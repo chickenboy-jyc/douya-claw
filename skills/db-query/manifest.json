@@ -1,0 +1,23 @@
+{
+  "name": "数据库只读查询",
+  "description": "以只读方式查询 MySQL 业务库（如商城库、报价库），用来回答「昨天下了多少单」「这个月新增多少用户」这类取数问题。硬护栏：只允许单条 SELECT（含 WITH … SELECT），拒绝一切写操作 / 多语句 / INTO OUTFILE / LOAD_FILE 等；默认最多返回 200 行（硬上限 2000），查询超时默认 30 秒（最大 60 秒），并尝试开启会话级只读事务。凭证每次临时传入，绝不落盘、绝不回显；数据库只监听内网/本机时可填 ssh_host 等参数走 SSH 隧道。连不上 / 认证失败 / SQL 被拒一律如实报错，绝不静默降级、绝不编造数据。结果会原样回显实际执行的 SQL，便于核对。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "timeoutMs": 180000,
+  "params": [
+    { "name": "sql", "label": "要执行的只读 SQL（仅支持单条 SELECT / WITH … SELECT）", "required": true },
+    { "name": "host", "label": "数据库地址(IP 或域名)", "required": true },
+    { "name": "username", "label": "数据库用户名", "required": true },
+    { "name": "password", "label": "数据库密码" },
+    { "name": "database", "label": "默认库名(如业务库名；也可留空、在 SQL 里写 库名.表名)" },
+    { "name": "port", "label": "数据库端口(默认 3306)" },
+    { "name": "limit", "label": "返回行数上限(默认 200，最大 2000)" },
+    { "name": "timeout_ms", "label": "查询超时毫秒(默认 30000，最大 60000)" },
+    { "name": "ssh_host", "label": "SSH 跳板机地址(数据库仅内网可达时填，走 SSH 隧道)" },
+    { "name": "ssh_port", "label": "SSH 端口(默认 22)" },
+    { "name": "ssh_username", "label": "SSH 用户名" },
+    { "name": "ssh_password", "label": "SSH 密码(与 ssh_key_path 二选一)" },
+    { "name": "ssh_key_path", "label": "SSH 私钥文件路径(有则优先于 ssh_password)" }
+  ]
+}

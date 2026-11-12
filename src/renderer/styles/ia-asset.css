@@ -1,0 +1,443 @@
+/* ============================================================================
+ * ia-asset.css —— 「你的企业资产库」+ 首登「品牌归属」步骤样式（包 C）
+ *
+ * 约定（见 docs/IA设计定稿 §4.3）：style.css 本轮冻结，新增样式一律写本文件，
+ * 由组件顶部 `import '../styles/ia-asset.css';` 引入。
+ * 命名避开 style.css 既有类名（merged-tabs / asset-panel / bip-* / ob-* 均已存在，
+ * 这里只新增 ia-asset-* 与 ob-brand-*，不覆盖任何既有规则）。
+ * ==========================================================================*/
+
+/* ---------------- 你的企业资产库：页头 ---------------- */
+.ia-asset-page {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ia-asset-head {
+  padding: 2px 2px 0;
+}
+
+.ia-asset-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 6px;
+  letter-spacing: 0.2px;
+}
+
+.ia-asset-sub {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--text-faint);
+  margin: 0;
+  max-width: 760px;
+}
+
+/* 子品牌矩阵 Tab 里，把 BrandIpManager 放进一个留白的卡片里，与资产/大脑两 Tab 视觉一致 */
+.ia-asset-page .bip-wrap {
+  padding: 4px 2px 8px;
+}
+
+/* 品牌矩阵里的「联网找候选子品牌」区块（复用 WebCandidatePicker） */
+.bip-web {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--loc-asst-line-1);
+}
+
+/* ---------------- 子品牌矩阵：品牌归属（母公司 / 旗下某个品牌） ----------------
+ * 承接被砍掉的「首登 Step5 品牌归属」能力，与 .ob-brand-choice 同一视觉语言。
+ * 复用 .bip-help，仅新增 .bip-owner* 三处。 */
+.bip-owner {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--loc-asst-line-1);
+}
+.bip-owner-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.bip-owner-choices {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.bip-owner-choice {
+  flex: 1 1 0;
+  min-width: 160px;
+  text-align: left;
+  border: 1px solid var(--line, var(--loc-asst-line-2));
+  border-radius: 10px;
+  background: var(--c-surface);
+  padding: 9px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.bip-owner-choice:hover:not(:disabled) {
+  border-color: var(--loc-asst-line-3);
+}
+.bip-owner-choice.active {
+  border-color: var(--loc-asst-line-4);
+  background: var(--loc-asst-bg-1);
+  box-shadow: 0 0 0 1px var(--loc-asst-shadow-1);
+}
+.bip-owner-choice:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.bip-owner-parent {
+  margin-top: 8px;
+}
+
+/* ---------------- 首登「品牌归属」步骤 ---------------- */
+.ob-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ob-brand-q {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.ob-brand-q-name {
+  color: var(--loc-asst-line-4);
+}
+
+.ob-brand-sub {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  line-height: 1.7;
+}
+
+.ob-brand-choices {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ob-brand-choice {
+  flex: 1 1 0;
+  min-width: 200px;
+  text-align: left;
+  border: 1px solid var(--line, var(--loc-asst-line-2));
+  border-radius: 10px;
+  background: var(--c-surface);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.ob-brand-choice:hover {
+  border-color: var(--loc-asst-line-3);
+}
+
+.ob-brand-choice.active {
+  border-color: var(--loc-asst-line-4);
+  background: var(--loc-asst-bg-1);
+  box-shadow: 0 0 0 1px var(--loc-asst-shadow-1);
+}
+
+.ob-brand-choice-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.ob-brand-choice-desc {
+  display: block;
+  font-size: 12px;
+  color: var(--text-faint);
+  line-height: 1.6;
+}
+
+.ob-brand-panel {
+  border: 1px dashed var(--loc-asst-line-5);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--loc-asst-bg-2);
+}
+
+.ob-brand-panel-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--loc-asst-line-4);
+  margin-bottom: 6px;
+}
+
+.ob-brand-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.ob-brand-field-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.ob-brand-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ob-brand-search-btn {
+  font-size: 12.5px;
+}
+
+.ob-brand-hint {
+  font-size: 12px;
+  color: var(--text-faint);
+  line-height: 1.6;
+}
+
+.ob-brand-cands {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ob-brand-cand-head {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.ob-brand-cand-src {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--loc-asst-ink-1);
+  background: var(--loc-asst-bg-3);
+  border-radius: 6px;
+  padding: 1px 6px;
+  margin-left: 6px;
+}
+
+/* 一键全选 / 清空候选（老板 2026-09-14 拍板 D 项：批量勾选、一次确认）。 */
+.ob-brand-cand-all {
+  margin-left: 8px;
+  padding: 1px 8px;
+  font-size: 11px;
+  color: var(--loc-asst-line-4);
+  background: var(--loc-asst-bg-4);
+  border: 1px solid var(--loc-asst-line-6);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ob-brand-cand-all:hover {
+  background: var(--loc-asst-bg-5);
+}
+
+.ob-brand-cand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.ob-brand-cand input {
+  width: 14px;
+  height: 14px;
+}
+
+.ob-brand-msg {
+  font-size: 12.5px;
+  color: var(--loc-asst-line-4);
+}
+
+.ob-brand-err {
+  font-size: 12.5px;
+  color: var(--loc-asst-ink-2);
+}
+
+/* ---------------- 通用「联网找候选」选择器（WebCandidatePicker） ----------------
+ * 抽象自首登「品牌归属」的候选区，复用到资产库所有名单字段。
+ * 前缀统一用 wcp-（web candidate picker），与既有 ob-* / bip-* / asset-* 不冲突。
+ * 配色沿用 .ob-brand-cand-all 的绿色系小按钮风格。 */
+.wcp-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 8px;
+}
+
+.wcp-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.wcp-search-btn {
+  font-size: 12.5px;
+}
+
+.wcp-hint {
+  font-size: 12px;
+  color: var(--text-faint);
+  line-height: 1.6;
+}
+
+.wcp-note {
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+.wcp-err {
+  font-size: 12.5px;
+  color: var(--loc-asst-ink-2);
+}
+
+.wcp-msg {
+  font-size: 12.5px;
+  color: var(--loc-asst-line-4);
+}
+
+.wcp-cands {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wcp-cand-head {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.wcp-cand-src {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--loc-asst-ink-1);
+  background: var(--loc-asst-bg-3);
+  border-radius: 6px;
+  padding: 1px 6px;
+  margin-left: 6px;
+}
+
+.wcp-cand-all {
+  margin-left: 8px;
+  padding: 1px 8px;
+  font-size: 11px;
+  color: var(--loc-asst-line-4);
+  background: var(--loc-asst-bg-4);
+  border: 1px solid var(--loc-asst-line-6);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.wcp-cand-all:hover {
+  background: var(--loc-asst-bg-5);
+}
+
+.wcp-cand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.wcp-cand input {
+  width: 14px;
+  height: 14px;
+}
+
+.wcp-cand-name {
+  color: var(--text);
+}
+
+.wcp-cand-note {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+/* ---- 「定时任务」作为「豆芽对话」第三个页签时的切换条（2026-10-10 第 6 条） ----
+ * 复用的是侧栏那套 .wb-tabs / .wb-tab；在整页里需要横向靠左、按钮不拉伸。
+ * 原入口是已删除的「今天做什么」页里的 Tab，这里按「开发工作台」先例收进豆芽对话，
+ * 不新增一级导航卡（一级导航数量被 unit-role-diff-ui 断言锁死）。 */
+.ia-tabbar .wb-tabs {
+  padding: 0 0 12px;
+}
+.ia-tabbar .wb-tabs .wb-tab {
+  flex: 0 0 auto;
+  padding: 6px 14px;
+}
+
+/* ============================================================================
+   资产 · 主题变量（文件作用域，前缀 --loc-asst-）
+   ============================================================================
+   【为什么是局部变量而不是直接用 --c-*】
+     本文件用的是自己的一套绿灰色阶，与全局语义 token 的绿值**不等值**
+     （例如 #1f7a4d 与 --c-brand-dark:#177A46 相差 ΔE≈4.5，直接换会让绿主题可见变色）。
+     所以这里为每个去重色值建一条局部变量：
+       · 绿主题（无 data-theme 属性）= **原字面量逐字不变** ⇒ 绿主题像素不变；
+       · light / dark 各给一套值（白色主题去绿、深色主题反向）。
+   【铁律】三套必须齐全，缺一套 = 那套主题下拿到空值 = 白屏。门禁 unit-theme-cover-group-b 守这条。
+   ========================================================================== */
+:root {
+  --loc-asst-line-1: rgba(0, 0, 0, 0.08);
+  --loc-asst-line-2: rgba(0, 0, 0, 0.1);
+  --loc-asst-line-3: rgba(48, 209, 88, 0.5);
+  --loc-asst-line-4: #1d7a36;
+  --loc-asst-bg-1: rgba(48, 209, 88, 0.08);
+  --loc-asst-shadow-1: rgba(48, 209, 88, 0.35);
+  --loc-asst-line-5: rgba(48, 209, 88, 0.45);
+  --loc-asst-bg-2: rgba(48, 209, 88, 0.04);
+  --loc-asst-ink-1: #b26a00;
+  --loc-asst-bg-3: rgba(250, 173, 20, 0.14);
+  --loc-asst-bg-4: rgba(29, 122, 54, 0.1);
+  --loc-asst-line-6: rgba(29, 122, 54, 0.28);
+  --loc-asst-bg-5: rgba(29, 122, 54, 0.18);
+  --loc-asst-ink-2: #c0392b;
+}
+html[data-theme="light"] {
+  --loc-asst-line-1: rgba(0, 0, 0, 0.08);
+  --loc-asst-line-2: rgba(0, 0, 0, 0.1);
+  --loc-asst-line-3: rgba(182, 182, 182, 0.5);
+  --loc-asst-line-4: #6a6a6a;
+  --loc-asst-bg-1: rgba(182, 182, 182, 0.08);
+  --loc-asst-shadow-1: rgba(182, 182, 182, 0.35);
+  --loc-asst-line-5: rgba(182, 182, 182, 0.45);
+  --loc-asst-bg-2: rgba(182, 182, 182, 0.04);
+  --loc-asst-ink-1: #b26a00;
+  --loc-asst-bg-3: rgba(250, 173, 20, 0.14);
+  --loc-asst-bg-4: rgba(106, 106, 106, 0.1);
+  --loc-asst-line-6: rgba(106, 106, 106, 0.28);
+  --loc-asst-bg-5: rgba(106, 106, 106, 0.18);
+  --loc-asst-ink-2: #c0392b;
+}
+html[data-theme="dark"] {
+  --loc-asst-line-1: rgba(0, 0, 0, 0.42);
+  --loc-asst-line-2: rgba(0, 0, 0, 0.42);
+  --loc-asst-line-3: rgba(110, 223, 138, 0.55);
+  --loc-asst-line-4: #9fe8b3;
+  --loc-asst-bg-1: rgba(110, 223, 138, 0.12);
+  --loc-asst-shadow-1: rgba(110, 223, 138, 0.52);
+  --loc-asst-line-5: rgba(110, 223, 138, 0.55);
+  --loc-asst-bg-2: rgba(110, 223, 138, 0.06);
+  --loc-asst-ink-1: #edc68e;
+  --loc-asst-bg-3: rgba(228, 185, 101, 0.21);
+  --loc-asst-bg-4: rgba(136, 227, 161, 0.15);
+  --loc-asst-line-6: rgba(136, 227, 161, 0.42);
+  --loc-asst-bg-5: rgba(136, 227, 161, 0.27);
+  --loc-asst-ink-2: #e49088;
+}

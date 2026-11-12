@@ -1,0 +1,33 @@
+{
+  "name": "委派给 dsh 跑",
+  "description": "把一整段**代码工程型**子任务整体交给本机 DeepSeek Harness（一个独立的 agent）跑完，返回它改了哪些文件、结论是什么。适合：新建多文件工程、跨多文件重构、需要反复「改-跑-看错-再改」的调试。**不适合**：单文件小改、只需要产出文档或表格的任务、需要你来判断取舍的决策类任务。注意它是另一个 agent，你看不到它中间的过程，只能拿到最终报告。",
+  "type": "js",
+  "timeoutMs": 900000,
+  "params": [
+    {
+      "name": "task",
+      "label": "要它干什么",
+      "hint": "写清楚目标 + 验收标准（怎么算做完）+ 关键约束。它看不到你和用户的对话，必须自成一体。例如：把这个目录下的 Godot 项目补成能跑的涂鸦跳跃：玩家可左右移动、点击跳跃、落地判定、分数显示。做完用 godot --headless 跑一遍确认无脚本报错。",
+      "default": "",
+      "required": true
+    },
+    {
+      "name": "cwd",
+      "label": "在哪个目录里干",
+      "hint": "相对工作区的路径，例如 games/doodle。留空 = 工作区根目录。它会在这个目录里读写文件。",
+      "default": ""
+    },
+    {
+      "name": "model",
+      "label": "用哪个模型",
+      "hint": "默认 deepseek-v4-pro（最强）。简单任务可用 deepseek-flash 换速度。",
+      "default": "deepseek-v4-pro"
+    },
+    {
+      "name": "effort",
+      "label": "推理强度",
+      "hint": "off / low / high / max。默认 high。",
+      "default": "high"
+    }
+  ]
+}

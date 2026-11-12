@@ -1,0 +1,401 @@
+/* ============================================================================
+ * ia-today.css —— 包 D（信息架构重排 · 今天做什么去重 + 对话引导 + 新媒体文案版块）
+ *
+ * 为什么单独开文件：style.css 本轮冻结（5 方同改必然互相覆盖），新增样式一律写在
+ * 各自包的新增文件里（见 IA 定稿 §4.3）。本文件只在包 D 的组件顶部 import：
+ *   · components/DouyaUsageGuide.jsx   —— 豆芽对话「怎么用」说明
+ *   · components/TodayOps.jsx          —— 今天做什么（去重后的「豆芽帮你做」区块）
+ *   · modules/NewMediaCenter.jsx / modules/NewMediaWorkbench.jsx —— 新媒体文案版块
+ *
+ * 命名前缀刻意避开 style.css 既有类（douya-usage- / wz-from- / nmc-），
+ * 以免同优先级相互覆盖（历史事故：`.pa-empty` 双向污染）。
+ * 注意：本文件里描述类名时不要在注释里写出**带点号的**选择器，避免被
+ * lint-css-collisions.mjs 之类的「选择器计数」断言误判（见 scripts/verify/README 第 7 条）。
+ * ========================================================================== */
+/* ────────────────────────────────────────────────────────────────────────────
+   文件作用域主题变量（主题可切换 · 三期工程）
+   ────────────────────────────────────────────────────────────────────────────
+   【为什么是局部变量，不是直接换全局 --c-*】
+     本文件这套色是自定义绿灰，与 theme-tokens.css 里 --c-* 的**绿主题值不相等**。
+     直接把字面量换掉，绿色主题就会肉眼可见地变色（背景、正文、品牌绿全都会漂）。
+     所以这里一条变量对一条原字面量：
+
+       · 绿主题（:root，不带 data-theme）  = **原字面量，一字不改** ⇒ 逐像素不变
+       · 白主题（html[data-theme="light"]）= 去绿中性，主色中性深灰（老板明令不许蓝）
+       · 深主题（html[data-theme="dark"]） = 带绿的深底浅字
+
+   【铁律：三套必须齐全】
+     少一套 ⇒ 那个主题下这些属性拿到空值 ⇒ 白屏 / 黑字黑底。新增变量必须同时补三套。
+     门禁 scripts/smoke/unit-theme-cover-group-a.mjs 的 C/D 两条断言守着这件事。
+
+   【命名】
+     --loc-it-<角色><序号>。前缀是文件独占的，**不许跨文件复用**。
+     刻意不用 --c- 开头：那是全局 token 的命名空间，混进去会被核心层门禁误判。
+
+   【数据可视化系列色】
+     标签/系列色表达的是**数据身份**，不是界面语义 —— 它们也建了变量，但深色值
+     只调亮度、不改成同一个色，系列之间保持可区分。
+   ──────────────────────────────────────────────────────────────────────────── */
+:root {
+  --loc-it-alphaBrand02: rgba(48, 209, 88, 0.02);
+  --loc-it-alphaBrand08: rgba(48, 209, 88, 0.08);
+  --loc-it-alphaBrand12: rgba(48, 209, 88, 0.12);
+  --loc-it-alphaBrand22: rgba(48, 209, 88, 0.22);
+  --loc-it-alphaBrand32: rgba(48, 209, 88, 0.32);
+  --loc-it-alphaBrand35: rgba(48, 209, 88, 0.35);
+  --loc-it-alphaWarn35: rgba(191, 160, 0, 0.35);
+  --loc-it-border: #e5e7eb;
+  --loc-it-bordera: rgba(0, 0, 0, 0.08);
+  --loc-it-borderb: rgba(0, 0, 0, 0.1);
+  --loc-it-brand: #30d158;
+  --loc-it-brandDeep: #1a7f3c;
+  --loc-it-brandDeepa: #1c8a45;
+  --loc-it-brandDeepb: #1e7a4c;
+  --loc-it-brandTint: #e3f5e9;
+  --loc-it-brandTinta: #eafaf0;
+  --loc-it-brandTintb: #eef7f0;
+  --loc-it-brandTintc: #f2f8f4;
+  --loc-it-danger: #c2413b;
+  --loc-it-dangerTint: #f3c9c9;
+  --loc-it-dangerTinta: #fdecec;
+  --loc-it-hover: rgba(0, 0, 0, 0.05);
+  --loc-it-text: #1d1d1f;
+  --loc-it-texta: #1f2328;
+  --loc-it-textb: #3a3a3c;
+  --loc-it-text2: #4b5058;
+  --loc-it-text2a: #6e6e73;
+  --loc-it-text2b: #8e8e93;
+  --loc-it-text3: #a1a1a6;
+  --loc-it-warn: #8a6d00;
+  --loc-it-warna: #a06617;
+  --loc-it-warnTint: #fdf3d6;
+  --loc-it-warnTinta: #fff6e5;
+  --loc-it-window: #fffbfb;
+}
+
+html[data-theme="light"] {
+  --loc-it-alphaBrand02: rgba(58, 66, 71, 0.02);
+  --loc-it-alphaBrand08: rgba(58, 66, 71, 0.08);
+  --loc-it-alphaBrand12: rgba(58, 66, 71, 0.12);
+  --loc-it-alphaBrand22: rgba(58, 66, 71, 0.22);
+  --loc-it-alphaBrand32: rgba(58, 66, 71, 0.32);
+  --loc-it-alphaBrand35: rgba(58, 66, 71, 0.35);
+  --loc-it-alphaWarn35: rgba(154, 106, 0, 0.35);
+  --loc-it-border: #e3e6e6;
+  --loc-it-bordera: #e3e6e6;
+  --loc-it-borderb: #e3e6e6;
+  --loc-it-brand: #3a4247;
+  --loc-it-brandDeep: #23282d;
+  --loc-it-brandDeepa: #23282d;
+  --loc-it-brandDeepb: #23282d;
+  --loc-it-brandTint: #f1f4f2;
+  --loc-it-brandTinta: #f1f4f2;
+  --loc-it-brandTintb: #f1f4f2;
+  --loc-it-brandTintc: #f1f4f2;
+  --loc-it-danger: #c0392b;
+  --loc-it-dangerTint: #fbedeb;
+  --loc-it-dangerTinta: #fbedeb;
+  --loc-it-hover: #edefee;
+  --loc-it-text: #1d2124;
+  --loc-it-texta: #1d2124;
+  --loc-it-textb: #1d2124;
+  --loc-it-text2: #565e63;
+  --loc-it-text2a: #565e63;
+  --loc-it-text2b: #565e63;
+  --loc-it-text3: #6e767c;
+  --loc-it-warn: #9a6a00;
+  --loc-it-warna: #9a6a00;
+  --loc-it-warnTint: #fbf3e3;
+  --loc-it-warnTinta: #fbf3e3;
+  --loc-it-window: #f6f7f7;
+}
+
+html[data-theme="dark"] {
+  --loc-it-alphaBrand02: rgba(60, 196, 124, 0.02);
+  --loc-it-alphaBrand08: rgba(60, 196, 124, 0.08);
+  --loc-it-alphaBrand12: rgba(60, 196, 124, 0.12);
+  --loc-it-alphaBrand22: rgba(60, 196, 124, 0.22);
+  --loc-it-alphaBrand32: rgba(60, 196, 124, 0.32);
+  --loc-it-alphaBrand35: rgba(60, 196, 124, 0.35);
+  --loc-it-alphaWarn35: rgba(227, 163, 58, 0.35);
+  --loc-it-border: rgba(255, 255, 255, 0.10);
+  --loc-it-bordera: rgba(255, 255, 255, 0.10);
+  --loc-it-borderb: rgba(255, 255, 255, 0.10);
+  --loc-it-brand: #3cc47c;
+  --loc-it-brandDeep: #2faf6b;
+  --loc-it-brandDeepa: #2faf6b;
+  --loc-it-brandDeepb: #2faf6b;
+  --loc-it-brandTint: #1b2a22;
+  --loc-it-brandTinta: #1b2a22;
+  --loc-it-brandTintb: #1b2a22;
+  --loc-it-brandTintc: #1b2a22;
+  --loc-it-danger: #f0796b;
+  --loc-it-dangerTint: rgba(240, 121, 107, 0.16);
+  --loc-it-dangerTinta: rgba(240, 121, 107, 0.16);
+  --loc-it-hover: #323835;
+  --loc-it-text: #ecf1ee;
+  --loc-it-texta: #ecf1ee;
+  --loc-it-textb: #ecf1ee;
+  --loc-it-text2: #9ba8a1;
+  --loc-it-text2a: #9ba8a1;
+  --loc-it-text2b: #9ba8a1;
+  --loc-it-text3: #7e8c85;
+  --loc-it-warn: #e3a33a;
+  --loc-it-warna: #e3a33a;
+  --loc-it-warnTint: rgba(227, 163, 58, 0.16);
+  --loc-it-warnTinta: rgba(227, 163, 58, 0.16);
+  --loc-it-window: #171a18;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * 一、豆芽对话「怎么用」说明（DouyaUsageGuide）
+ * 老板第 9 条：经营对话里不放任何跳转卡，只讲豆芽 AI 怎么用。
+ * ------------------------------------------------------------------------- */
+.douya-usage {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+  max-width: 720px;
+}
+.douya-usage-head { display: flex; flex-direction: column; gap: 4px; }
+.douya-usage-title { font-size: 15px; font-weight: 700; color: var(--loc-it-text); }
+.douya-usage-sub { font-size: 12.5px; line-height: 1.6; color: var(--loc-it-text2a); }
+
+.douya-usage-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.douya-usage-step { display: flex; align-items: flex-start; gap: 10px; }
+.douya-usage-idx {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: var(--loc-it-brandTintb);
+  color: var(--loc-it-brandDeepa);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.douya-usage-body { min-width: 0; }
+.douya-usage-t { font-size: 13.5px; font-weight: 600; color: var(--loc-it-text); }
+.douya-usage-d { font-size: 12.5px; line-height: 1.6; color: var(--loc-it-text2a); margin-top: 2px; }
+
+.douya-usage-sec-t { font-size: 13px; font-weight: 600; color: var(--loc-it-text); margin-bottom: 8px; }
+.douya-usage-chips {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.douya-usage-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid var(--loc-it-bordera);
+  border-radius: 10px;
+  background: var(--c-surface-2);
+}
+.douya-usage-chip-ic { flex-shrink: 0; font-size: 16px; line-height: 1.3; }
+.douya-usage-chip-body { min-width: 0; }
+.douya-usage-chip-t { font-size: 12.5px; font-weight: 600; color: var(--loc-it-text); }
+.douya-usage-chip-s { font-size: 11.5px; line-height: 1.5; color: var(--loc-it-text2b); margin-top: 2px; }
+
+/* ---- 2026-10-11 新增：示例句「点一下就发」 ----
+   只在对话空态启用（App.jsx 传了 onPickSample）。使用指南弹窗不传 ⇒ 这些类不会出现。
+   配色沿用本页绿色系，不引入新色。 */
+.douya-usage-tap-hint { font-size: 11.5px; line-height: 1.5; color: var(--loc-it-brandDeep); margin: -2px 0 8px; }
+.douya-usage-picks { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.douya-usage-pick {
+  font: inherit;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--loc-it-text);
+  background: var(--c-surface);
+  border: 1px solid var(--loc-it-borderb);
+  border-radius: 999px;
+  padding: 2px 9px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.douya-usage-pick:hover { background: var(--loc-it-brandTinta); border-color: var(--loc-it-brand); color: var(--loc-it-brandDeep); }
+.douya-usage-pick:focus-visible { outline: 2px solid var(--loc-it-brand); outline-offset: 1px; }
+
+.douya-usage-where { display: flex; flex-direction: column; gap: 6px; }
+.douya-usage-where-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--loc-it-textb);
+}
+.douya-usage-where-ic { flex-shrink: 0; }
+
+/* ④ 遇到问题怎么办：本机路径清单（只读、可整段选中便于复制）。
+   绿色复用同文件上方 douya-usage-idx 的既有绿，其余为 Apple 灰，无黑无蓝。 */
+.douya-usage-help { display: flex; flex-direction: column; gap: 6px; }
+.douya-usage-help-d { font-size: 12.5px; line-height: 1.6; color: var(--loc-it-text2a); }
+.douya-usage-help-list { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
+.douya-usage-help-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 10px;
+  border: 1px solid var(--loc-it-bordera);
+  border-radius: 10px;
+  background: var(--c-surface-2);
+}
+.douya-usage-help-k { font-size: 12.5px; font-weight: 600; color: var(--loc-it-text); }
+.douya-usage-help-v {
+  align-self: flex-start;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--loc-it-brandDeepa);
+  background: var(--loc-it-brandTintb);
+  padding: 2px 7px;
+  border-radius: 6px;
+  user-select: all;
+}
+.douya-usage-help-n { font-size: 11.5px; line-height: 1.5; color: var(--loc-it-text2b); }
+.douya-usage-help-tip { font-size: 11.5px; line-height: 1.6; color: var(--loc-it-text2b); margin-top: 2px; }
+
+.douya-usage-foot {
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--loc-it-bordera);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--loc-it-text2b);
+}
+
+/* ---------------------------------------------------------------------------
+ * 二、新媒体「生成文案」版块 —— 显式标注「已从企业资产库带出」
+ * 老板第 6 条：把「企业资产库的数据有没有真的被用上」变成看得见的东西。
+ * ------------------------------------------------------------------------- */
+.wz-from {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--loc-it-brandTintc);
+  border: 1px solid var(--loc-it-alphaBrand22);
+}
+.wz-from-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--loc-it-brandDeepa);
+  margin-right: 2px;
+}
+.wz-from-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+.wz-from-chip.ok { color: var(--loc-it-brandDeepa); background: var(--loc-it-brandTint); border-color: var(--loc-it-alphaBrand35); }
+.wz-from-chip.miss { color: var(--loc-it-warn); background: var(--loc-it-warnTint); border-color: var(--loc-it-alphaWarn35); }
+.wz-from-hint { font-size: 11.5px; line-height: 1.5; color: var(--loc-it-text2a); }
+
+/* 「生成文案」独立版块：比普通卡片更醒目一点（老板第 6 条要「显眼」） */
+.nmc-copy {
+  border: 1px solid var(--loc-it-alphaBrand35);
+  box-shadow: 0 1px 0 var(--loc-it-alphaBrand12) inset;
+}
+.nmc-copy > .hd-dash-hd { color: var(--loc-it-brandDeepa); }
+
+/* 新媒体中心容器（保留原 merged-tabs 布局，仅加一点内边距兜底） */
+.nmc-wrap { padding: 4px 2px; }
+
+/* ---------------------------------------------------------------------------
+ * 三、底部一点响应式兜底：窄屏（对话区较窄）时能力卡单列
+ * ------------------------------------------------------------------------- */
+@media (max-width: 720px) {
+  .douya-usage-chips { grid-template-columns: 1fr; }
+}
+
+/* ---------------------------------------------------------------------------
+ * 四、「把豆芽喂饱」引导卡（首登 10 屏 → 4 屏的能力补偿）
+ * class 前缀 feed-buddy- 独立命名，避免与 style.css 既有类冲突。
+ * ------------------------------------------------------------------------- */
+.feed-buddy {
+  margin: 12px 0 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--loc-it-alphaBrand32);
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--loc-it-alphaBrand08), var(--loc-it-alphaBrand02));
+}
+.feed-buddy-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.feed-buddy-title { font-size: 14px; font-weight: 600; color: var(--loc-it-text); }
+.feed-buddy-close {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--text-faint, var(--loc-it-text3));
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+.feed-buddy-close:hover { color: var(--loc-it-text); background: var(--loc-it-hover); }
+.feed-buddy-sub {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-weak, var(--loc-it-text2a));
+}
+.feed-buddy-actions {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.feed-buddy-ai-btn { display: inline-flex; }
+.feed-buddy-note { margin-top: 8px; font-size: 12px; color: var(--loc-it-brandDeepa); }
+.feed-buddy-warn { margin-top: 8px; font-size: 12px; color: var(--loc-it-warn); }
+
+
+/* ===== 合规预检（第十八轮）：生成结果下方的医疗广告红线自查 ===== */
+.wz-comp {
+  margin: 0 16px 14px;
+  border: 1px solid var(--line, var(--loc-it-border));
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: var(--c-surface);
+}
+.wz-comp.has { border-color: var(--loc-it-dangerTint); background: var(--loc-it-window); }
+.wz-comp-hd { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wz-comp-t { font-size: 12.5px; font-weight: 800; color: var(--ink, var(--loc-it-texta)); }
+.wz-comp-s { font-size: 12px; color: var(--ink-2, var(--loc-it-text2)); }
+.wz-comp-s.ok { color: var(--green-dark, var(--loc-it-brandDeepb)); }
+.wz-comp-s.bad { color: var(--loc-it-danger); }
+.wz-comp-list { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.wz-comp-item { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; line-height: 1.6; }
+.wz-comp-lv { flex: none; padding: 1px 7px; border-radius: 5px; font-size: 10.5px; font-weight: 800; }
+.wz-comp-item.block .wz-comp-lv { background: var(--loc-it-dangerTinta); color: var(--loc-it-danger); }
+.wz-comp-item.warn .wz-comp-lv { background: var(--loc-it-warnTinta); color: var(--loc-it-warna); }
+.wz-comp-m { flex: none; font-weight: 700; color: var(--ink, var(--loc-it-texta)); }
+.wz-comp-a { color: var(--ink-2, var(--loc-it-text2)); }

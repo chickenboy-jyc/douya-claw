@@ -1,0 +1,642 @@
+/* ============================================================
+ * ⑦ 内容创作 · 创作工作台（2026-10-12 老板参考图《豆芽助手内容创作平台.png》）
+ *   老板原话：「内容创作就是目前新媒体的…UI界面生成文案」。
+ *   布局：开始创作（写什么 + 3 个引用工具 + 生成文案）
+ *         → 热门模板（6 张卡 + 分类筛）→ 最近创作（真实资产）。
+ *   视觉：Apple 风 —— 浅底、大圆角、克制绿点缀，禁黑禁蓝。
+ *   命名：co- 前缀（content ops），全部新增类，不碰 style.css 与其它样式文件。
+ *   【2026-10-13 晚 · 第二轮「更干净」】老板反馈「太乱太密字太小」⇒ 字号再放一档
+ *   （正文最低 12.5px 起、模板标题 14→15.5）、卡片内边距与网格间距同步放大；
+ *   模板描述统一两行截断，长文案不再撑高卡片。
+ * ============================================================ */
+/* ────────────────────────────────────────────────────────────────────────────
+   文件作用域主题变量（主题可切换 · 三期工程）
+   ────────────────────────────────────────────────────────────────────────────
+   【为什么是局部变量，不是直接换全局 --c-*】
+     本文件这套色是自定义绿灰，与 theme-tokens.css 里 --c-* 的**绿主题值不相等**。
+     直接把字面量换掉，绿色主题就会肉眼可见地变色（背景、正文、品牌绿全都会漂）。
+     所以这里一条变量对一条原字面量：
+
+       · 绿主题（:root，不带 data-theme）  = **原字面量，一字不改** ⇒ 逐像素不变
+       · 白主题（html[data-theme="light"]）= 去绿中性，主色中性深灰（老板明令不许蓝）
+       · 深主题（html[data-theme="dark"]） = 带绿的深底浅字
+
+   【铁律：三套必须齐全】
+     少一套 ⇒ 那个主题下这些属性拿到空值 ⇒ 白屏 / 黑字黑底。新增变量必须同时补三套。
+     门禁 scripts/smoke/unit-theme-cover-group-a.mjs 的 C/D 两条断言守着这件事。
+
+   【命名】
+     --loc-iac-<角色><序号>。前缀是文件独占的，**不许跨文件复用**。
+     刻意不用 --c- 开头：那是全局 token 的命名空间，混进去会被核心层门禁误判。
+
+   【数据可视化系列色】
+     标签/系列色表达的是**数据身份**，不是界面语义 —— 它们也建了变量，但深色值
+     只调亮度、不改成同一个色，系列之间保持可区分。
+   ──────────────────────────────────────────────────────────────────────────── */
+:root {
+  --loc-iac-alphaBrand12: rgba(47, 175, 107, 0.12);
+  --loc-iac-border: #e5e7eb;
+  --loc-iac-bordera: rgba(0, 0, 0, 0.07);
+  --loc-iac-borderb: rgba(0, 0, 0, 0.096);
+  --loc-iac-borderc: rgba(0, 0, 0, 0.11);
+  --loc-iac-borderd: rgba(0, 0, 0, 0.18);
+  --loc-iac-bordere: rgba(0, 0, 0, 0.2);
+  --loc-iac-borderf: rgba(0, 0, 0, 0.24);
+  --loc-iac-brandDeep: #0e7d59;
+  --loc-iac-brandDeepa: #1e7a4c;
+  --loc-iac-brandLine: #bfe7d0;
+  --loc-iac-brandTint: #eff9f3;
+  --loc-iac-brandTinta: #f2fbf6;
+  --loc-iac-danger: #d93025;
+  --loc-iac-dangerTint: #fdebeb;
+  --loc-iac-hover: rgba(0, 0, 0, 0.015);
+  --loc-iac-hovera: rgba(0, 0, 0, 0.02);
+  --loc-iac-hoverb: rgba(0, 0, 0, 0.025);
+  --loc-iac-hoverc: rgba(0, 0, 0, 0.035);
+  --loc-iac-hoverd: rgba(0, 0, 0, 0.036);
+  --loc-iac-hovere: rgba(0, 0, 0, 0.04);
+  --loc-iac-hoverf: rgba(0, 0, 0, 0.044);
+  --loc-iac-hoverg: rgba(0, 0, 0, 0.06);
+  --loc-iac-hoverh: rgba(0, 0, 0, 0.07);
+  --loc-iac-shadowSoft: rgba(0, 0, 0, 0.03);
+  --loc-iac-shadowSofta: rgba(30, 60, 45, 0.04);
+  --loc-iac-shadowSoftb: rgba(30, 60, 45, 0.06);
+  --loc-iac-shadowSoftc: rgba(30, 60, 45, 0.1);
+  --loc-iac-surface2: #f5f7f6;
+  --loc-iac-text: #1d1d1f;
+  --loc-iac-text2: #4b5058;
+  --loc-iac-text2a: #8a8f99;
+  --loc-iac-text3: #98a0aa;
+  --loc-iac-window: #f7fcf9;
+}
+
+html[data-theme="light"] {
+  --loc-iac-alphaBrand12: rgba(58, 66, 71, 0.12);
+  --loc-iac-border: #e3e6e6;
+  --loc-iac-bordera: #e3e6e6;
+  --loc-iac-borderb: #e3e6e6;
+  --loc-iac-borderc: #e3e6e6;
+  --loc-iac-borderd: #e3e6e6;
+  --loc-iac-bordere: #e3e6e6;
+  --loc-iac-borderf: #e3e6e6;
+  --loc-iac-brandDeep: #23282d;
+  --loc-iac-brandDeepa: #23282d;
+  --loc-iac-brandLine: #d5dbd8;
+  --loc-iac-brandTint: #f1f4f2;
+  --loc-iac-brandTinta: #f1f4f2;
+  --loc-iac-danger: #c0392b;
+  --loc-iac-dangerTint: #fbedeb;
+  --loc-iac-hover: #edefee;
+  --loc-iac-hovera: #edefee;
+  --loc-iac-hoverb: #edefee;
+  --loc-iac-hoverc: #edefee;
+  --loc-iac-hoverd: #edefee;
+  --loc-iac-hovere: #edefee;
+  --loc-iac-hoverf: #edefee;
+  --loc-iac-hoverg: #edefee;
+  --loc-iac-hoverh: #edefee;
+  --loc-iac-shadowSoft: rgba(0, 0, 0, 0.04);
+  --loc-iac-shadowSofta: rgba(0, 0, 0, 0.04);
+  --loc-iac-shadowSoftb: rgba(0, 0, 0, 0.04);
+  --loc-iac-shadowSoftc: rgba(0, 0, 0, 0.04);
+  --loc-iac-surface2: #f4f5f5;
+  --loc-iac-text: #1d2124;
+  --loc-iac-text2: #565e63;
+  --loc-iac-text2a: #565e63;
+  --loc-iac-text3: #6e767c;
+  --loc-iac-window: #f6f7f7;
+}
+
+html[data-theme="dark"] {
+  --loc-iac-alphaBrand12: rgba(60, 196, 124, 0.12);
+  --loc-iac-border: rgba(255, 255, 255, 0.10);
+  --loc-iac-bordera: rgba(255, 255, 255, 0.10);
+  --loc-iac-borderb: rgba(255, 255, 255, 0.10);
+  --loc-iac-borderc: rgba(255, 255, 255, 0.10);
+  --loc-iac-borderd: rgba(255, 255, 255, 0.10);
+  --loc-iac-bordere: rgba(255, 255, 255, 0.10);
+  --loc-iac-borderf: rgba(255, 255, 255, 0.10);
+  --loc-iac-brandDeep: #2faf6b;
+  --loc-iac-brandDeepa: #2faf6b;
+  --loc-iac-brandLine: #2c4a39;
+  --loc-iac-brandTint: #1b2a22;
+  --loc-iac-brandTinta: #1b2a22;
+  --loc-iac-danger: #f0796b;
+  --loc-iac-dangerTint: rgba(240, 121, 107, 0.16);
+  --loc-iac-hover: #323835;
+  --loc-iac-hovera: #323835;
+  --loc-iac-hoverb: #323835;
+  --loc-iac-hoverc: #323835;
+  --loc-iac-hoverd: #323835;
+  --loc-iac-hovere: #323835;
+  --loc-iac-hoverf: #323835;
+  --loc-iac-hoverg: #323835;
+  --loc-iac-hoverh: #323835;
+  --loc-iac-shadowSoft: rgba(0, 0, 0, 0.28);
+  --loc-iac-shadowSofta: rgba(0, 0, 0, 0.28);
+  --loc-iac-shadowSoftb: rgba(0, 0, 0, 0.28);
+  --loc-iac-shadowSoftc: rgba(0, 0, 0, 0.28);
+  --loc-iac-surface2: #2a2f2c;
+  --loc-iac-text: #ecf1ee;
+  --loc-iac-text2: #9ba8a1;
+  --loc-iac-text2a: #9ba8a1;
+  --loc-iac-text3: #7e8c85;
+  --loc-iac-window: #171a18;
+}
+
+
+.co-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.co-card {
+  padding: 20px 22px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px var(--loc-iac-shadowSoft);
+}
+
+/* ---- 区块标题 ---- */
+.co-sec-hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.co-sec-t { font-size: 18.5px; font-weight: 700; color: var(--text); }
+
+/* ---- 开始创作 ---- */
+.co-ta.ant-input {
+  border-radius: 12px;
+  font-size: 16.5px;
+}
+.co-ta .ant-input,
+.co-ta textarea { line-height: 1.75; }
+
+.co-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.co-tool {
+  font-size: 15px;
+  color: var(--text-dim);
+  padding: 6px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--loc-iac-hovera);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.co-tool:hover { border-color: var(--loc-iac-bordere); color: var(--loc-iac-text); }
+.co-tool.on {
+  color: var(--loc-iac-text);
+  border-color: var(--loc-iac-bordere);
+  background: var(--loc-iac-hovere);
+  font-weight: 600;
+}
+.co-spacer { flex: 1; }
+
+/* ---- 引用企业资料：展开的清单 ---- */
+.co-ref {
+  margin-top: 14px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--loc-iac-hoverb);
+  border: 1px solid var(--border);
+}
+.co-ref-row {
+  display: flex;
+  gap: 10px;
+  font-size: 15px;
+  line-height: 1.9;
+}
+/* 【2026-11-08】项名 / 占位 / 说明这三处原来是 `var(--text-faint)`。
+   清单搬进 Popover 之后底色从卡内 `--loc-iac-hoverb`（深色 #323835）换成 `--c-surface`
+   （深色 #232725），而 `--text-faint` 深色值是 #7e8c85 —— 压在这个底上只有 **4.31:1**，
+   低于正文 4.5 的门槛（浅色卡内那格更早就只有 4.00:1，只是一直没被量过）。
+   改用 `--loc-iac-text2`（浅 #565e63 / 深 #9ba8a1）：浅色 6.61:1、深色 6.13:1，两套都过。
+   ⚠️ 这三条**只服务「使用企业资料」清单**（`co-ref-k/co-ref-v/co-ref-note` 全仓仅
+      `ContentOps.jsx:484-488` 一处使用），所以改它们不会波及别页。
+   ⚠️ 别改回 `--text-faint`：那是个"提示级"灰，本仓深层多处用它压浅底，
+      一换底色就会掉到 4.5 以下 —— 门禁 `unit-dark-contrast` 的 C32/C33/C34 钉着这件事。 */
+.co-ref-k { flex-shrink: 0; width: 62px; color: var(--loc-iac-text2); }
+.co-ref-v { color: var(--text); }
+.co-ref-v.empty { color: var(--loc-iac-text2); }
+.co-ref-note {
+  margin-top: 8px;
+  font-size: 14.5px;
+  color: var(--loc-iac-text2);
+  line-height: 1.7;
+}
+.co-link { color: var(--loc-iac-text); font-weight: 600; cursor: pointer; }
+.co-link:hover { text-decoration: underline; }
+
+/* ---- 已选条件 chips ---- */
+.co-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.co-chips .co-chip.ant-tag {
+  margin: 0;
+  border-radius: 999px;
+  background: var(--loc-iac-hoverd);
+  border-color: var(--loc-iac-borderc);
+  color: var(--loc-iac-text);
+  font-size: 14px;
+}
+
+/* ---- 分类筛 ---- */
+.co-cats {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.co-cat {
+  font-size: 15px;
+  color: var(--text-dim);
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.co-cat:hover { background: var(--loc-iac-hovere); }
+.co-cat.on {
+  background: var(--loc-iac-hoverg);
+  color: var(--loc-iac-text);
+  font-weight: 700;
+}
+
+/* ---- 模板卡 ---- */
+.co-tpls {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  /* 第八轮：14px → 20px，卡片之间也要有呼吸（原来三张卡挤成一排） */
+  gap: 20px;
+  /* 第九轮：align-items:stretch 让同排卡片等高（默认就是 stretch，这里显式写出来当契约）。 */
+  align-items: stretch;
+}
+.co-tpl {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 22px 22px;
+  border-radius: 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  /* 第九轮（2026-10-14）：模板卡高度对齐。
+     实测六张卡高度 93/63/71/71/70/64px 参差不齐 —— 根因是描述文字一行/两行不等，
+     再叠加 align-items:flex-start 让每张卡按自身内容撑高。
+     改成 stretch + grid 内部拉伸：同排卡片强制等高（对齐是"整齐"的第一观感）。 */
+  height: 100%;
+}
+.co-tpl:hover { border-color: var(--loc-iac-borderd); }
+.co-tpl.on {
+  border-color: var(--loc-iac-borderf);
+  background: var(--loc-iac-hoverc);
+}
+.co-tpl-ic { flex-shrink: 0; display: inline-flex; }
+.co-tpl-ic .line-ic { width: 40px; height: 40px; border-radius: 12px; }
+.co-tpl-bd { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.co-tpl-t { font-size: 17px; font-weight: 700; color: var(--text); }
+.co-tpl-d {
+  font-size: 15px; color: var(--text-faint); line-height: 1.6;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.co-tpl-go {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--loc-iac-brandDeep);
+  white-space: nowrap;
+  align-self: center;
+}
+.co-tpl:hover .co-tpl-go { text-decoration: underline; }
+
+/* ---- 最近创作 ---- */
+.co-list { display: flex; flex-direction: column; gap: 10px; }
+.co-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--loc-iac-hover);
+}
+.co-row-ic { flex-shrink: 0; display: inline-flex; }
+.co-row-ic .line-ic { width: 32px; height: 32px; border-radius: 10px; }
+.co-row-bd { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.co-row-t {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.co-row-d { font-size: 14px; color: var(--text-faint); }
+.co-row-go {
+  flex-shrink: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--loc-iac-text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.co-row-go:hover { text-decoration: underline; }
+
+/* ---- 空态 ---- */
+.co-empty {
+  padding: 18px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 14px;
+  color: var(--text-faint);
+  font-size: 15px;
+  line-height: 1.75;
+  text-align: center;
+}
+
+/* ---- 【第七轮】单列：右栏整条撤掉（与首页同一判据——三栏并排是「乱」的结构性来源）。
+   版心限宽 960px，与首页一致；模板区随主列变宽自然铺开。 ---- */
+.co-cols {
+
+/* ═══ 第十三轮（2026-10-14）区块标题品牌绿前缀 ═══
+   基准图五页的区块标题（「热门模板 / 主要竞品动态 / 创作助手 / 近期活动安排」…）
+   左侧都带一个**绿色小标记**（方块或圆点）。这是每页重复出现 4~6 次的品牌色锚点，
+   成本极低但把「黑白感」压下去一大截。 */
+
+
+  display: grid;
+  /* 第十一轮（2026-10-14）：恢复双栏（参考图三栏结构，右=参考区/副工作区） */
+  grid-template-columns: minmax(0, 1fr) 310px;
+  /* 第八轮（2026-10-14）：区区间距18px → 40px。
+     「排版太密」的主因不是行高（本来就1.7~1.9），而是**区块之间几乎贴着** ——
+     「开始创作 / 热门模板 / 最近创作」三个区看着像一整块。40px 才是能看出分区感的量。 */
+  gap: 40px;
+  align-items: start;
+  /* 第九轮（2026-10-14）：补 margin:0 auto。
+     四页都设了 max-width:960px 却**都没居中** ⇒ 内容整体贴左、右侧空一大块，
+     视觉上就是「没对齐」。这里把「居中」写成显式契约而不是靠默认行为。 */
+  max-width: var(--r15-page-w, 1560px); /* 第十五轮：解除 880 锁宽（--grid-page 从未定义，全部走 fallback），改用 round15 宽容器 */
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ---- 右栏 ---- */
+.co-rail { display: flex; flex-direction: column; gap: 16px; }
+.co-rail-card {
+  padding: 18px 19px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px var(--loc-iac-shadowSoft);
+}
+.co-rail-t { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 11px; }
+.co-rail-list { display: flex; flex-direction: column; gap: 9px; }
+.co-rail-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 12px;
+  border-radius: 12px;
+  background: var(--loc-iac-hovera);
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+.co-rail-item:hover { border-color: var(--loc-iac-borderd); }
+.co-rail-ic { flex-shrink: 0; display: inline-flex; }
+.co-rail-ic .line-ic { width: 32px; height: 32px; border-radius: 10px; }
+.co-rail-bd { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.co-rail-it { font-size: 16px; font-weight: 600; color: var(--text); }
+.co-rail-id {
+  font-size: 14px;
+  color: var(--text-faint);
+  line-height: 1.55;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.co-rail-go { flex-shrink: 0; font-size: 17.5px; color: var(--text-faint); }
+
+/* 内容风格 chips */
+.co-styles { display: flex; gap: 6px; flex-wrap: wrap; }
+.co-style {
+  font-size: 14.5px;
+  color: var(--text-dim);
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--loc-iac-hovera);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.co-style:hover { border-color: var(--loc-iac-bordere); color: var(--loc-iac-text); }
+.co-style.on {
+  color: var(--loc-iac-text);
+  border-color: var(--loc-iac-bordere);
+  background: var(--loc-iac-hoverf);
+  font-weight: 700;
+}
+
+/* 备用资料行 */
+.co-rail-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--loc-iac-hover);
+  cursor: pointer;
+  font-size: 14.5px;
+}
+.co-rail-row:hover { border-color: var(--loc-iac-borderd); }
+.co-rail-k { flex: 1; min-width: 0; color: var(--text); }
+/* 2026-10-13 参考图口径：栏头右侧挂「管理」入口 */
+.co-rail-t { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.co-rail-more { font-size: 14px; font-weight: 400; color: var(--text-faint); cursor: pointer; }
+.co-rail-more:hover { color: var(--loc-iac-text); }
+.co-rail-ic { flex-shrink: 0; display: inline-flex; }
+.co-rail-ic .line-ic { width: 32px; height: 32px; border-radius: 10px; }
+.co-rail-v {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--loc-iac-text);
+}
+.co-rail-v.empty { color: var(--text-faint); font-weight: 400; }
+.co-rail-note { margin-top: 9px; font-size: 14px; color: var(--text-faint); line-height: 1.65; }
+
+/* ---------- 示例条目（2026-10-13 参考图同款，仅空态时视图层渲染） ---------- */
+.co-sec-more {
+  margin-left: auto;
+  font-size: 14.5px;
+  font-weight: 400;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+.co-sec-more:hover { color: var(--loc-iac-text); }
+.co-row-demo { pointer-events: none; }
+.co-demo-note { margin-top: 8px; font-size: 14px; color: var(--text-faint); }
+.co-rail-row-demo { pointer-events: none; cursor: default; }
+.co-rail-row-demo:hover { border-color: var(--border); }
+
+/* 右栏底部建议卡 */
+.co-rail-advice {
+  background: var(--loc-iac-hoverc);
+  border-color: var(--loc-iac-borderb);
+}
+.co-rail-advice .co-rail-t { color: var(--loc-iac-text); }
+.co-rail-text { font-size: 15px; color: var(--text-dim); line-height: 1.75; margin-bottom: 9px; }
+.co-rail-link { font-size: 15px; font-weight: 700; color: var(--loc-iac-text); cursor: pointer; }
+.co-rail-link:hover { text-decoration: underline; }
+
+/* ── 2026-10-13 顶部分类页签（参考图那一排：主页 / 营销文案 / … / 其他）─────────────
+   视觉上是一排「页签」，但刻意用 span[role=tab] 而不是 <button>：
+   首屏按钮棘轮 content=3 只数 <button>，写成按钮既语义错（它是视图切换）又会顶爆门禁。 */
+.co-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line, var(--loc-iac-bordera));
+}
+.co-tab {
+  padding: 11px 20px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.co-tab:hover { background: var(--loc-iac-hovere); }
+.co-tab.on {
+  background: var(--loc-iac-hoverh);
+  color: var(--loc-iac-text);
+}
+
+/* 区块标题右侧的小计数（如「共 6 个」） */
+.co-sec-note { margin-left: auto; font-size: 14px; color: var(--text-faint); }
+
+
+/* ============================================================================
+   第十五轮（2026-10-15 融合 → 2026-10-16 设计系统 v3 同款形态）融合区：
+   日常内容 + 精品文案并入创作工具台首屏第一块。
+   设计稿 .co-fused .fu：横排（38px 图标 + 文字块 + 右上「进入 ›」），
+   白底、radius 14、padding 16；hover 浮起。点击整卡进入完整工具（页签保留）。
+   ========================================================================== */
+.co-fused {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 760px) {
+  .co-fused { grid-template-columns: 1fr; }
+}
+.co-fused-card {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--c-surface);
+  border: 1px solid var(--border, var(--c-border));
+  border-radius: 14px;
+  box-shadow: 0 4px 18px var(--loc-iac-shadowSoftb), 0 1px 3px var(--loc-iac-shadowSofta);
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.co-fused-card:hover {
+  border-color: var(--loc-iac-brandLine);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px var(--loc-iac-shadowSoftc), 0 1px 3px var(--loc-iac-shadowSofta);
+}
+.co-fused-card:focus-visible {
+  outline: 2px solid var(--green, var(--c-brand));
+  outline-offset: 2px;
+}
+.co-fused-ic {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: var(--green, var(--c-brand)); color: var(--c-on-brand);
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+}
+.co-fused-ic-p { background: #7A57E8; }
+.co-fused-bd { display: flex; flex-direction: column; gap: 0; min-width: 0; }
+.co-fused-t { font-size: 14.5px; font-weight: 800; color: var(--text, var(--c-text)); }
+.co-fused-d { font-size: 11.5px; color: var(--text-2, var(--c-text-2)); margin-top: 4px; line-height: 1.6; }
+.co-fused-chips { display: flex; gap: 5px; margin-top: 10px; flex-wrap: wrap; }
+.co-fused-chips span {
+  font-size: 10px; color: var(--green-dark, var(--c-brand-dark));
+  background: var(--green-tint, var(--c-brand-tint)); border-radius: 5px; padding: 2px 8px; font-weight: 600;
+}
+.co-fused-go {
+  position: absolute; right: 14px; top: 14px;
+  font-size: 11px; color: var(--green-ink, var(--c-brand)); font-weight: 700;
+}
+
+/* ============================================================================
+ * 2026-10-18 第十六轮：模型选择（日常内容 / 精品文案）+ 参考资料上传
+ * 老板原话：「输入框下面做一个模型选择 日常内容/精品文案 在这里进行prompt的切换」
+ *          「右边的内容风格删除，改为参考资料上传」
+ * ==========================================================================*/
+.co-model-pick {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin: 10px 0 4px;
+}
+.co-model-opt {
+  display: flex; align-items: flex-start; gap: 9px;
+  padding: 10px 12px; border-radius: 12px;
+  border: 1.5px solid var(--line, var(--loc-iac-border)); background: var(--c-surface);
+  cursor: pointer; transition: border-color .15s, background .15s, box-shadow .15s;
+}
+.co-model-opt:hover { border-color: var(--loc-iac-brandLine); }
+.co-model-opt.on {
+  border-color: var(--green, var(--c-brand));
+  background: linear-gradient(180deg, var(--loc-iac-brandTinta) 0%, var(--c-surface) 100%);
+  box-shadow: 0 1px 6px var(--loc-iac-alphaBrand12);
+}
+.co-model-ic {
+  flex: none; width: 24px; height: 24px; border-radius: 7px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--loc-iac-alphaBrand12); color: var(--green-ink, var(--c-brand));
+}
+.co-model-opt.on .co-model-ic { background: var(--green, var(--c-brand)); color: var(--c-on-brand); }
+.co-model-bd { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.co-model-t { font-size: 13px; font-weight: 700; color: var(--ink-1, var(--loc-iac-text)); }
+.co-model-d { font-size: 11px; line-height: 1.5; color: var(--ink-3, var(--loc-iac-text2a)); }
+
+/* 右栏「参考资料上传」卡 */
+.co-ref-upload-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px; border-radius: 9px;
+  border: 1px dashed var(--loc-iac-brandLine); background: var(--loc-iac-window);
+  color: var(--green-dark, var(--loc-iac-brandDeepa)); font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: background .15s, border-color .15s;
+}
+.co-ref-upload-btn:hover { background: var(--loc-iac-brandTint); border-color: var(--green, var(--c-brand)); }
+.co-ref-files { display: flex; flex-direction: column; gap: 4px; margin: 8px 0 6px; }
+.co-ref-file {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 8px; border-radius: 8px; background: var(--loc-iac-surface2);
+  font-size: 12px; color: var(--ink-2, var(--loc-iac-text2));
+}
+.co-ref-file-n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.co-ref-file-x {
+  flex: none; width: 16px; height: 16px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--loc-iac-text3); font-size: 13px; line-height: 1; cursor: pointer;
+}
+.co-ref-file-x:hover { background: var(--loc-iac-dangerTint); color: var(--loc-iac-danger); }
+.co-ref-ta { margin-top: 8px; }

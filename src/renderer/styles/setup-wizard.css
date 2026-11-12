@@ -1,0 +1,459 @@
+/* ============================================================================
+   企业建档全屏分步引导（CompanySetupWizard · 0.21.16 老板第 2 条）
+   ----------------------------------------------------------------------------
+   老板原话：「做成跟 iphone 刚刚激活时候那样子全屏的一步步引导用户去完成这个建档的」。
+   视觉语言**照首登引导（style.css 的 .ob-*）写**，不另造一套观感：
+     · 同一个品牌底色（浅绿径向渐变 + 近白）；
+     · 同一套圆角 / 描边 / 绿色强调（#30d158）；
+     · 同样的「一次只问一件事」——大标题 + 一句解释 + 一组卡片/字段 + 底部两个按钮。
+
+   为什么单独一个文件（不往 style.css 里加）：
+     style.css 已 6700+ 行、16 个模块共用，往里加一条就要担心撞名
+     （见 scripts/smoke/lint-css-collisions.mjs）；独立文件按 import 顺序后加载、只影响本组件。
+   前缀统一 `csw-`（Company Setup Wizard），全仓原本没有这个前缀。
+
+   ⚠️ 几何（position:fixed / inset:0 / z-index）**不写在这里**，写在组件的内联样式上：
+      测试跑在 jsdom 里、样式表被 esbuild 的 `'.css': 'empty'` 吞掉，
+      只有内联样式能被断言读到。这里只负责「好看」。
+   ============================================================================ */
+
+.csw-root {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 24px;
+  overflow-y: auto;
+  background: radial-gradient(1200px 600px at 50% -10%, var(--loc-wiz-bg-1), transparent 60%), var(--loc-wiz-bg-2);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.csw-sheet {
+  width: 100%;
+  max-width: 760px;
+  margin: auto;
+  padding: 28px 34px 30px;
+  border-radius: 22px;
+  background: var(--loc-wiz-bg-3);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 24px 64px var(--loc-wiz-shadow-1);
+}
+
+/* ---- 顶栏：品牌 + 「稍后再说」 ---- */
+.csw-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.csw-brand {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-faint);
+  letter-spacing: 0.4px;
+}
+.csw-quiet {
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 12.5px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 8px;
+  transition: color 0.15s, background 0.15s;
+}
+.csw-quiet:hover {
+  color: var(--text);
+  background: var(--loc-wiz-bg-4);
+}
+
+/* ---- 进度点（同 .ob-steps/.ob-stepdot 的观感） ---- */
+.csw-steps {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.csw-stepdot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-faint);
+  background: var(--c-surface);
+  transition: all 0.15s;
+}
+.csw-stepdot.on {
+  border-color: var(--loc-wiz-line-1);
+  background: var(--loc-wiz-bg-5);
+  color: var(--loc-wiz-ink-1);
+  font-weight: 700;
+}
+
+/* ---- 标题区 ---- */
+.csw-head {
+  text-align: center;
+  margin-bottom: 22px;
+}
+.csw-title {
+  font-size: 23px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.3px;
+}
+.csw-sub {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+/* ---- 第 1 步：4 张身份卡（整块可点 / 选中态明显） ---- */
+.csw-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.csw-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 12px 18px;
+  border-radius: 16px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--c-surface);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.csw-card:hover {
+  border-color: var(--loc-wiz-line-2);
+  transform: translateY(-1px);
+}
+.csw-card:focus-visible {
+  outline: 2px solid var(--loc-wiz-line-1);
+  outline-offset: 2px;
+}
+.csw-card.on {
+  border-color: var(--loc-wiz-line-1);
+  background: var(--loc-wiz-bg-6);
+  box-shadow: 0 6px 18px var(--loc-wiz-shadow-2);
+}
+.csw-card-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+.csw-card-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.csw-card.on .csw-card-label {
+  color: var(--loc-wiz-ink-1);
+}
+.csw-card-desc {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  line-height: 1.45;
+}
+
+/* 窄屏：两列（四列会挤成豆腐块） */
+@media (max-width: 720px) {
+  .csw-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .csw-sheet {
+    padding: 22px 20px 24px;
+  }
+}
+
+/* ---- 第 2 步：字段 ---- */
+.csw-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.csw-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.csw-field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.csw-field-hint {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  line-height: 1.5;
+}
+.csw-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.csw-tag {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--c-surface);
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.csw-tag:hover {
+  border-color: var(--loc-wiz-line-2);
+}
+.csw-tag.on {
+  border-color: var(--loc-wiz-line-1);
+  background: var(--loc-wiz-bg-5);
+  color: var(--loc-wiz-ink-1);
+  font-weight: 600;
+}
+.csw-skip {
+  align-self: center;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 12.5px;
+  cursor: pointer;
+  padding: 8px 10px;
+  margin-top: 2px;
+  border-radius: 8px;
+  transition: color 0.15s, background 0.15s;
+}
+/* 悬停时字色加深一档。原来写 `--loc-wiz-line-1` —— 那是**线/描边色**：
+   绿主题 #30d158 压在同色系淡底 --loc-wiz-bg-7(rgba(48,209,88,.08)) 上只有 1.9:1，
+   浅色 #b6b6b6 压 #f6f6f6 是 2.2:1，深色 #81e399 勉强能看。三套里两套不可读。
+   为什么不改回绿色：任何能压住淡绿底的绿都已经接近墨绿（`--green-ink` 5.0:1 也行），
+   而「跳过」本该是被弱化的动作 —— 基底色已经是 faint 灰，悬停加深到 `--c-text-2`
+   在绿/浅主题 6.6:1、深色 6.8:1，语义与可读性都成立，且不引入新的主题分支。 */
+.csw-skip:hover {
+  color: var(--c-text-2);
+  background: var(--loc-wiz-bg-7);
+}
+
+/* ---- 第 3 步：结果 ---- */
+.csw-done {
+  text-align: center;
+  padding: 6px 0 2px;
+}
+.csw-done-icon {
+  font-size: 44px;
+  line-height: 1;
+}
+.csw-done-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 10px;
+}
+.csw-done-sub {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  margin-top: 8px;
+  line-height: 1.6;
+}
+.csw-coverage {
+  margin: 18px auto 0;
+  max-width: 620px;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--loc-wiz-bg-8);
+  font-size: 12.5px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+.csw-coverage-note {
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+/* ---- 提示 / 报错 ---- */
+.csw-err {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--loc-wiz-line-3);
+  background: var(--loc-wiz-bg-9);
+  color: var(--loc-wiz-ink-2);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.csw-note {
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+/* ---- 底部按钮 ---- */
+.csw-foot {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 24px;
+}
+.csw-foot .ant-btn {
+  min-width: 132px;
+}
+
+/* ============================================================================
+   企业大脑「资产」分区里的两个配套块（同一个功能，跟着本文件一起加载）
+   ----------------------------------------------------------------------------
+   ① .asset-wizard-entry —— 推荐入口（页头 CTA 之外的第二入口，资产分区内也能一键进向导）
+   ② .asset-advanced     —— 老的长表单折叠壳（「高级：直接填全部字段」）
+                            只是**外观**：内容不做条件渲染，收起时节点仍在 DOM 里。
+   ============================================================================ */
+
+.asset-wizard-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  border: 1.5px solid var(--loc-wiz-line-4);
+  background: linear-gradient(180deg, var(--loc-wiz-bg-7), var(--loc-wiz-bg-10));
+}
+.asset-wizard-entry-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+.asset-wizard-entry-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+.asset-advanced {
+  border: 1px solid var(--loc-wiz-line-5);
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: var(--loc-wiz-bg-11);
+  margin-bottom: 12px;
+}
+.asset-advanced-summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--loc-wiz-ink-3);
+  list-style: none;
+}
+.asset-advanced-summary::-webkit-details-marker {
+  display: none;
+}
+.asset-advanced-summary::before {
+  content: '▸ ';
+  color: var(--loc-wiz-ink-4);
+}
+.asset-advanced[open] .asset-advanced-summary::before {
+  content: '▾ ';
+}
+.asset-advanced[open] .asset-advanced-summary {
+  margin-bottom: 10px;
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .asset-wizard-entry {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ============================================================================
+   建档向导 · 主题变量（文件作用域，前缀 --loc-wiz-）
+   ============================================================================
+   【为什么是局部变量而不是直接用 --c-*】
+     本文件用的是自己的一套绿灰色阶，与全局语义 token 的绿值**不等值**
+     （例如 #1f7a4d 与 --c-brand-dark:#177A46 相差 ΔE≈4.5，直接换会让绿主题可见变色）。
+     所以这里为每个去重色值建一条局部变量：
+       · 绿主题（无 data-theme 属性）= **原字面量逐字不变** ⇒ 绿主题像素不变；
+       · light / dark 各给一套值（白色主题去绿、深色主题反向）。
+   【铁律】三套必须齐全，缺一套 = 那套主题下拿到空值 = 白屏。门禁 unit-theme-cover-group-b 守这条。
+   ========================================================================== */
+:root {
+  --loc-wiz-bg-1: rgba(48, 209, 88, 0.14);
+  --loc-wiz-bg-2: #f2f7f3;
+  --loc-wiz-bg-3: rgba(255, 255, 255, 0.96);
+  --loc-wiz-shadow-1: rgba(0, 0, 0, 0.14);
+  --loc-wiz-bg-4: rgba(0, 0, 0, 0.04);
+  --loc-wiz-line-1: #30d158;
+  --loc-wiz-bg-5: rgba(48, 209, 88, 0.12);
+  --loc-wiz-ink-1: #0a8f2f;
+  --loc-wiz-line-2: rgba(48, 209, 88, 0.55);
+  --loc-wiz-bg-6: rgba(48, 209, 88, 0.1);
+  --loc-wiz-shadow-2: rgba(48, 209, 88, 0.16);
+  --loc-wiz-bg-7: rgba(48, 209, 88, 0.08);
+  --loc-wiz-bg-8: rgba(48, 209, 88, 0.06);
+  --loc-wiz-line-3: rgba(255, 59, 48, 0.28);
+  --loc-wiz-bg-9: rgba(255, 59, 48, 0.06);
+  --loc-wiz-ink-2: #c0261c;
+  --loc-wiz-line-4: rgba(48, 209, 88, 0.35);
+  --loc-wiz-bg-10: rgba(48, 209, 88, 0.02);
+  --loc-wiz-line-5: #eceff1;
+  --loc-wiz-bg-11: #fcfcfc;
+  --loc-wiz-ink-3: #6b7280;
+  --loc-wiz-ink-4: #9ca3af;
+}
+html[data-theme="light"] {
+  --loc-wiz-bg-1: rgba(182, 182, 182, 0.14);
+  --loc-wiz-bg-2: #f2f7f3;
+  --loc-wiz-bg-3: rgba(255, 255, 255, 0.96);
+  --loc-wiz-shadow-1: rgba(0, 0, 0, 0.14);
+  --loc-wiz-bg-4: rgba(0, 0, 0, 0.04);
+  --loc-wiz-line-1: #b6b6b6;
+  --loc-wiz-bg-5: rgba(182, 182, 182, 0.12);
+  --loc-wiz-ink-1: #7b7b7b;
+  --loc-wiz-line-2: rgba(182, 182, 182, 0.55);
+  --loc-wiz-bg-6: rgba(182, 182, 182, 0.1);
+  --loc-wiz-shadow-2: rgba(182, 182, 182, 0.16);
+  --loc-wiz-bg-7: rgba(182, 182, 182, 0.08);
+  --loc-wiz-bg-8: rgba(182, 182, 182, 0.06);
+  --loc-wiz-line-3: rgba(255, 59, 48, 0.28);
+  --loc-wiz-bg-9: rgba(255, 59, 48, 0.06);
+  --loc-wiz-ink-2: #c0261c;
+  --loc-wiz-line-4: rgba(182, 182, 182, 0.35);
+  --loc-wiz-bg-10: rgba(182, 182, 182, 0.02);
+  --loc-wiz-line-5: #eceff1;
+  --loc-wiz-bg-11: #fcfcfc;
+  --loc-wiz-ink-3: #727272;
+  --loc-wiz-ink-4: #a2a2a2;
+}
+html[data-theme="dark"] {
+  --loc-wiz-bg-1: rgba(110, 223, 138, 0.21);
+  --loc-wiz-bg-2: #212322;
+  --loc-wiz-bg-3: rgba(35, 39, 37, 0.95);
+  --loc-wiz-shadow-1: rgba(0, 0, 0, 0.42);
+  --loc-wiz-bg-4: rgba(0, 0, 0, 0.42);
+  --loc-wiz-line-1: #81e399;
+  --loc-wiz-bg-5: rgba(110, 223, 138, 0.18);
+  --loc-wiz-ink-1: #98eeb0;
+  --loc-wiz-line-2: rgba(110, 223, 138, 0.55);
+  --loc-wiz-bg-6: rgba(110, 223, 138, 0.15);
+  --loc-wiz-shadow-2: rgba(110, 223, 138, 0.24);
+  --loc-wiz-bg-7: rgba(110, 223, 138, 0.12);
+  --loc-wiz-bg-8: rgba(110, 223, 138, 0.09);
+  --loc-wiz-line-3: rgba(226, 100, 93, 0.42);
+  --loc-wiz-bg-9: rgba(226, 100, 93, 0.09);
+  --loc-wiz-ink-2: #ea857e;
+  --loc-wiz-line-4: rgba(110, 223, 138, 0.52);
+  --loc-wiz-bg-10: rgba(110, 223, 138, 0.06);
+  --loc-wiz-line-5: #272928;
+  --loc-wiz-bg-11: #1a1c1b;
+  --loc-wiz-ink-3: #b4b6b5;
+  --loc-wiz-ink-4: #a3a5a4;
+}

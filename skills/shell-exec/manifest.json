@@ -1,0 +1,10 @@
+{
+  "name": "执行命令",
+  "description": "在工作区目录下执行系统命令（如 node/python/git/npm 等）。结果会返回。装依赖/构建类长命令可调大 timeout_ms。",
+  "type": "system",
+  "timeoutMs": 600000,
+  "params": [
+    { "name": "command", "label": "要执行的命令", "hint": "例如 npm install 或 node build.js；在工作区目录下执行", "default": "", "required": true },
+    { "name": "timeout_ms", "label": "超时毫秒数（默认 300000，上限 600000；装依赖/构建可调大）", "default": "" }
+  ]
+}

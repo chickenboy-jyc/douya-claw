@@ -1,0 +1,22 @@
+{
+  "name": "编辑图片",
+  "description": "对图片做改动：缩放(resize)、裁剪(crop)、旋转(rotate)、灰度(grayscale)、格式转换(convert)、加水印(watermark)、调亮度(brightness)。处理结果保存到工作区。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "params": [
+    { "name": "path", "label": "图片路径", "required": true },
+    { "name": "action", "label": "操作(resize/crop/rotate/grayscale/convert/watermark/brightness)", "required": true },
+    { "name": "width", "label": "宽度(缩放用)" },
+    { "name": "height", "label": "高度(缩放用)" },
+    { "name": "angle", "label": "角度(旋转用)" },
+    { "name": "left", "label": "裁剪左边界" },
+    { "name": "top", "label": "裁剪上边界" },
+    { "name": "right", "label": "裁剪右边界" },
+    { "name": "bottom", "label": "裁剪下边界" },
+    { "name": "format", "label": "目标格式(convert 用，如 png/jpg/webp)" },
+    { "name": "text", "label": "水印文字(watermark 用)" },
+    { "name": "factor", "label": "亮度系数(brightness 用，1 为原样)" },
+    { "name": "output", "label": "输出文件名(可选)" }
+  ]
+}

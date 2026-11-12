@@ -1,0 +1,404 @@
+/* ============================================================================
+ * round17-focus.css —— 「左对话 + 右小助手」铺满形态（0.21.12）
+ *
+ * 老板原话（第 6 条）：
+ *   「对话式做方案 铺满全屏 右边加一个小助手 告诉他们怎么用 简单点」
+ * 老板原话（第 5 条，同一形态用在经营方案）：
+ *   「只保留4个卡片 和一个对话框 其他都删了 … 主屏幕就是对话框和卡片」
+ *
+ * 为什么单独一个文件、统一用 r17- 前缀：
+ *   style.css 已 6697 行、16 个模块共用，ia-activity / ia-direction 又各自带一堆旧规则；
+ *   把「铺满布局」写进任何一个旧文件，都会被那边的 flex/height 规则抢权重。
+ *   这里只新增类，不覆盖旧类名，`lint-css-collisions.mjs` 不会报撞名。
+ *
+ * 布局契约（两个页面共用）：
+ *   .r17-focus          两列网格 [对话 1fr | 小助手 300px]，高度吃满父容器
+ *   .r17-focus-main     左：白卡，内含 ActivityChat；对话体内部滚动、输入框吸底
+ *   .r17-focus-rail     右：小助手（浅绿底），内容多时自己滚
+ *   ≤1180px 堆叠：小助手落到对话下方（宁可往下排，也不把对话框压窄）
+ * ========================================================================== */
+
+.r17-focus {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--r17-asst-w, 300px);
+  gap: 18px;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+@media (max-width: 1180px) {
+  .r17-focus { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---- 左：对话主区（铺满） ---- */
+.r17-focus-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 18px 22px 16px;
+  background: #fff;
+  border: 1px solid var(--border, #E8EAED);
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+.r17-focus-hd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-bottom: 12px;
+}
+.r17-focus-t {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text, #1d1d1f);
+  letter-spacing: -0.2px;
+}
+.r17-focus-back {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 600;
+  color: #177A46;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.r17-focus-back:hover { text-decoration: underline; }
+
+/* ActivityChat 根节点是 .module-page（自带 flex:1 + overflow-y:auto + padding），
+   在这里要把它降级成「一个跟着卡片走的普通 flex 列」，滚动交给内部的 .act-chat-body。 */
+.r17-focus .act-chat {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+}
+.r17-focus .act-chat-body {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  padding: 2px 2px 10px;
+}
+.r17-focus .act-chat-welcome { margin: 5vh auto 0; }
+/* 空态示例按钮：铺满时给宽一点，别挤成三行字 */
+.r17-focus .act-chat-ex { padding: 12px 16px; font-size: 13.5px; }
+/* 输入条固定在卡片底部 */
+.r17-focus .act-chat-input { flex-shrink: 0; }
+/* 材料条在铺满态不需要虚线大框，收成一行 */
+.r17-focus .act-chat-materials {
+  flex-shrink: 0;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.06);
+  padding: 6px 10px;
+  margin-bottom: 8px;
+}
+
+/* ---- 右：小助手 ---- */
+.r17-focus-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+.r17-asst {
+  padding: 18px;
+  background: linear-gradient(160deg, #EAF8F0, #F8FDFA);
+  border: 1px solid #DFF1E6;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.r17-asst-hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #177A46;
+}
+.r17-asst-hd-ic {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: #1d7a36;
+  color: #fff;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.r17-asst-sub {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: #5A6472;
+  margin-top: -6px;
+}
+.r17-asst-step {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.r17-asst-idx {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #1d7a36;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  margin-top: 1px;
+}
+.r17-asst-step-bd {
+  min-width: 0;
+  /* 标题行与说明行是 <span>，必须显式改列向 flex，否则会挤成一行 */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.r17-asst-step-t {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d1d1f;
+  line-height: 1.5;
+}
+.r17-asst-step-d {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: #5A6472;
+  margin-top: 2px;
+}
+.r17-asst-tip {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid #E3F2E9;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #5A6472;
+}
+.r17-asst-tip b { color: #177A46; }
+
+/* 经营方案页右栏的「当前方案」小助手卡：白底，与上面那块浅绿说明卡区分开 */
+.r17-asst-now {
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid var(--border, #E8EAED);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.r17-asst-now-t {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim, #5A6472);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.r17-asst-now-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text, #1d1d1f);
+  line-height: 1.45;
+}
+.r17-asst-now-meta {
+  font-size: 12px;
+  color: var(--text-faint, #98A1AC);
+}
+.r17-asst-now-sum {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: #5A6472;
+}
+
+/* ============================================================================
+ * 经营方案页（第 5 条）：对话框 + 小助手在上、四张方案卡在下
+ *
+ * 老板原话：「只保留4个卡片 和一个对话框 其他都删了 … 主屏幕就是对话框和卡片」。
+ * 「铺满」和「下方还有卡片」不能同时成立，所以这里给对话区一个**确定高度**
+ * （58vh，最多 520px）：一屏之内上下都看得见，对话框自己内部滚动。
+ * ========================================================================== */
+.r17-focus.r17-focus-split {
+  flex: none;
+  height: min(58vh, 520px);
+  min-height: 380px;
+}
+@media (max-width: 1180px) {
+  /* 堆叠后左右两栏上下排，固定高度会让小助手被挤没 ⇒ 交回自然高度 */
+  .r17-focus.r17-focus-split {
+    height: auto;
+    min-height: 0;
+  }
+  .r17-focus-split .r17-focus-main { min-height: 320px; }
+}
+
+.r17-cards-hd {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 18px 0 10px;
+  flex-wrap: wrap;
+}
+.r17-cards-t {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text, #1d1d1f);
+}
+.r17-cards-note {
+  font-size: 12px;
+  color: #b26a00;
+}
+
+/**
+ * 卡片栅格用 auto-fit 而不是写死 `repeat(4, 1fr)`。
+ *
+ * 【2026-10-19 实测发现的问题，不是猜测】老板说「只保留 4 个卡片」，
+ * 但 `config/directionCatalog.js` 里**每个身份只有 3 套方案**
+ * （manufacturer：新品增长 / AI 搜索可见性 / 行业品牌建设；clinic：患者获客 / 医生 IP / 私域复购；
+ *  dealer、platform 同样各 3 条）。写死 4 列 ⇒ 3 张卡各占 1/4、右边空出整块 1/4 的洞，
+ * 在高分屏上非常显眼。
+ * 换成 `auto-fit + minmax(240px, 1fr)` 后：有 3 张就 3 等分、有 4 张就 4 等分（老板要的上限），
+ * 窄屏自动折行 —— 不再依赖「目录里正好有几条」这个会变的事实。
+ */
+.r17-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+.r17-cards .direction-plan-card {
+  height: 100%;
+  padding: 14px 16px;
+  gap: 8px;
+}
+.r17-cards .direction-plan-name { font-size: 15.5px; }
+.r17-cards .direction-plan-summary {
+  font-size: 12.5px;
+  line-height: 1.65;
+  /* 卡片短句最多 3 行：四张并排时高度才会齐 */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.r17-cards .direction-plan-period {
+  margin-left: 0;
+  font-size: 12px;
+}
+.r17-cards .direction-plan-reason {
+  font-size: 12px;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.r17-cards .direction-plan-expand {
+  align-self: flex-start;
+  font-size: 12px;
+}
+.r17-cards .direction-plan-choose {
+  margin-top: auto;
+  width: 100%;
+}
+
+/* ============================================================================
+ * 执行日历入口（0.21.12 第 5 条删页签后的落点）
+ * 页头右侧一个小链接，不是页签 —— 主屏形态保持「对话框 + 卡片」。
+ * ========================================================================== */
+.r17-focus-cal {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 600;
+  color: #177A46;
+  cursor: pointer;
+  flex: none;
+}
+.r17-focus-cal:hover {
+  text-decoration: underline;
+}
+/* 箭头用伪元素：文本节点必须恰好是「执行日历」（e2e 的 findText 是全等匹配） */
+.r17-focus-cal::after {
+  content: ' ›';
+  opacity: 0.7;
+}
+
+/* 执行日历整页：月历自己内部滚动，外层只负责铺满 + 留白 */
+.direction-cal-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+.direction-cal-wrap > *:last-child {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* ============================================================================
+   深色主题覆盖（0.21.25 · 2026-11-08）
+   ============================================================================
+   老板原话：「深色里面还有很多白色底的地方 结果字是白色底也是白色
+             具体在豆芽助手 企业大脑 媒体与报价」。
+
+   本文件（「左对话 + 右小助手」铺满形态，经营方案 / 内容创作共用）此前
+   **一条 `data-theme` 规则都没有**：左对话主卡 `background:#fff`、
+   右小助手卡是 `linear-gradient(160deg,#EAF8F0,#F8FDFA)` 浅绿渐变，
+   而字色一半走 `var(--text)`（深色下 #ecf1ee）、一半写死成 `#177A46` / `#5A6472` /
+   `#1d1d1f` 这类**浅色主题专用的深墨**。
+   实测：`.r17-focus-main` = 1.14:1、`.r17-asst` = 1.11:1、
+   `.r17-asst-step-t`（#1d1d1f 压 #232725）= 1.11:1 —— 整页几乎全瞎。
+
+   ⚠️ 这里把「写死的深墨」统一换成 token，**不是**另给一套深色字面量：
+     同一个类名在绿 / 白 / 深三套主题下都由 `--c-*` 决定，只留一处真源。
+   ⚠️ 一律 `html[data-theme="dark"] …`（0,1,1），理由同 `theme-tokens.css` 头注释。
+   ============================================================================ */
+
+/* —— 左：对话主卡（白卡）—— */
+html[data-theme="dark"] .r17-focus-main { background: var(--c-surface); }
+
+/* 页头「← 返回」「执行日历 ›」：基础写死 #177A46，深色下压在深卡片面上 = 2.82:1 */
+html[data-theme="dark"] .r17-focus-back,
+html[data-theme="dark"] .r17-focus-cal { color: var(--c-brand); }
+
+/* 材料条的虚线框：基础 `rgba(0,0,0,.06)` 在深底上完全看不见 */
+html[data-theme="dark"] .r17-focus .act-chat-materials { border-color: var(--c-border); }
+
+/* —— 右：小助手卡（浅绿渐变底）—— */
+html[data-theme="dark"] .r17-asst {
+  background: var(--c-brand-tint);
+  border-color: var(--c-brand-line);
+}
+/* 标题 / 步骤 / 说明：基础全是写死的深墨（#177A46 / #1d1d1f / #5A6472） */
+html[data-theme="dark"] .r17-asst-hd { color: var(--c-brand); }
+html[data-theme="dark"] .r17-asst-sub { color: var(--c-text-2); }
+html[data-theme="dark"] .r17-asst-step-t { color: var(--c-text); }
+html[data-theme="dark"] .r17-asst-step-d { color: var(--c-text-2); }
+/* 提示块：基础 `rgba(255,255,255,.75)` 是一块 75% 白板 */
+html[data-theme="dark"] .r17-asst-tip {
+  background: var(--c-surface-2);
+  border-color: var(--c-brand-line);
+  color: var(--c-text-2);
+}
+html[data-theme="dark"] .r17-asst-tip b { color: var(--c-brand); }
+
+/* —— 经营方案右栏「当前方案」卡（白卡）—— */
+html[data-theme="dark"] .r17-asst-now { background: var(--c-surface); }
+html[data-theme="dark"] .r17-asst-now-sum { color: var(--c-text-2); }
+

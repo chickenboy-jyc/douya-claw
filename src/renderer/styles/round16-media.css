@@ -1,0 +1,179 @@
+/*
+ * round16-media.css —— 0.21.9 老板第 8 条（媒体与报价：无法下滑 + 排版乱 + 行间距）专用样式。
+ *
+ * 老板原话：「媒体与报价无法下滑 + 排版乱、行间距」。
+ * 本文件只做两件事：① 修滚动（根因见下）；② 媒体卡与页头的排版/行距。
+ * 不写进 style.css：那文件 6697 行、16 个模块共用，改一条会影响别的页。
+ */
+
+/* ============================================================================
+ * 一、滚动根因（这是"无法下滑"的**唯一**原因，不是高度不够也不是内容被裁）
+ * ----------------------------------------------------------------------------
+ * NewMediaCenter 的外层是 `.merged-tabs.nmc-wrap`，而 style.css:4014 给
+ * `.merged-tabs` 定义的是 `display:flex; flex-direction:column; overflow:hidden;`，
+ * 并且 style.css:4047 又规定 `.merged-tabs .module-page { overflow:visible; flex:none; }`
+ * —— 这两条本来是为"外面套了一层 antd Tabs、由 .ant-tabs-content-holder 负责滚动"的页面写的。
+ * 但本页**没有 Tabs 子节点**（single-tab 纯装饰，早前已删），于是：
+ *   · .nmc-wrap 自己 overflow:hidden ⇒ 超出部分直接裁掉、不滚；
+ *   · 里面也没有 .ant-tabs-content-holder 这个滚动容器 ⇒ 全页没有任何一层在滚。
+/* 修法：把滚动交给 `.nmc-wrap` 自己（它是页面根节点，高度由外层 app-body 撑满）。
+ * 这也解释了"滚到底看不到最后一条"与"内层固定高度截断"两个症状是同一个原因。
+ *
+ * ⚠️ 选择器必须写成 `.merged-tabs.nmc-wrap`（0,2,0）而不是 `.nmc-wrap`（0,1,0）：
+ *   本元素同时带 `.merged-tabs`，style.css:4014 的 `.merged-tabs { overflow:hidden }`
+ *   与本文件同权重时**谁后加载谁赢**，实测 style.css 后加载 ⇒ 第一版算出来的
+ *   overflow-y 仍然是 `hidden`。这一个字决定用户能不能滚（程序化 scrollTop 照样能设，
+ *   所以只测 scrollTop 会看到"能滚动"，用户手指却滚不动 —— 必须测 computed style）。
+ * ========================================================================== */
+.merged-tabs.nmc-wrap {
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* 底部留白 72px：最后一张卡不至于贴住窗口下沿（尤其卡片有阴影时），
+     同时也保证"滚到底真的能看到最后一条"。 */
+  padding-bottom: 72px;
+}
+
+/* 兜底：若将来这一页里出现 .module-page 子节点，仍然不让它自己成滚动容器（否则又变成内层截断）。
+   同样要压过 style.css:4047 `.merged-tabs .module-page { overflow:visible; flex:none }`（0,2,0），
+   所以这里也写满两级。 */
+.merged-tabs.nmc-wrap > .module-page {
+  overflow: visible;
+  height: auto;
+  flex: none;
+}
+
+/* 展开"全部媒体库"后不允许任何内层 max-height 把内容截断 */
+.nmc-wrap .say-fold,
+.nmc-wrap .say-fold-bd,
+.nmc-wrap .media-grid {
+  max-height: none;
+  overflow: visible;
+}
+
+/* ============================================================================
+ * 二、页头与元信息的间距 / 行距
+ * ========================================================================== */
+.nmc-wrap .module-page-head {
+  margin-bottom: 18px;
+}
+.nmc-wrap .module-page-sub {
+  line-height: 1.7;
+}
+
+/* 「已读入《x》」「N 字」这类 meta 行：行高 1.7，与正文同一节奏 */
+.nmc-wrap .media-article-tools {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  line-height: 1.7;
+}
+.nmc-wrap .media-article-file,
+.nmc-wrap .media-article-count,
+.nmc-wrap .media-article-msg {
+  line-height: 1.7;
+}
+
+/* ============================================================================
+ * 三、媒体卡排版
+ * ========================================================================== */
+/* 卡片间距 14px（原 12px 太挤）；展开后网格最小列宽 240px（原 230px 太窄，中文一行放不下几个字） */
+.nmc-wrap .media-grid {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.nmc-wrap .media-card {
+  /* 圆润 + 极浅描边 + 一层轻阴影（与老板第 2 条定的口径一致） */
+  border-radius: 14px;
+  border: 1px solid var(--loc-media-line-1);
+  box-shadow: 0 1px 2px var(--loc-media-shadow-1);
+  padding: 14px;
+}
+.nmc-wrap .media-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.nmc-wrap .media-card-price {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--loc-media-ink-1);
+  margin: 6px 0 8px;
+}
+/* 简介：12.5px / 行高 1.7 / 最多 2 行截断。
+   注意 JSX 那边已经删掉 `slice(0, 46)` 的硬截断 —— 中文按字数切会把一句话切在半路，
+   看起来像排版坏了；按行截断才是"该省略才省略"。 */
+.nmc-wrap .media-card-intro {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--loc-media-ink-2);
+  max-height: none;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.nmc-wrap .media-card-meta {
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* ============================================================================
+ * 四、「浏览全部 N 家媒体」= 整行宽大按钮（原先是 34px 高的小胶囊）
+ * ========================================================================== */
+.nmc-wrap .say-more {
+  display: flex;
+  width: 100%;
+  height: 44px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--loc-media-ink-1);
+  background: var(--loc-media-bg-1);
+  border: 1px solid var(--loc-media-line-2);
+}
+.nmc-wrap .say-more:hover {
+  background: var(--loc-media-bg-2);
+  color: var(--loc-media-ink-1);
+}
+
+/* ============================================================================
+   媒体 · 主题变量（文件作用域，前缀 --loc-media-）
+   ============================================================================
+   【为什么是局部变量而不是直接用 --c-*】
+     本文件用的是自己的一套绿灰色阶，与全局语义 token 的绿值**不等值**
+     （例如 #1f7a4d 与 --c-brand-dark:#177A46 相差 ΔE≈4.5，直接换会让绿主题可见变色）。
+     所以这里为每个去重色值建一条局部变量：
+       · 绿主题（无 data-theme 属性）= **原字面量逐字不变** ⇒ 绿主题像素不变；
+       · light / dark 各给一套值（白色主题去绿、深色主题反向）。
+   【铁律】三套必须齐全，缺一套 = 那套主题下拿到空值 = 白屏。门禁 unit-theme-cover-group-b 守这条。
+   ========================================================================== */
+:root {
+  --loc-media-line-1: rgba(0, 0, 0, 0.06);
+  --loc-media-shadow-1: rgba(0, 0, 0, 0.04);
+  --loc-media-ink-1: #1d7a36;
+  --loc-media-ink-2: #6e6e73;
+  --loc-media-bg-1: rgba(48, 209, 88, 0.1);
+  --loc-media-line-2: rgba(48, 209, 88, 0.28);
+  --loc-media-bg-2: rgba(48, 209, 88, 0.16);
+}
+html[data-theme="light"] {
+  --loc-media-line-1: rgba(0, 0, 0, 0.06);
+  --loc-media-shadow-1: rgba(0, 0, 0, 0.04);
+  --loc-media-ink-1: #6a6a6a;
+  --loc-media-ink-2: #6e6e73;
+  --loc-media-bg-1: rgba(182, 182, 182, 0.1);
+  --loc-media-line-2: rgba(182, 182, 182, 0.28);
+  --loc-media-bg-2: rgba(182, 182, 182, 0.16);
+}
+html[data-theme="dark"] {
+  --loc-media-line-1: rgba(0, 0, 0, 0.42);
+  --loc-media-shadow-1: rgba(0, 0, 0, 0.42);
+  --loc-media-ink-1: #9fe8b3;
+  --loc-media-ink-2: #b1b3b2;
+  --loc-media-bg-1: rgba(110, 223, 138, 0.15);
+  --loc-media-line-2: rgba(110, 223, 138, 0.42);
+  --loc-media-bg-2: rgba(110, 223, 138, 0.24);
+}

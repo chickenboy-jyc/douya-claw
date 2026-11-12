@@ -1,0 +1,14 @@
+{
+  "name": "账号人设检测",
+  "description": "在自建后端（api.example.com）做账号人设：detect=按账号名+简介自动生成结构化人设（定位/语气/边界）；scrape=抓取真实账号链接的公开数据（昵称/粉丝/近N条作品）；list=列出某公司下所有人设。",
+  "type": "js",
+  "timeoutMs": 120000,
+  "params": [
+    { "key": "action", "label": "操作：detect=人设生成(默认) / scrape=链接抓取 / list=列表", "default": "detect" },
+    { "key": "company_id", "label": "公司ID（必填）", "default": "", "required": true },
+    { "key": "account_name", "label": "账号名（detect 必填）", "default": "" },
+    { "key": "account_desc", "label": "账号简介（detect 用）", "default": "" },
+    { "key": "account_url", "label": "账号链接（scrape 必填）", "default": "" },
+    { "key": "platform", "label": "平台（scrape 可选：小红书/公众号/知乎/抖音/微博）", "default": "" }
+  ]
+}

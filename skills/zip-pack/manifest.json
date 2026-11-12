@@ -1,0 +1,13 @@
+{
+  "name": "压缩解压",
+  "description": "压缩文件夹为 zip，或解压 zip 文件到工作区。action 传 zip（压缩）或 unzip（解压）。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "timeoutMs": 300000,
+  "params": [
+    { "name": "action", "label": "操作(zip 压缩 / unzip 解压)", "required": true },
+    { "name": "path", "label": "路径(zip 时是要压缩的目录/文件，unzip 时是 zip 包)", "required": true },
+    { "name": "output", "label": "输出路径(可选)" }
+  ]
+}

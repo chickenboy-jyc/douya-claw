@@ -1,0 +1,8 @@
+{
+  "name": "加入购物车",
+  "description": "把用户已确认的商品加入上游货源商城的购物车。goods 是商品数组，每项含 searchProductId（必填，从「查询商品」结果里拿）、count（数量）、type、tagType、storeId。仅当用户明确确认要买哪个商品、买多少时才调用。",
+  "type": "js",
+  "params": [
+    { "key": "goods", "label": "商品数组(JSON)", "default": "[]", "required": true }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "读文件",
+  "description": "读取文件内容。文本文件返回行数/字节数与正文；**图片文件（png/jpg/webp/gif/bmp/tiff）会真的看一眼**，返回尺寸和画面描述（主体是什么、主体是否完整有没有被裁切、背景是否透明、画面是否异常），可用来核对自己刚生成/抠好的图能不能交付。可传绝对路径直接读电脑任意位置的代码/配置/文档，也可传相对路径读工作区。读 Word/PDF/Excel/PPT 请用「读取文档」；只想读图片里的文字请用「图片文字识别」；只想要客观尺寸/透明通道/alpha 包围盒（主体是否贴边）读数请用「识别图片」。",
+  "type": "file",
+  "timeoutMs": 150000,
+  "params": [
+    { "name": "path", "label": "文件路径（绝对路径或相对工作区）", "hint": "例如 src/main.js、C:/project/README.md 或 C:/out/pet.png", "default": "", "required": true }
+  ]
+}

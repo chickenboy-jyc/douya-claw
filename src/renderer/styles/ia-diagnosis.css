@@ -1,0 +1,749 @@
+/**
+ * ia-diagnosis.css —— 包 B（经营诊断 11 维）新增样式。
+ *
+ * 为什么单独一个文件：`src/renderer/style.css` 本轮冻结（5 方同改会互相覆盖）。
+ * 新增样式一律写在这里，并在 `modules/MarketMomentum.jsx` 顶部 `import '../styles/ia-diagnosis.css';`。
+ *
+ * 命名约定：本文件只新增以下类，不改动 style.css 里既有类的定义：
+ *   .md-card-source / .md-card-verify / .md-card-embed / .md-card-detail
+ *   .ia-embed（CompetitorAnalysis 内嵌模式）/ .ia-embed-hd / .ia-embed-close
+ *   .ia-diag-note
+ *
+ * ⚠️ 注意：本文件被「选择器计数类」断言盯上的可能性极低（那类断言只扫 style.css），
+ * 但仍遵守项目规矩：描述类名时去点号书写，避免纯文本计数误判。
+ *
+ * 【2026-10-13 晚 · 第二轮「更干净」】老板反馈「太乱太密字太小」⇒ 在上一轮放大基础上
+ * 再放一档（正文最低 12.5px 起、标题再 +1~1.5px、表格单元格 padding 加大）；
+ * 示例区说明从大虚线框改成一行小字（参考图只有卡片和表格，没有说明框）。
+ */
+
+/* ---- 每维数据来源标签（「来源：xxx」，11 维每维都有） ---- */
+.md-card-source {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  line-height: 1.6;
+  margin: -2px 0 8px;
+}
+
+/* ---- 「待核验」标记（联网补来的维度且无实测支撑时必须出现） ---- */
+.md-card-verify {
+  margin-inline-start: 2px;
+  background: var(--loc-diag-bg-1);
+  border-color: var(--loc-diag-line-1);
+  color: var(--text-dim);
+}
+
+/* ---- 维度卡片内展开的详情区（竞品对比矩阵 / GEO 明细） ---- */
+.md-card-embed {
+  margin-top: 12px;
+  border-top: 1px dashed var(--loc-diag-line-2);
+  padding-top: 12px;
+}
+
+/* ---- 卡片内的「展开详情」小按钮行 ---- */
+.md-card-detail {
+  margin-top: 8px;
+}
+
+/* ---- 自家品牌护栏告警（2026-09-21：AI 仍把本企业自有品牌 / 旗下 IP 当成竞品时） ---- */
+.md-card-warn {
+  display: block;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--loc-diag-bg-2);
+  border: 1px solid var(--loc-diag-line-3);
+  color: var(--loc-diag-ink-1);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+/* ---- 顶部说明补充（11 维口径 + 三态标注说明） ---- */
+.ia-diag-note {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  line-height: 1.7;
+  margin: -4px 0 12px;
+}
+
+/* ---- CompetitorAnalysis「内嵌模式」：隐藏独立页头，压缩外框 ---- */
+.ia-embed {
+  padding: 0;
+}
+
+.ia-embed .ia-embed-skip-head {
+  display: none;
+}
+
+.ia-embed-hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.ia-embed-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ia-embed-note {
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+.ia-embed-close {
+  margin-left: auto;
+}
+
+/* ============================================================
+ * ④ 经营诊断重排（2026-10-10 老板第 4 条）
+ *   老板原话：「经营诊断太乱了，又是 GEO 又是 SEO 看啊看不懂，也不关心这个。
+ *              最重要的是竞品对比，还要自己输入竞品 —— 全部让 AI 完成。」
+ *   结构：一句话结论 → 竞品对比（主角，矩阵常驻展开）→ 其余维度一嘴带过（每行一行，超出省略）。
+ *   视觉：Apple 风——浅底、大圆角、克制的绿点缀，禁黑禁蓝。
+ * ============================================================ */
+
+/* 板块纵向节奏（覆盖 .md-list 的 12px，让三层结构更透气） */
+.md-list.mm-diag { gap: 14px; }
+
+/* ---- ① 一句话结论 ---- */
+.mm-oneline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: var(--loc-diag-bg-3);
+  border: 1px solid var(--loc-diag-line-4);
+}
+.mm-oneline-k {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--loc-diag-ink-2);
+}
+.mm-oneline-text {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+/* ---- ② 竞品对比：本页主角 ---- */
+.md-card.mm-hero {
+  padding: 18px 20px;
+  border-radius: 18px;
+  border-left: 3px solid var(--loc-diag-ink-2);
+}
+.mm-hero-hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.mm-hero-title { font-size: 18px; font-weight: 800; color: var(--text); }
+.mm-hero-note { font-size: 12.5px; color: var(--text-faint); }
+.mm-hero-finding { font-size: 15px; line-height: 1.7; color: var(--text); margin-bottom: 6px; }
+.mm-hero-advice { font-size: 14.5px; line-height: 1.7; color: var(--text-dim); }
+.mm-hero-embed {
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+/* ---- ③ 其余维度：一嘴带过 ---- */
+.mm-brief { display: flex; flex-direction: column; gap: 8px; }
+.mm-brief-hd {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 2px 0;
+}
+.mm-brief-title { font-size: 13.5px; font-weight: 700; color: var(--text-dim); }
+.mm-brief-sub { font-size: 12.5px; color: var(--text-faint); }
+.md-card.mm-brief-row {
+  padding: 11px 15px;
+  border-radius: 12px;
+  box-shadow: none;
+}
+.mm-brief-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mm-brief-name { font-size: 14.5px; font-weight: 700; color: var(--text); flex-shrink: 0; }
+.mm-brief-text {
+  flex: 1;
+  min-width: 180px;
+  font-size: 13.5px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mm-brief-act { margin-top: 0; margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---- 内嵌时把表单收紧：页面只剩「竞品名单 + 对比结果」两件事 ---- */
+.ia-embed .xm-form { margin-top: 2px; }
+.comp-adv { margin: 4px 0 2px; }
+.comp-adv-bd { padding: 2px 0 4px; }
+
+/* ============================================================
+ * ⑤ 竞品分析仪表盘（2026-10-12 老板参考图《豆芽CLAW竞品分析仪表盘.png》）
+ *   老板原话：「竞品分析放在第二个 这是新的竞品分析页面 UI」。
+ *   布局：页头（标题 + 重新分析）→ 搜索区 → 双栏（主列 4 页签 + 右栏洞察）。
+ *   视觉：Apple 风 —— 浅底、大圆角、克制绿点缀，禁黑禁蓝（标签蓝仅作「豆芽推荐」弱提示）。
+ *   命名：ca- 前缀（competitor analysis），全部新增类，不动 style.css 与本文件既有类。
+ *   【2026-10-13 晚 · 第二轮「更干净」】字号再放一档，示例说明改一行小字。
+ * ============================================================ */
+
+/* ---- 页头 ---- */
+.ca-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.ca-head-main { flex: 1; min-width: 260px; }
+.ca-head-side {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+.ca-ran-at { white-space: nowrap; }
+/* 按家覆盖率角标（0.21.26）：数字是"查到的家数/要查的家数"，与「联网实检 N 条」并列但口径不同。
+   刻意做成纯文本（不是按钮/胶囊）：首屏按钮棘轮 intel = 1，这里连样式都别引一个新的可点感。 */
+.ca-cov {
+  max-width: 420px;
+  line-height: 1.5;
+  color: var(--text-sub, var(--loc-diag-ink-3));
+}
+.ca-relink {
+  color: var(--loc-diag-ink-2);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ca-relink:hover { text-decoration: underline; }
+
+/* ---- 搜索区（参考图：输入竞品品牌或关键词 + 「分析」） ---- */
+.ca-search {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.ca-search-input {
+  flex: 1;
+  max-width: 560px;
+}
+.ca-search-input.ant-input { border-radius: 10px; }
+.ca-search-hint {
+  font-size: 13px;
+  color: var(--text-faint);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+/* ---- 双栏主体 ---- */
+.ca-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 20px;
+  align-items: start;
+}
+.ca-main { min-width: 0; }
+.ca-tab-pane { padding-top: 4px; }
+.ca-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: sticky;
+  top: 8px;
+}
+
+/* ---- 竞品概况：卡片网格 ---- */
+.ca-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.ca-grid-empty {
+  grid-column: 1 / -1;
+  padding: 18px 16px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 14px;
+  color: var(--text-faint);
+  font-size: 13.5px;
+  line-height: 1.7;
+  text-align: center;
+}
+.ca-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 18px 18px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px var(--loc-diag-shadow-1);
+}
+.ca-card-logo {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--loc-diag-bg-4);
+  color: var(--loc-diag-ink-2);
+  font-size: 19px;
+  font-weight: 800;
+}
+.ca-card-bd { flex: 1; min-width: 0; }
+.ca-card-name {
+  font-size: 16.5px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+.ca-card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.ca-card-meta {
+  margin-top: 7px;
+  font-size: 13px;
+  color: var(--text-faint);
+  line-height: 1.65;
+}
+.ca-card-go {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--loc-diag-ink-2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ca-card-go:hover { text-decoration: underline; }
+
+/* ---- 汇总条（「共 N 个维度已体检 · N/N 个维度已有明确判断」） ---- */
+.ca-sum {
+  padding: 11px 15px;
+  border-radius: 12px;
+  background: var(--loc-diag-shadow-1);
+  border: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+
+/* ---- 自家品牌「已剔除」提示（比告警弱一档） ---- */
+.ca-self-note {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+/* ---- ④ 两条「建议」维度（do_now / optimize）----
+   刻意不用 .md-card：entry-interact 锁 .md-card = 1 + brief 行数。 */
+.ca-advice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: var(--loc-diag-bg-5);
+  border: 1px solid var(--loc-diag-line-5);
+}
+.ca-advice-hd {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ca-advice-title { font-size: 14px; font-weight: 700; color: var(--loc-diag-ink-2); }
+.ca-advice-sub { font-size: 12.5px; color: var(--text-faint); }
+.ca-advice-row {
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+}
+.ca-advice-name { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.ca-advice-text { font-size: 13.5px; color: var(--text-dim); line-height: 1.7; }
+.ca-advice-act { font-size: 13.5px; color: var(--text); line-height: 1.7; margin-top: 4px; }
+
+/* ---- 洞察速报 ---- */
+.ca-insight-hd {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 14px 0 8px;
+}
+.ca-insight-hd:first-child { margin-top: 0; }
+.ca-insight-card {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+}
+.ca-insight-row {
+  display: flex;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-dim);
+  padding: 4px 0;
+}
+.ca-insight-k {
+  flex-shrink: 0;
+  width: 44px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ---- 机会洞察 ---- */
+.ca-opp-hd {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.ca-opp { display: flex; flex-direction: column; gap: 8px; }
+.ca-opp-item {
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+}
+.ca-opp-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.ca-opp-text { font-size: 14px; color: var(--text-dim); line-height: 1.7; }
+.ca-opp-geo {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--loc-diag-bg-1);
+  border: 1px solid var(--loc-diag-line-6);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.ca-opp-geo-text { flex: 1; min-width: 220px; font-size: 14px; color: var(--text-dim); line-height: 1.7; }
+
+/* ---- 右栏 ---- */
+.ca-rail-card {
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+}
+.ca-rail-title {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.ca-rail-tag { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.ca-rail-text { font-size: 14px; color: var(--text-dim); line-height: 1.75; }
+.ca-rail-empty { color: var(--text-faint); }
+.ca-reco { display: flex; flex-direction: column; gap: 9px; margin-bottom: 12px; }
+.ca-reco-item {
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: var(--loc-diag-shadow-1);
+  border: 1px solid var(--border);
+}
+.ca-reco-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.ca-reco-meta { font-size: 12.5px; color: var(--text-faint); line-height: 1.6; margin-top: 2px; }
+
+/* ---- 示例区样式已整段删除（0.21.13） ----
+ * 老板原话：「没有数据就不要显示了啊」。旧的 ca-demo-note / ca-sec-hd / ca-card-kpi /
+ * ca-demo-table 一族规则只有那段示例数据在用，示例常量已从 MarketMomentum.jsx 里删掉，
+ * 这里一并清掉，不留「样式还在、等着谁把假数据接回来」的死代码。
+ *
+ * 同批删掉的还有 0.21.11 那套「四页签合并成一页长滚动」的锚点条与小节标题
+ * （ca-anchors / ca-anchor / ca-sec / ca-sec-t2）—— 页面已经不是长滚动了。
+ */
+
+/* ---------- 矩阵表头：一句完整度（CompetitorAnalysis 仍在用） ---------- */
+.comp-matrix-cov {
+  font-size: 12px;
+  color: var(--text-dim, var(--loc-diag-ink-4));
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* ============================================================================
+ * 0.21.13 · 竞品分析 = 一次联网问答 → 精简结论（前缀 cq-，与旧 ca- 规则不重叠）
+ *
+ * 老板原话：「直接用联网大模型 分几个问题 跑一个对话出来 就行了。简单点，不用太复杂，
+ *            把大模型能搜到的都分析一下，最后精简一下不就好了吗，然后这一块UI有问题。」
+ * 视觉口径：一页四个问答块，纵向节奏清楚、字号够看、不堆边框；查不到就一句话，不留空卡。
+ *
+ * ── 「一屏看完」是硬指标，不是审美偏好 ──────────────────────────────────────
+ * 老板说的是「又臭又长」，所以本页必须**零滚动**。判据在 `scripts/verify/
+ * intel-qa-simplify.mjs` 的 `fits_one_screen`：量 `.cq-page`（= `.module-page`，
+ * 唯一真正 overflow-y:auto 的盒子）的 scrollHeight ≤ clientHeight。
+ * ⚠️ 别用量 `document.body.scrollHeight` —— App 外壳把 body 钉在 100vh + overflow:hidden，
+ *    那个数恒等于视口高，任何内容长度都为真（本页第一版就是这么假绿的）。
+ *
+ * 下面这些数值就是为这 856px 的可视高度调的：只压间距/内边距/行高，
+ * **没有删任何一条信息**（四题、每题状态、来源角标、行内字段全都还在）。
+ * ========================================================================== */
+
+/* 页头：整条 banner 从 106px 压到 ~96px，并收紧下外边距（20 → 12） */
+.cq-page .page-banner {
+  min-height: 84px;
+  padding: 12px 18px;
+  margin-bottom: 12px;
+  gap: 16px;
+}
+.cq-page .page-banner-ic { width: 60px; height: 60px; }
+.cq-page .page-banner-ic .line-ic svg { width: 30px; height: 30px; }
+.cq-page .page-banner-title { font-size: 21px; }
+.cq-page .page-banner-sub { font-size: 13px; }
+
+.cq-page .ca-search { margin-top: 0; margin-bottom: 6px; }
+
+/* 提示语：字号/行高收紧，下外边距 16 → 8（信息一字未减） */
+.cq-page .ca-search-hint {
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+/* 四题纵向排开（这里就是整页的唯一主体，不再是"一屏接一屏"的长滚动） */
+.cq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.cq-q {
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: var(--bg-panel, var(--c-surface));
+  border: 1px solid var(--border, var(--loc-diag-line-2));
+}
+
+/* 查询中的那一题：左边一道绿色竖条，一眼看出进度走到哪 */
+.cq-q-running { border-left: 3px solid var(--loc-diag-line-7); }
+.cq-q-ok { border-left: 3px solid var(--loc-diag-line-8); }
+.cq-q-none, .cq-q-idle { background: var(--loc-diag-bg-6); }
+
+.cq-q-hd {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cq-q-no {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--loc-diag-ink-5);
+  background: var(--loc-diag-bg-7);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+.cq-q-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text, var(--loc-diag-ink-2));
+  letter-spacing: -0.2px;
+}
+.cq-q-state {
+  margin-left: auto;
+  font-size: 12.5px;
+  color: var(--text-faint, var(--loc-diag-ink-6));
+  white-space: nowrap;
+}
+
+/* 结果行：名字固定宽度，其余文字换行；只有有值的格子才会出现（JS 侧保证） */
+.cq-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+.cq-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 3px 0;
+  border-top: 1px dashed var(--border, var(--loc-diag-line-9));
+}
+.cq-row:first-child { border-top: none; padding-top: 1px; }
+.cq-row-name {
+  flex-shrink: 0;
+  min-width: 96px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text, var(--loc-diag-ink-2));
+}
+.cq-row-txt {
+  flex: 1;
+  min-width: 160px;
+  font-size: 13.5px;
+  color: var(--text-dim, var(--loc-diag-ink-4));
+  line-height: 1.55;
+}
+.cq-row-price {
+  flex-shrink: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--loc-diag-ink-5);
+}
+
+/* 机会点：编号列表，一条一行 */
+.cq-opp {
+  margin: 6px 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cq-opp-item { font-size: 13.5px; line-height: 1.55; color: var(--text-dim, var(--loc-diag-ink-4)); }
+.cq-opp-t { font-size: 14px; font-weight: 700; color: var(--text, var(--loc-diag-ink-2)); }
+.cq-opp-a { margin-top: 1px; }
+
+/* 纯文本降级（模型没给 JSON 时的简短结论） */
+.cq-plain {
+  margin-top: 6px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-dim, var(--loc-diag-ink-4));
+}
+
+/* 没查到：一句话，不占位、不留空卡 */
+.cq-none {
+  margin-top: 6px;
+  font-size: 13.5px;
+  color: var(--text-faint, var(--loc-diag-ink-6));
+}
+
+/* 每题来源角标（联网实检 N 条 / 未联网 · 模型答） */
+.cq-src {
+  margin-top: 5px;
+  font-size: 11.5px;
+  color: var(--text-faint, var(--loc-diag-ink-6));
+}
+
+/* 空态：还没问过时的唯一提示 */
+.cq-empty {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--loc-diag-bg-8);
+  border: 1px dashed var(--loc-diag-line-8);
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-dim, var(--loc-diag-ink-4));
+}
+
+/* ============================================================================
+   竞品诊断 · 主题变量（文件作用域，前缀 --loc-diag-）
+   ============================================================================
+   【为什么是局部变量而不是直接用 --c-*】
+     本文件用的是自己的一套绿灰色阶，与全局语义 token 的绿值**不等值**
+     （例如 #1f7a4d 与 --c-brand-dark:#177A46 相差 ΔE≈4.5，直接换会让绿主题可见变色）。
+     所以这里为每个去重色值建一条局部变量：
+       · 绿主题（无 data-theme 属性）= **原字面量逐字不变** ⇒ 绿主题像素不变；
+       · light / dark 各给一套值（白色主题去绿、深色主题反向）。
+   【铁律】三套必须齐全，缺一套 = 那套主题下拿到空值 = 白屏。门禁 unit-theme-cover-group-b 守这条。
+   ========================================================================== */
+:root {
+  --loc-diag-bg-1: rgba(0, 0, 0, 0.04);
+  --loc-diag-line-1: rgba(0, 0, 0, 0.12);
+  --loc-diag-line-2: rgba(0, 0, 0, 0.08);
+  --loc-diag-bg-2: rgba(255, 159, 10, 0.12);
+  --loc-diag-line-3: rgba(255, 159, 10, 0.45);
+  --loc-diag-ink-1: #8a5a00;
+  --loc-diag-bg-3: rgba(0, 0, 0, 0.045);
+  --loc-diag-line-4: rgba(0, 0, 0, 0.11);
+  --loc-diag-ink-2: #1d1d1f;
+  --loc-diag-ink-3: #666666;
+  --loc-diag-shadow-1: rgba(0, 0, 0, 0.03);
+  --loc-diag-bg-4: rgba(0, 0, 0, 0.06);
+  --loc-diag-bg-5: rgba(0, 0, 0, 0.035);
+  --loc-diag-line-5: rgba(0, 0, 0, 0.09);
+  --loc-diag-line-6: rgba(0, 0, 0, 0.096);
+  --loc-diag-ink-4: #6e6e73;
+  --loc-diag-line-7: rgba(48, 209, 88, 0.75);
+  --loc-diag-line-8: rgba(48, 209, 88, 0.35);
+  --loc-diag-bg-6: rgba(0, 0, 0, 0.015);
+  --loc-diag-ink-5: #1d7a36;
+  --loc-diag-bg-7: rgba(48, 209, 88, 0.12);
+  --loc-diag-ink-6: #8e8e93;
+  --loc-diag-line-9: rgba(0, 0, 0, 0.07);
+  --loc-diag-bg-8: rgba(48, 209, 88, 0.06);
+}
+html[data-theme="light"] {
+  --loc-diag-bg-1: rgba(0, 0, 0, 0.04);
+  --loc-diag-line-1: rgba(0, 0, 0, 0.12);
+  --loc-diag-line-2: rgba(0, 0, 0, 0.08);
+  --loc-diag-bg-2: rgba(255, 159, 10, 0.12);
+  --loc-diag-line-3: rgba(255, 159, 10, 0.45);
+  --loc-diag-ink-1: #8a5a00;
+  --loc-diag-bg-3: rgba(0, 0, 0, 0.045);
+  --loc-diag-line-4: rgba(0, 0, 0, 0.11);
+  --loc-diag-ink-2: #1d1d1f;
+  --loc-diag-ink-3: #666666;
+  --loc-diag-shadow-1: rgba(0, 0, 0, 0.03);
+  --loc-diag-bg-4: rgba(0, 0, 0, 0.06);
+  --loc-diag-bg-5: rgba(0, 0, 0, 0.035);
+  --loc-diag-line-5: rgba(0, 0, 0, 0.09);
+  --loc-diag-line-6: rgba(0, 0, 0, 0.096);
+  --loc-diag-ink-4: #6e6e73;
+  --loc-diag-line-7: rgba(182, 182, 182, 0.75);
+  --loc-diag-line-8: rgba(182, 182, 182, 0.35);
+  --loc-diag-bg-6: rgba(0, 0, 0, 0.015);
+  --loc-diag-ink-5: #6a6a6a;
+  --loc-diag-bg-7: rgba(182, 182, 182, 0.12);
+  --loc-diag-ink-6: #8e8e93;
+  --loc-diag-line-9: rgba(0, 0, 0, 0.07);
+  --loc-diag-bg-8: rgba(182, 182, 182, 0.06);
+}
+html[data-theme="dark"] {
+  --loc-diag-bg-1: rgba(0, 0, 0, 0.42);
+  --loc-diag-line-1: rgba(0, 0, 0, 0.42);
+  --loc-diag-line-2: rgba(0, 0, 0, 0.42);
+  --loc-diag-bg-2: rgba(228, 179, 103, 0.18);
+  --loc-diag-line-3: rgba(228, 179, 103, 0.55);
+  --loc-diag-ink-1: #efd39e;
+  --loc-diag-bg-3: rgba(0, 0, 0, 0.42);
+  --loc-diag-line-4: rgba(0, 0, 0, 0.42);
+  --loc-diag-ink-2: #d6d8d7;
+  --loc-diag-ink-3: #b6b8b7;
+  --loc-diag-shadow-1: rgba(0, 0, 0, 0.42);
+  --loc-diag-bg-4: rgba(0, 0, 0, 0.42);
+  --loc-diag-bg-5: rgba(0, 0, 0, 0.42);
+  --loc-diag-line-5: rgba(0, 0, 0, 0.42);
+  --loc-diag-line-6: rgba(0, 0, 0, 0.42);
+  --loc-diag-ink-4: #b1b3b2;
+  --loc-diag-line-7: rgba(110, 223, 138, 0.55);
+  --loc-diag-line-8: rgba(110, 223, 138, 0.52);
+  --loc-diag-bg-6: rgba(0, 0, 0, 0.42);
+  --loc-diag-ink-5: #9fe8b3;
+  --loc-diag-bg-7: rgba(110, 223, 138, 0.18);
+  --loc-diag-ink-6: #aaacab;
+  --loc-diag-line-9: rgba(0, 0, 0, 0.42);
+  --loc-diag-bg-8: rgba(110, 223, 138, 0.09);
+}

@@ -1,0 +1,350 @@
+/* ============================================================================
+   chat-ux.css —— 对话体验三件套的样式（老板第 4 / 5 条，2026-10-20 第二十二轮）
+
+   覆盖三块，类名一律用**新前缀**，绝不复用既有类（本仓 lint-css-collisions 专抓
+   "同一个 class 的基础规则被两处定义"这类静默改坏样式的 bug）：
+
+     1) .dsnav-*    对话区右下角的「回到最上面 / 回到最新」悬浮控件（第 4 条）
+     2) .chat-gen   生成中的显眼运行态气泡（第 5 条 c 项：三点跳动 + 文案 + 已等 N 秒）
+     3) .msg-fail   失败卡片（第 5 条 a 项：说清失败 + 原因 + 重试，不是含糊的「已停止」）
+
+   定位意图（为什么是 sticky 而不是 fixed）：
+     三处对话区（豆芽助手 .chat / 活动 .act-chat-body / 内容创作 .co-log-body）都是
+     **各自的**滚动容器，不是整页滚动。fixed 会跑到窗口角落、跟着别的模块一起飘；
+     sticky + height:0 让控件留在"滚动容器自己的可视底边"上，且**不占内容高度**
+     （height:0 ⇒ 不会把最后一条消息挤下去、也不产生多余滚动距离）。
+   ========================================================================== */
+
+/* ---------- 1) 滚动导航 ---------- */
+.dsnav-wrap {
+  position: sticky;
+  bottom: 6px;
+  height: 0;
+  align-self: stretch;
+  z-index: 20;
+  pointer-events: none; /* 空白区域不许挡住正文点击 */
+}
+
+.dsnav {
+  position: absolute;
+  right: 6px;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.dsnav-btn {
+  pointer-events: auto;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+  border: 1px solid var(--loc-chat-line-1);
+  background: var(--c-glass-2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--text-dim, var(--loc-chat-ink-1));
+  font-family: var(--font, inherit);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 8px var(--loc-chat-shadow-1);
+  transition: background 0.15s, color 0.15s, transform 0.12s, opacity 0.15s;
+}
+
+.dsnav-btn:hover:not(:disabled) {
+  background: var(--c-surface);
+  color: var(--text, var(--loc-chat-ink-2));
+  transform: translateY(-1px);
+}
+
+.dsnav-btn:focus-visible {
+  outline: 2px solid var(--green, var(--loc-chat-line-2));
+  outline-offset: 2px;
+}
+
+/* 已经在那一头：置灰 + 不收点击（点了没反应最容易被当成"坏了"） */
+.dsnav-btn:disabled,
+.dsnav-btn[data-scrollnav-off='1'] {
+  opacity: 0.38;
+  cursor: default;
+  box-shadow: none;
+  transform: none;
+}
+
+.dsnav-ic {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.dsnav-tx {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* 「回到最新」有未读时：加一点重量（边框 + 字重），颜色之外还有角标数字，
+   所以色弱用户也能看出"有新东西" */
+.dsnav-btn.has-unread {
+  border-color: var(--loc-chat-line-3);
+  color: var(--text, var(--loc-chat-ink-2));
+  font-weight: 600;
+}
+
+.dsnav-badge {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--green, var(--loc-chat-line-2));
+  color: var(--c-on-brand);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* ---------- 2) 生成中（显眼运行态） ---------- */
+.chat-gen {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  max-width: 92%;
+  padding: 9px 13px;
+  border-radius: 14px;
+  border: 1px solid var(--loc-chat-line-4);
+  background: var(--loc-chat-bg-1);
+  color: var(--text, var(--loc-chat-ink-2));
+  font-family: var(--font, inherit);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.chat-gen-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+}
+
+.chat-gen-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green, var(--loc-chat-line-2));
+  animation: chat-gen-bounce 1.05s infinite ease-in-out;
+}
+
+.chat-gen-dots i:nth-child(2) { animation-delay: 0.15s; }
+.chat-gen-dots i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes chat-gen-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.45; }
+  40% { transform: translateY(-3px); opacity: 1; }
+}
+
+.chat-gen-text {
+  font-weight: 600;
+}
+
+.chat-gen-elapsed {
+  color: var(--text-faint, var(--loc-chat-ink-3));
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 用户开了"减少动态效果"：动效关掉，文字与耗时照常（信息一点不少） */
+@media (prefers-reduced-motion: reduce) {
+  .chat-gen-dots i {
+    animation: none;
+    opacity: 1;
+  }
+  .dsnav-btn {
+    transition: none;
+  }
+}
+
+/* ---------- 3) 失败卡片 ---------- */
+.msg-fail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 100%;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--loc-chat-line-5);
+  background: var(--loc-chat-bg-2);
+}
+
+.msg-fail-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--loc-chat-ink-4);
+}
+
+.msg-fail-kind {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 9px;
+  background: var(--loc-chat-bg-3);
+  color: var(--loc-chat-ink-4);
+}
+
+.msg-fail-reason {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-dim, var(--loc-chat-ink-1));
+  word-break: break-word;
+}
+
+.msg-fail-next {
+  font-size: 12px;
+  color: var(--text-faint, var(--loc-chat-ink-3));
+}
+
+.msg-fail-ops {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* 各对话区里的失败小卡（活动 / 内容创作沿用它们自己的气泡，这里只补重试按钮间距） */
+.act-msg-err-retry,
+.co-msg-err-retry {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* ---------- 4) 「在等你」与「发生过什么」（2026-10-21 第二十三轮） ----------
+   老板原话：「豆芽助手会反复问你要你回答，你不回答他就不做」。
+   这里两块都是**同一个问题的界面侧**：等待必须被说成"在等你"，超时必须留下痕迹。
+
+   为什么 `.chat-wait` 不做跳动的三点、也不显示「已等 N 秒」：
+     后端 waitClarify / waitMaterial 的超时是 5 分钟。给它挂一个秒表，用户就会盯着
+     秒表走到 4 分 58 秒，越等越确信"它卡死了" —— 那正是老板描述的那种体感。
+     所以这里刻意做成**静止**的一段话，把"可以不答"直接写出来，把选择权交回用户。
+   `data-chat-waiting="1"` 是门禁锚点，与 `.chat-gen` 的 `data-chat-generating="1"`
+   互斥（同一时刻只应出现其中一个）。 */
+
+.chat-wait {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-self: flex-start;
+  max-width: 92%;
+  padding: 9px 13px;
+  border-radius: 14px;
+  border: 1px solid var(--loc-chat-line-6);
+  background: var(--loc-chat-bg-4);
+  color: var(--text, var(--loc-chat-ink-2));
+  font-family: var(--font, inherit);
+  line-height: 1.45;
+}
+
+.chat-wait-title {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.chat-wait-hint {
+  font-size: 11.5px;
+  color: var(--text-faint, var(--loc-chat-ink-3));
+}
+
+/* 系统小字：挂起超时 / 被跳过时交代一句「发生了什么」。
+   刻意居中小行、不用气泡 —— 它既不是豆芽说的话，也不是用户说的话，
+   做成气泡会让用户误以为模型又回了他一句。 */
+.msg-notice {
+  align-self: center;
+  max-width: 84%;
+  margin: 2px 0 10px;
+  padding: 0;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-faint, var(--loc-chat-ink-3));
+  word-break: break-word;
+}
+
+/* 素材弹窗里「跳过 = 按最佳判断先做」的一行小字（不新增控件，只补语义） */
+.material-skip-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-faint, var(--loc-chat-ink-3));
+}
+
+/* ============================================================================
+   对话体验 · 主题变量（文件作用域，前缀 --loc-chat-）
+   ============================================================================
+   【为什么是局部变量而不是直接用 --c-*】
+     本文件用的是自己的一套绿灰色阶，与全局语义 token 的绿值**不等值**
+     （例如 #1f7a4d 与 --c-brand-dark:#177A46 相差 ΔE≈4.5，直接换会让绿主题可见变色）。
+     所以这里为每个去重色值建一条局部变量：
+       · 绿主题（无 data-theme 属性）= **原字面量逐字不变** ⇒ 绿主题像素不变；
+       · light / dark 各给一套值（白色主题去绿、深色主题反向）。
+   【铁律】三套必须齐全，缺一套 = 那套主题下拿到空值 = 白屏。门禁 unit-theme-cover-group-b 守这条。
+   ========================================================================== */
+:root {
+  --loc-chat-line-1: rgba(0, 0, 0, 0.1);
+  --loc-chat-ink-1: #6e6e73;
+  --loc-chat-shadow-1: rgba(0, 0, 0, 0.08);
+  --loc-chat-ink-2: #1d1d1f;
+  --loc-chat-line-2: #30d158;
+  --loc-chat-line-3: rgba(48, 209, 88, 0.55);
+  --loc-chat-line-4: rgba(48, 209, 88, 0.35);
+  --loc-chat-bg-1: rgba(48, 209, 88, 0.08);
+  --loc-chat-ink-3: #8e8e93;
+  --loc-chat-line-5: rgba(255, 69, 58, 0.35);
+  --loc-chat-bg-2: rgba(255, 69, 58, 0.07);
+  --loc-chat-ink-4: #b3261e;
+  --loc-chat-bg-3: rgba(255, 69, 58, 0.14);
+  --loc-chat-line-6: rgba(0, 122, 255, 0.28);
+  --loc-chat-bg-4: rgba(0, 122, 255, 0.07);
+}
+html[data-theme="light"] {
+  --loc-chat-line-1: rgba(0, 0, 0, 0.1);
+  --loc-chat-ink-1: #6e6e73;
+  --loc-chat-shadow-1: rgba(0, 0, 0, 0.08);
+  --loc-chat-ink-2: #1d1d1f;
+  --loc-chat-line-2: #b6b6b6;
+  --loc-chat-line-3: rgba(182, 182, 182, 0.55);
+  --loc-chat-line-4: rgba(182, 182, 182, 0.35);
+  --loc-chat-bg-1: rgba(182, 182, 182, 0.08);
+  --loc-chat-ink-3: #8e8e93;
+  --loc-chat-line-5: rgba(255, 69, 58, 0.35);
+  --loc-chat-bg-2: rgba(255, 69, 58, 0.07);
+  --loc-chat-ink-4: #b3261e;
+  --loc-chat-bg-3: rgba(255, 69, 58, 0.14);
+  --loc-chat-line-6: rgba(127, 127, 127, 0.28);
+  --loc-chat-bg-4: rgba(127, 127, 127, 0.07);
+}
+html[data-theme="dark"] {
+  --loc-chat-line-1: rgba(0, 0, 0, 0.42);
+  --loc-chat-ink-1: #b1b3b2;
+  --loc-chat-shadow-1: rgba(0, 0, 0, 0.42);
+  --loc-chat-ink-2: #d6d8d7;
+  --loc-chat-line-2: #81e399;
+  --loc-chat-line-3: rgba(110, 223, 138, 0.55);
+  --loc-chat-line-4: rgba(110, 223, 138, 0.52);
+  --loc-chat-bg-1: rgba(110, 223, 138, 0.12);
+  --loc-chat-ink-3: #aaacab;
+  --loc-chat-line-5: rgba(226, 98, 90, 0.52);
+  --loc-chat-bg-2: rgba(226, 98, 90, 0.11);
+  --loc-chat-ink-4: #ea8883;
+  --loc-chat-bg-3: rgba(226, 98, 90, 0.21);
+  --loc-chat-line-6: rgba(160, 174, 166, 0.42);
+  --loc-chat-bg-4: rgba(160, 174, 166, 0.11);
+}

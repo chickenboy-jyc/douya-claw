@@ -1,0 +1,13 @@
+{
+  "name": "生成Excel",
+  "description": "根据表头和数据行生成带格式的 .xlsx 表格（表头加粗蓝底、列宽自适应）。headers 是表头数组 JSON，rows 是二维数据数组 JSON。适合做报表、数据清单、汇总表。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "params": [
+    { "name": "title", "label": "工作表名/标题" },
+    { "name": "headers", "label": "表头(JSON 数组)", "required": true },
+    { "name": "rows", "label": "数据(JSON 二维数组)", "required": true },
+    { "name": "filename", "label": "输出文件名(可选，如 报表.xlsx)" }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "处理音视频",
+  "description": "用 ffmpeg 处理音视频：裁剪片段(trim)、变速(speed)、提取音频(extract-audio)、格式转换(convert)、调音量(volume)、压缩(compress)、多视频拼接(concat)。input 是输入文件，output 是输出文件。用户口语说的「剪视频」就是这里的裁剪/变速/拼接，单轨直接用它；要多轨精剪（画中画/转场/字幕/关键帧）才用「视频精剪」。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "timeoutMs": 240000,
+  "params": [
+    { "name": "action", "label": "操作(trim/speed/extract-audio/convert/volume/compress/concat)", "required": true },
+    { "name": "input", "label": "输入文件" },
+    { "name": "inputs", "label": "多文件数组(JSON，concat 拼接用)" },
+    { "name": "output", "label": "输出文件" },
+    { "name": "start", "label": "起始时间(trim 用，如 00:00:05)" },
+    { "name": "duration", "label": "时长(trim 用，秒)" },
+    { "name": "factor", "label": "倍率(speed/volume 用)" },
+    { "name": "format", "label": "目标格式(convert 用，如 mp4/mp3/avi)" }
+  ]
+}

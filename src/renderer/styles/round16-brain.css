@@ -1,0 +1,381 @@
+/*
+ * round16-brain.css —— 0.21.9 老板第 4 条（企业大脑）专用样式。
+ *
+ * 为什么要单开一个文件而不是写进 style.css：
+ *   style.css 有 6697 行、16 个模块共用，且历史上被 git stash 洗过一次。往里面加类名，
+ *   一次撞名就会影响到别的模块（scripts/smoke/lint-css-collisions.mjs 专门抓这个）。
+ *   独立文件按 import 顺序后加载，同权重下后写的赢，作用面清晰。
+ *
+ * 改动范围：只影响「企业大脑」页（CompanyProfile 的三个胶囊按钮 + AI 长期记忆横排）。
+ * 原样式一律不删不改 —— 这里全部是新增类名 + 对本页容器的定向覆盖。
+ */
+
+/* ============ 一、页头 ============ */
+.cp-page .ia-asset-head {
+  margin-bottom: 14px;
+  /* 0.21.16（老板第 2 条）：页头右侧多了「🧭 建档引导」主入口，标题区与按钮横排。 */
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+/* 建档引导主入口（企业建档 = 全屏分步引导，见 components/CompanySetupWizard.jsx） */
+.cp-setup-cta {
+  flex: 0 0 auto;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1.5px solid transparent;
+  background: var(--loc-brain-bg-1);
+  color: var(--loc-brain-ink-1);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 14px var(--loc-brain-shadow-1);
+}
+.cp-setup-cta:hover {
+  background: var(--loc-brain-bg-2);
+  transform: translateY(-1px);
+}
+.cp-setup-cta:focus-visible {
+  outline: 2px solid var(--loc-brain-line-1);
+  outline-offset: 2px;
+}
+.cp-page .ia-asset-title {
+  /* 老板要「以企业大脑为核心」：标题就是它，字重提一档，不再和副标题挤在一起 */
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  margin: 0 0 6px;
+}
+.cp-page .ia-asset-sub {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--loc-brain-ink-2);
+  margin: 0;
+}
+
+/* ============ 二、三个胶囊按钮（企业大脑 / 资产 / 子品牌） ============ */
+.cp-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+.cp-tab {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--loc-brain-line-2);
+  background: var(--c-surface);
+  color: var(--loc-brain-ink-3);
+  /* 老板第 2 条定的圆润口径：按钮 12~999px 之间，胶囊取 999px */
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+  box-shadow: 0 1px 2px var(--loc-brain-shadow-2);
+}
+.cp-tab:hover {
+  background: var(--c-bg-window);
+}
+.cp-tab.on {
+  /* 选中：绿底白字（沿用项目主色，不引入新色系） */
+  background: var(--loc-brain-bg-3);
+  border-color: var(--loc-brain-bg-3);
+  color: var(--c-on-brand);
+  box-shadow: 0 1px 2px var(--c-shadow-color), 0 6px 16px var(--loc-brain-shadow-3);
+}
+.cp-tab:focus-visible {
+  outline: 2px solid var(--loc-brain-line-3);
+  outline-offset: 2px;
+}
+
+/* 分区容器：不要给固定高度 —— 内容长度由内部决定，滚动交给外层 module-page。 */
+.cp-pane {
+  min-width: 0;
+}
+
+/* ============ 三、AI 长期记忆：竖排 → 横版卡片轨道 ============ */
+/*
+ * 线上原样式（style.css:2719）在 ≤900px 会把三列压成**单列**，这正是老板说的"竖版"。
+ * 这里改成：宽屏固定三列，窄屏用 auto-fit minmax(200px,1fr) 自动换行 ——
+ * 也就是"永远横排，不够宽就把三张卡折成两行"，绝不堆成一列长条。
+ * 注意 !important 是必要的：style.css 的 1fr 1fr 1fr 与 round15.css 的 repeat(3,minmax(0,1fr))
+ * 都命中同一元素，本文件后加载但仍需压过媒体查询里的 1fr（媒体查询不改权重）。
+ */
+.brain-cols {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  align-items: start;
+}
+@media (max-width: 1180px) {
+  .brain-cols {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  }
+}
+
+/* 每一类记忆 = 一张横向小卡（标题 + 条数 + 最近几条，取数逻辑一字未动） */
+.brain-col {
+  background: var(--c-surface);
+  border: 1px solid var(--loc-brain-line-4);
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-shadow: 0 1px 2px var(--loc-brain-shadow-2);
+  min-width: 0;
+}
+.brain-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.brain-col-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--loc-brain-ink-3);
+}
+.brain-col-count {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--loc-brain-bg-3);
+  background: var(--loc-brain-bg-4);
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+/* ============================================================================
+ * 0.21.11 · 老板第 5 条：「企业大脑无法下滑」+「布局有些乱，能隐藏的就隐藏掉」。
+ *
+ * ① 不能下滑的**真因**（不是"内容太长"）：
+ *    本页根元素是 `.merged-tabs.ia-asset-page.cp-page`。style.css:4047 把
+ *    `.merged-tabs` 定成 `display:flex; flex-direction:column; overflow:hidden`，
+ *    滚动条本来由 `.ant-tabs-content-holder` 提供 —— 而 0.21.9 把 3 个 Tab 换成了
+ *    自绘胶囊按钮（cp-tabs），容器里**再也没有**那个滚动子元素。
+ *    结果：内容超过一屏就被裁掉，滚轮完全没反应。
+ *    与内容创作（.co-page）是同一个病根，两处一起修。
+ *
+ * ② 简洁：右栏原来平铺 5 张卡（AI 工具 / 体检结论 / 企业体检结论 / 时间轴 / 平台账号），
+ *    一屏堆满。现在后三张收进一个默认收起的 <details>（.cb-more），
+ *    要看的点一下展开 —— 能力一个没删，只是不再抢主视线。
+ * ========================================================================== */
+.merged-tabs.cp-page {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 18px 22px 40px;
+}
+.merged-tabs.cp-page > * {
+  flex-shrink: 0;
+}
+
+/* 右栏「更多」折叠区：默认收起，展开后与其它卡保持同样的间距 */
+.cb-more {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.cb-more > summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--loc-brain-bg-3);
+  background: var(--loc-brain-bg-5);
+  border-radius: 999px;
+  padding: 7px 14px;
+  text-align: center;
+  user-select: none;
+}
+.cb-more > summary::-webkit-details-marker { display: none; }
+.cb-more > summary:hover { background: var(--loc-brain-bg-6); }
+.cb-more[open] > summary { margin-bottom: 2px; }
+
+/* ============================================================================
+ * 0.21.12 · 老板第 4 条：「企业大脑也没改」
+ *
+ * 「记一条进大脑」原本是主列里独立的一张卡，和上面的「AI 面板」做的是同一件事
+ * （都是往大脑里写字），两张卡各占一块版面。现在并进 AI 面板卡内部：
+ * 一条分隔线 + 一行输入，视觉上像"跟豆芽再说一句"的延伸，而不是另一个功能。
+ * ========================================================================== */
+.brain-inline-add {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--loc-brain-line-2);
+}
+.brain-inline-add-t {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-dim, var(--loc-brain-ink-4));
+  margin-bottom: 8px;
+}
+
+/* ============================================================================
+ * 0.21.17 · 老板第 6 条：「企业大脑里面 AI 长期记忆 折叠起来，然后顺序换一下，
+ * 资产和子品牌做的更加傻瓜式 一键式一点」
+ *
+ * 一、AI 长期记忆默认折叠（`details.brain-mem`）
+ *     收起态只剩一行：标题 + 三类条数 + 「展开」。它仍是 `.r15-card`，
+ *     所以边框/圆角/阴影与其他卡完全一致 —— 折叠后不像"半张卡"，而像"同一张卡收短了"。
+ *     ⚠️ 收起时三列节点仍在 DOM 里（原生 details 的行为），锚点与老用例不受影响。
+ * ========================================================================== */
+.brain-mem > .brain-mem-sum {
+  /* 去掉原生三角，自己做箭头；整行可点。 */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  /* 收起时 summary 就是整张卡的内容，去掉它自己的下边距，避免卡片下方多出一条空带 */
+  margin: 0;
+}
+.brain-mem > .brain-mem-sum::-webkit-details-marker { display: none; }
+
+.brain-mem-sum-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--r15-text, var(--loc-brain-ink-5));
+  flex: 0 0 auto;
+}
+.brain-mem-sum-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+/* 展开/收起提示：文案由 CSS 出（只在收起/展开两态之间切换，不占 JS 状态） */
+.brain-mem-sum-hint {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--r15-green-dark, var(--loc-brain-bg-3));
+}
+.brain-mem-sum-hint::after { content: '展开 ▾'; }
+.brain-mem[open] > .brain-mem-sum-hint::after { content: '收起 ▴'; }
+.brain-mem[open] > .brain-mem-sum { margin-bottom: 14px; }
+.brain-mem > .brain-cols { margin-top: 0; }
+
+/* 二、AI 面板里的「去改」直达按钮（资产 / 子品牌）—— 把原来的一句文字提示变成可点入口 */
+.brain-jump {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.brain-jump-label {
+  font-size: 12px;
+  color: var(--r15-muted, var(--loc-brain-ink-2));
+}
+.brain-jump-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--loc-brain-line-5);
+  background: var(--c-surface);
+  color: var(--r15-green-dark, var(--loc-brain-bg-3));
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 5px 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.brain-jump-btn:hover {
+  background: var(--r15-green-tint, var(--loc-brain-bg-7));
+  border-color: var(--loc-brain-line-6);
+}
+.brain-jump-btn:focus-visible {
+  outline: 2px solid var(--loc-brain-line-3);
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   企业大脑 · 主题变量（文件作用域，前缀 --loc-brain-）
+   ============================================================================
+   【为什么是局部变量而不是直接用 --c-*】
+     本文件用的是自己的一套绿灰色阶，与全局语义 token 的绿值**不等值**
+     （例如 #1f7a4d 与 --c-brand-dark:#177A46 相差 ΔE≈4.5，直接换会让绿主题可见变色）。
+     所以这里为每个去重色值建一条局部变量：
+       · 绿主题（无 data-theme 属性）= **原字面量逐字不变** ⇒ 绿主题像素不变；
+       · light / dark 各给一套值（白色主题去绿、深色主题反向）。
+   【铁律】三套必须齐全，缺一套 = 那套主题下拿到空值 = 白屏。门禁 unit-theme-cover-group-b 守这条。
+   ========================================================================== */
+:root {
+  --loc-brain-bg-1: #30d158;
+  --loc-brain-ink-1: #062b10;
+  --loc-brain-shadow-1: rgba(48, 209, 88, 0.22);
+  --loc-brain-bg-2: #3edb64;
+  --loc-brain-line-1: #0a8f2f;
+  --loc-brain-ink-2: #6e6e73;
+  --loc-brain-line-2: rgba(0, 0, 0, 0.08);
+  --loc-brain-ink-3: #1c1c1e;
+  --loc-brain-shadow-2: rgba(0, 0, 0, 0.04);
+  --loc-brain-bg-3: #1d7a36;
+  --loc-brain-shadow-3: rgba(29, 122, 54, 0.22);
+  --loc-brain-line-3: rgba(29, 122, 54, 0.45);
+  --loc-brain-line-4: rgba(0, 0, 0, 0.06);
+  --loc-brain-bg-4: rgba(48, 209, 88, 0.14);
+  --loc-brain-bg-5: rgba(48, 209, 88, 0.1);
+  --loc-brain-bg-6: rgba(48, 209, 88, 0.18);
+  --loc-brain-ink-4: #5a6472;
+  --loc-brain-ink-5: #1c2b23;
+  --loc-brain-line-5: #bfe7d0;
+  --loc-brain-bg-7: #f0faf3;
+  --loc-brain-line-6: #9ed7b5;
+}
+html[data-theme="light"] {
+  --loc-brain-bg-1: #b6b6b6;
+  --loc-brain-ink-1: #242424;
+  --loc-brain-shadow-1: rgba(182, 182, 182, 0.22);
+  --loc-brain-bg-2: #c0c0c0;
+  --loc-brain-line-1: #7b7b7b;
+  --loc-brain-ink-2: #6e6e73;
+  --loc-brain-line-2: rgba(0, 0, 0, 0.08);
+  --loc-brain-ink-3: #1c1c1e;
+  --loc-brain-shadow-2: rgba(0, 0, 0, 0.04);
+  --loc-brain-bg-3: #6a6a6a;
+  --loc-brain-shadow-3: rgba(106, 106, 106, 0.22);
+  --loc-brain-line-3: rgba(106, 106, 106, 0.45);
+  --loc-brain-line-4: rgba(0, 0, 0, 0.06);
+  --loc-brain-bg-4: rgba(182, 182, 182, 0.14);
+  --loc-brain-bg-5: rgba(182, 182, 182, 0.1);
+  --loc-brain-bg-6: rgba(182, 182, 182, 0.18);
+  --loc-brain-ink-4: #636363;
+  --loc-brain-ink-5: #1c2b23;
+  --loc-brain-line-5: #dedede;
+  --loc-brain-bg-7: #f0faf3;
+  --loc-brain-line-6: #cacaca;
+}
+html[data-theme="dark"] {
+  --loc-brain-bg-1: #81e399;
+  /* ★ 2026-11-08 修：原值 #c0f5ce 与 `--loc-brain-bg-1:#81e399` 成对取了「亮底 + 亮字」
+     ⇒ `.cp-setup-cta`（企业大脑页头的「建档引导」主按钮）实测 **1.28:1**，字完全看不见。
+     绿主题那一格是 #062b10（深墨压亮绿 #30d158），白主题是 #242424 —— 深色这里照抄同一个
+     语义：**深墨压亮绿**。改后 on #81e399 = 9.83:1、悬停 on #76e591 = 9.95:1。
+     ⚠️ 只改这一格的取值，消费规则（`.cp-setup-cta`）一个字都没动。 */
+  --loc-brain-ink-1: #062b10;
+  --loc-brain-shadow-1: rgba(110, 223, 138, 0.33);
+  --loc-brain-bg-2: #76e591;
+  --loc-brain-line-1: #98eeb0;
+  --loc-brain-ink-2: #b1b3b2;
+  --loc-brain-line-2: rgba(0, 0, 0, 0.42);
+  --loc-brain-ink-3: #d6d8d7;
+  --loc-brain-shadow-2: rgba(0, 0, 0, 0.42);
+  --loc-brain-bg-3: #9fe8b3;
+  --loc-brain-shadow-3: rgba(136, 227, 161, 0.33);
+  --loc-brain-line-3: rgba(136, 227, 161, 0.55);
+  --loc-brain-line-4: rgba(0, 0, 0, 0.42);
+  --loc-brain-bg-4: rgba(110, 223, 138, 0.21);
+  --loc-brain-bg-5: rgba(110, 223, 138, 0.15);
+  --loc-brain-bg-6: rgba(110, 223, 138, 0.27);
+  --loc-brain-ink-4: #b6b8b7;
+  --loc-brain-ink-5: #cdded5;
+  --loc-brain-line-5: #1e4f33;
+  --loc-brain-bg-7: #12351c;
+  --loc-brain-line-6: #265c3b;
+}

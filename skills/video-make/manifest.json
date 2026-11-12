@@ -1,0 +1,13 @@
+{
+  "name": "生成视频",
+  "description": "把多张图片合成视频（MP4）或 GIF。frames 是图片路径数组 JSON，按顺序合成，fps 控制帧率。适合做简单的图片轮播视频、动画。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "timeoutMs": 120000,
+  "params": [
+    { "name": "frames", "label": "图片路径数组(JSON)", "required": true },
+    { "name": "fps", "label": "帧率(默认 10)" },
+    { "name": "output", "label": "输出文件名(默认 video.mp4)" }
+  ]
+}

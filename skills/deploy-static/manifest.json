@@ -1,0 +1,23 @@
+{
+  "name": "部署静态网站",
+  "description": "把本地静态网站目录部署到 Linux 服务器：备份旧版本 → 打包上传 → 远端解压 → 回读校验；可选自动生成并热加载 nginx 站点配置。action 支持 deploy（部署）/rollback（回滚到最近备份）/status（查看现状）。凭证每次临时传入，支持密码或私钥 key_path。会自动拒绝系统目录（如 /etc、/usr）与空目录等危险目标，避免误伤服务器或清空线上。默认按单页应用（SPA）配置 nginx：SPA 模式会把找不到的路径回退到 index.html，避免刷新子页面 404。若要把站点挂到已被占用的域名的子路径下（如 https://api.example.com/miaomiao/），传 url_path（如 /miaomiao/）：技能会定位承载该域名的既有 server 块，仅在其中插入带固定标记的 location，不改动原有配置；同名标记块整块替换（幂等），目标路径已被他人占用时安全跳过，写入后 nginx -t 失败会自动回滚。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "timeoutMs": 900000,
+  "params": [
+    { "name": "action", "label": "操作(deploy/rollback/status)", "required": true },
+    { "name": "host", "label": "服务器地址(IP 或域名)", "required": true },
+    { "name": "username", "label": "用户名", "required": true },
+    { "name": "password", "label": "密码(与 key_path 二选一)" },
+    { "name": "port", "label": "端口(默认 22)" },
+    { "name": "key_path", "label": "私钥文件路径(有则优先于密码)" },
+    { "name": "local_dir", "label": "本地网站目录(相对工作区或绝对路径，deploy 用)" },
+    { "name": "remote_dir", "label": "远端目标目录(如 /www/huodong/)", "required": true },
+    { "name": "domain", "label": "域名(nginx server_name，可选)" },
+    { "name": "url_path", "label": "子路径(挂到已有域名的路径下，如 /miaomiao/；留空=新建独立站点)" },
+    { "name": "nginx_use", "label": "是否配置并热加载 nginx(true/false)" },
+    { "name": "spa_mode", "label": "是否单页应用SPA(前端路由，默认 true；纯静态多页站填 false)" },
+    { "name": "auto_install", "label": "是否自动安装缺失依赖(nginx，默认 false；true 会修改服务器环境)" }
+  ]
+}

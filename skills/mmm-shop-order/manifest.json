@@ -1,0 +1,8 @@
+{
+  "name": "加入购物车",
+  "description": "把商品加入上游货源商城（supplier.example.com）的购物车。goods 是商品数组，每项含 searchProductId（必填，从「查询商品」结果里拿）、count（数量）。\n\n【暂未开通】上游货源的登录与加购接口仍在等待真实凭证实测（上游 /authapi/* 为兜底路由，无法从响应证明路径存在），当前**不会执行任何加购操作**，仅会返回「暂未开通」提示。",
+  "type": "js",
+  "params": [
+    { "key": "goods", "label": "商品数组(JSON)", "default": "[]", "required": true }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "联网搜索",
+  "description": "联网搜索关键词或抓取指定网页，返回可读正文。用法：搜资料/查最新信息时传 query（如「2025 年口腔耗材市场规模」）；抓具体网页时传 url。做网页/写文案/查实时信息前先调用它搜索参考，能让成果更准确、不陈旧。",
+  "type": "js",
+  "allowNetwork": true,
+  "timeoutMs": 90000,
+  "params": [
+    { "key": "query", "label": "搜索关键词", "default": "" },
+    { "key": "url", "label": "网页地址", "default": "" }
+  ]
+}

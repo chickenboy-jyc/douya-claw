@@ -1,0 +1,16 @@
+{
+  "name": "微信接口",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "description": "调用微信小程序官方接口：code2session（登录，用 code 换 openid/session_key）、get_access_token（获取 access_token）、send_subscribe_message（发送订阅消息）、get_unlimited_qrcode（生成小程序码，返回 base64 图片）。appid/secret 自动从设置读取。params：action（必填，枚举 code2session/get_access_token/send_subscribe_message/get_unlimited_qrcode）、code（登录 code）、touser（接收者 openid）、template_id（订阅消息模板 ID）、data（订阅消息 data，JSON 字符串）、page（跳转页面路径）、scene（小程序码 scene 参数）。",
+  "params": [
+    { "name": "action", "label": "操作类型(code2session/get_access_token/send_subscribe_message/get_unlimited_qrcode)", "required": true },
+    { "name": "code", "label": "登录 code(仅 code2session)" },
+    { "name": "touser", "label": "接收者 openid(仅发订阅消息)" },
+    { "name": "template_id", "label": "订阅消息模板 ID" },
+    { "name": "data", "label": "订阅消息 data(JSON 字符串)" },
+    { "name": "page", "label": "跳转页面(如 pages/index/index)" },
+    { "name": "scene", "label": "小程序码 scene 参数" }
+  ]
+}

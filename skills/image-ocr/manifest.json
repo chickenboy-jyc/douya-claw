@@ -1,0 +1,10 @@
+{
+  "name": "识别文字",
+  "description": "OCR 文字识别：识别图片/截图里的文字（中英文），返回识别出的文本。适合把图片里的文字提取出来。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "params": [
+    { "name": "path", "label": "图片路径", "required": true }
+  ]
+}

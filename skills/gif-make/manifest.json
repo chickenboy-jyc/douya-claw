@@ -1,0 +1,13 @@
+{
+  "name": "生成动画",
+  "description": "生成 GIF 小动画：①把多张图片合成 GIF（frames 传图片路径数组 JSON）；②用文字生成移动动画（text 传文字，生成文字从一侧滑到另一侧的循环 GIF）。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "params": [
+    { "name": "frames", "label": "图片路径数组(JSON，合成 GIF 用)" },
+    { "name": "text", "label": "文字(生成文字动画用)" },
+    { "name": "duration", "label": "帧间隔毫秒(默认 200)" },
+    { "name": "output", "label": "输出文件名(默认 animation.gif)" }
+  ]
+}

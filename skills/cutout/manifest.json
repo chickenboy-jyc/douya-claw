@@ -1,0 +1,15 @@
+{
+  "name": "抠图去背景",
+  "description": "把照片/插画的主体从背景里分离出来，输出**带透明通道的 PNG**，用于桌宠形象、贴纸、图标、界面素材。三种 mode：flood（纯色/近纯色背景，默认 —— 从画布边缘向内做连通域泛洪，主体内部同色部分不会被误删）、alpha（原图已有透明通道，做二值化+边缘羽化）、box（兜底：主体居中且背景简单时按行列投影裁掉外部背景，不产生透明区）。抠完会**自己量一遍并把读数写进返回值**（尺寸、alpha 包围盒、主体占画布、四边是否贴边、前景像素占比）；前景太少、背景没被去掉会直接报失败，只抠出半身、主体贴边会给出警告 —— 请照读数判断能不能交付，不要只看到「完成」两个字就当成品。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": false,
+  "timeoutMs": 120000,
+  "params": [
+    { "name": "path", "label": "图片路径(相对工作区或绝对路径)", "required": true },
+    { "name": "output", "label": "输出 PNG 路径(默认同目录基名-cutout.png)", "required": false },
+    { "name": "mode", "label": "auto/flood/alpha/box(默认 auto：有透明区→alpha；边缘颜色统一→flood；否则→box)", "required": false },
+    { "name": "tol", "label": "背景颜色容差 0~255(默认 30，抠多了调小、抠少了调大)", "required": false },
+    { "name": "feather", "label": "边缘羽化像素 0~8(默认 1，0=硬边)", "required": false }
+  ]
+}

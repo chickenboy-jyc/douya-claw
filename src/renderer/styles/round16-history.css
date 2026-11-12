@@ -1,0 +1,281 @@
+/**
+ * 豆芽助手「历史成果」右栏 —— 按任务栏的行语言重做（0.21.11 · 老板第 7 条）。
+ *
+ * 老板原话：「豆芽助手里面任务栏常在 不要隐藏掉，历史成果换个UI根据任务栏来 简单干净点 现在有点乱」。
+ *
+ * 设计口径（与 styles/round16.css 里的 .task-center / .tc-item 逐项对齐）：
+ *   · 一条信息 = 一行：圆点（类型色）+ 名字（单行省略）+ 右侧极淡的次要信息；
+ *   · 分组用「小号粗体灰字标题」+ 可选计数胶囊，而不是卡片套卡片；
+ *   · 行高 32~34px、圆角 12~14px、hover 只加 4% 黑底，不加边框不加阴影。
+ *
+ * 为什么单开文件：style.css 已 6697 行、16 个模块共用，往里面 append 会静默改坏别的页
+ * （见 scripts/smoke/lint-css-collisions.mjs 顶部那次真实事故）。本文件在 index.jsx 里
+ * 紧跟 round16.css 之后引入，同优先级下靠后覆盖。
+ *
+ * ⚠️ 这里**不能**写 `.wb-apple .right-panel …`：右栏与 `<div className="main wb-apple">` 是
+ * 兄弟节点（App.jsx 里右栏挂在 .app-body 下、和 .main 平级），带这个前缀的规则
+ * **物理上匹配不到任何元素** —— 不报错、门禁全绿，只是样式静默失效。
+ * 这条坑在 round16.css 的 .task-center 段已踩过一次，这里不再踩。
+ */
+
+.right-panel.hist-panel {
+  width: 284px;
+  background: var(--loc-hist-bg-1);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+}
+
+.hist-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* 分组标题：与任务栏 .tc-group-title 同款（11px / 700 / 0.4px 字距 / 灰） */
+.hist-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--loc-hist-ink-1);
+  padding: 14px 8px 6px;
+}
+.hist-group-title:first-child {
+  padding-top: 6px;
+}
+.hist-group-n {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--loc-hist-ink-2);
+  background: var(--loc-hist-bg-2);
+  border-radius: 8px;
+  padding: 1px 6px;
+  letter-spacing: 0;
+}
+
+/* 一行 = 一条。position:relative 供 hover 动作层绝对定位 */
+.hist-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.hist-row:hover {
+  background: var(--loc-hist-bg-3);
+}
+.hist-row:focus-visible {
+  outline: 2px solid var(--loc-hist-line-1);
+  outline-offset: 1px;
+}
+
+.hist-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--loc-hist-ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 右侧次要信息：类型标签 / 能力说明，10~10.5px 灰，永远不换行 */
+.hist-tag {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 1px 5px;
+  background: var(--loc-hist-bg-4);
+  color: var(--loc-hist-ink-1);
+  transition: opacity 0.12s;
+}
+/* 「还有 N 条」这类计数提示。原来用 `--loc-hist-ink-4`：那条在绿/浅主题是 #c7c7cc
+   （白底 1.6:1），在深色是 #383a39（压 #1d2124 只有 1.4:1）—— 两套主题都看不见。
+   它本来是当**圆点底色**用的（见下面 .hist-dot-other），拿它当字色是选错了变量。
+   改走全局 `--c-text-3`：两套主题都 ≥4.6:1，且自带主题翻转。 */
+.hist-hint {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  color: var(--c-text-3);
+}
+
+/* 圆点：沿用任务栏「一个圆点区分一类」的语言。
+   文档绿 / 表格黄 / 演示紫 是老板点名过的三色，图片与其它各补一色。
+   黄点在白底上偏淡，单独补一圈极浅光晕保证可辨（同 .tc-dot-dev 的处理）。 */
+.hist-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 3px var(--loc-hist-shadow-1);
+}
+.hist-dot-doc { background: var(--loc-hist-bg-5); }
+.hist-dot-sheet { background: var(--loc-hist-bg-6); box-shadow: 0 0 0 3px var(--loc-hist-shadow-2); }
+.hist-dot-slide { background: #af52de; }
+.hist-dot-image { background: var(--loc-hist-bg-7); }
+.hist-dot-other { background: var(--loc-hist-ink-4); }
+/* 常用能力 / 关键任务：空心点，视觉上比「真实成果」轻一档，不会被误读成文件 */
+.hist-dot-cap { background: var(--c-surface); box-shadow: inset 0 0 0 2px var(--loc-hist-line-1); }
+.hist-dot-task { background: var(--c-surface); box-shadow: inset 0 0 0 2px var(--loc-hist-shadow-3); }
+
+/* 标签文字跟着圆点同色，扫读时不必去认字 */
+.hist-tag-doc { color: var(--loc-hist-ink-2); background: var(--loc-hist-bg-8); }
+.hist-tag-sheet { color: var(--loc-hist-ink-5); background: var(--loc-hist-bg-9); }
+.hist-tag-slide { color: #7a3aa8; background: var(--loc-hist-bg-10); }
+.hist-tag-image { color: var(--loc-hist-ink-6); background: var(--loc-hist-bg-11); }
+
+/* 悬停/键盘聚焦才浮现的次要动作（定位 / 继续改）。
+   为什么用 opacity 而不是 display:none：display 切换会让键盘 Tab 序列在鼠标悬停前后突变，
+   且动画不可能做；opacity + pointer-events 既能淡入，Tab 聚焦时又能通过 :focus-within 显形。
+   为什么垫一层渐变底：动作层压在类型标签上，渐变让左侧文字自然"退开"，不用把标签真的删掉。 */
+.hist-actions {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 4px;
+  padding: 3px 4px 3px 14px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--loc-hist-bg-12) 0%, var(--c-surface) 22%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+.hist-row:hover .hist-actions,
+.hist-row:focus-within .hist-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+.hist-row:hover .hist-tag,
+.hist-row:focus-within .hist-tag {
+  opacity: 0;
+}
+
+.hist-btn {
+  font-size: 10.5px;
+  padding: 3px 7px;
+  border-radius: 8px;
+  border: 1px solid var(--loc-hist-line-2);
+  background: var(--loc-hist-bg-13);
+  color: var(--loc-hist-ink-7);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+}
+.hist-btn:hover {
+  background: var(--loc-hist-bg-14);
+  border-color: var(--loc-hist-line-3);
+}
+
+/* ============================================================================
+   历史记录 · 主题变量（文件作用域，前缀 --loc-hist-）
+   ============================================================================
+   【为什么是局部变量而不是直接用 --c-*】
+     本文件用的是自己的一套绿灰色阶，与全局语义 token 的绿值**不等值**
+     （例如 #1f7a4d 与 --c-brand-dark:#177A46 相差 ΔE≈4.5，直接换会让绿主题可见变色）。
+     所以这里为每个去重色值建一条局部变量：
+       · 绿主题（无 data-theme 属性）= **原字面量逐字不变** ⇒ 绿主题像素不变；
+       · light / dark 各给一套值（白色主题去绿、深色主题反向）。
+   【铁律】三套必须齐全，缺一套 = 那套主题下拿到空值 = 白屏。门禁 unit-theme-cover-group-b 守这条。
+   ========================================================================== */
+:root {
+  --loc-hist-bg-1: rgba(255, 255, 255, 0.9);
+  --loc-hist-ink-1: #8e8e93;
+  --loc-hist-ink-2: #1d7a36;
+  --loc-hist-bg-2: rgba(48, 209, 88, 0.14);
+  --loc-hist-bg-3: rgba(0, 0, 0, 0.04);
+  --loc-hist-line-1: rgba(48, 209, 88, 0.55);
+  --loc-hist-ink-3: #1d1d1f;
+  --loc-hist-bg-4: rgba(0, 0, 0, 0.05);
+  --loc-hist-ink-4: #c7c7cc;
+  --loc-hist-shadow-1: rgba(0, 0, 0, 0.03);
+  --loc-hist-bg-5: #34c759;
+  --loc-hist-bg-6: #ffcc00;
+  --loc-hist-shadow-2: rgba(255, 204, 0, 0.16);
+  --loc-hist-bg-7: #ff9500;
+  --loc-hist-shadow-3: rgba(255, 149, 0, 0.55);
+  --loc-hist-bg-8: rgba(52, 199, 89, 0.12);
+  --loc-hist-ink-5: #8a6d00;
+  --loc-hist-bg-9: rgba(255, 204, 0, 0.18);
+  --loc-hist-bg-10: rgba(175, 82, 222, 0.13);
+  --loc-hist-ink-6: #a75b00;
+  --loc-hist-bg-11: rgba(255, 149, 0, 0.14);
+  --loc-hist-bg-12: rgba(255, 255, 255, 0);
+  --loc-hist-line-2: rgba(48, 209, 88, 0.3);
+  --loc-hist-bg-13: rgba(48, 209, 88, 0.1);
+  --loc-hist-ink-7: #0a8f2f;
+  --loc-hist-bg-14: rgba(48, 209, 88, 0.26);
+  --loc-hist-line-3: rgba(48, 209, 88, 0.7);
+}
+html[data-theme="light"] {
+  --loc-hist-bg-1: rgba(255, 255, 255, 0.9);
+  --loc-hist-ink-1: #8e8e93;
+  --loc-hist-ink-2: #6a6a6a;
+  --loc-hist-bg-2: rgba(182, 182, 182, 0.14);
+  --loc-hist-bg-3: rgba(0, 0, 0, 0.04);
+  --loc-hist-line-1: rgba(182, 182, 182, 0.55);
+  --loc-hist-ink-3: #1d1d1f;
+  --loc-hist-bg-4: rgba(0, 0, 0, 0.05);
+  --loc-hist-ink-4: #c7c7cc;
+  --loc-hist-shadow-1: rgba(0, 0, 0, 0.03);
+  --loc-hist-bg-5: #aeaeae;
+  --loc-hist-bg-6: #ffcc00;
+  --loc-hist-shadow-2: rgba(255, 204, 0, 0.16);
+  --loc-hist-bg-7: #ff9500;
+  --loc-hist-shadow-3: rgba(255, 149, 0, 0.55);
+  --loc-hist-bg-8: rgba(174, 174, 174, 0.12);
+  --loc-hist-ink-5: #8a6d00;
+  --loc-hist-bg-9: rgba(255, 204, 0, 0.18);
+  --loc-hist-bg-10: rgba(125, 125, 125, 0.13);
+  --loc-hist-ink-6: #a75b00;
+  --loc-hist-bg-11: rgba(255, 149, 0, 0.14);
+  --loc-hist-bg-12: rgba(255, 255, 255, 0);
+  --loc-hist-line-2: rgba(182, 182, 182, 0.3);
+  --loc-hist-bg-13: rgba(182, 182, 182, 0.1);
+  --loc-hist-ink-7: #7b7b7b;
+  --loc-hist-bg-14: rgba(182, 182, 182, 0.26);
+  --loc-hist-line-3: rgba(182, 182, 182, 0.7);
+}
+html[data-theme="dark"] {
+  --loc-hist-bg-1: rgba(35, 39, 37, 0.9);
+  --loc-hist-ink-1: #aaacab;
+  --loc-hist-ink-2: #9fe8b3;
+  --loc-hist-bg-2: rgba(110, 223, 138, 0.21);
+  --loc-hist-bg-3: rgba(0, 0, 0, 0.42);
+  --loc-hist-line-1: rgba(110, 223, 138, 0.55);
+  --loc-hist-ink-3: #d6d8d7;
+  --loc-hist-bg-4: rgba(0, 0, 0, 0.42);
+  --loc-hist-ink-4: #383a39;
+  --loc-hist-shadow-1: rgba(0, 0, 0, 0.42);
+  --loc-hist-bg-5: #87e09d;
+  --loc-hist-bg-6: #ead37b;
+  --loc-hist-shadow-2: rgba(229, 204, 105, 0.24);
+  --loc-hist-bg-7: #eabc7b;
+  --loc-hist-shadow-3: rgba(229, 177, 105, 0.55);
+  --loc-hist-bg-8: rgba(116, 219, 142, 0.18);
+  --loc-hist-ink-5: #efde9e;
+  --loc-hist-bg-9: rgba(229, 204, 105, 0.27);
+  --loc-hist-bg-10: rgba(152, 167, 159, 0.2);
+  --loc-hist-ink-6: #edc493;
+  --loc-hist-bg-11: rgba(229, 177, 105, 0.21);
+  --loc-hist-bg-12: rgba(35, 39, 37, 0.08);
+  --loc-hist-line-2: rgba(110, 223, 138, 0.45);
+  --loc-hist-bg-13: rgba(110, 223, 138, 0.15);
+  --loc-hist-ink-7: #98eeb0;
+  --loc-hist-bg-14: rgba(110, 223, 138, 0.39);
+  --loc-hist-line-3: rgba(110, 223, 138, 0.55);
+}

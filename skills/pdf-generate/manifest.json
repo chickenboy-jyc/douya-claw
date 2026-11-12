@@ -1,0 +1,12 @@
+{
+  "name": "生成PDF",
+  "description": "生成 PDF 文档（支持中文）。sections 参数是 JSON 数组，每项形如 {\"heading\":\"小节标题\",\"paragraphs\":[\"段落1\",\"段落2\"]}。适合做报告、说明文档。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "params": [
+    { "name": "title", "label": "文档标题", "required": true },
+    { "name": "sections", "label": "内容(JSON 数组 [{heading,paragraphs}])", "type": "textarea", "required": true },
+    { "name": "filename", "label": "输出文件名(可选，如 报告.pdf)" }
+  ]
+}

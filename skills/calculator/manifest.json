@@ -1,0 +1,8 @@
+{
+  "name": "计算器",
+  "description": "对一段四则运算表达式求值（仅本地、仅示例）。",
+  "type": "js",
+  "params": [
+    { "key": "expr", "label": "表达式", "default": "1+2*3", "required": true }
+  ]
+}

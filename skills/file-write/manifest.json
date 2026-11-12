@@ -1,0 +1,10 @@
+{
+  "name": "写文件",
+  "description": "在工作区内创建或覆盖写入文件。可生成代码、报告、配置等。",
+  "type": "file",
+  "params": [
+    { "name": "path", "label": "文件路径（相对于工作区）", "hint": "例如 index.html 或 report/index.html；相对工作区，不要写盘符绝对路径", "default": "", "required": true },
+    { "name": "content", "label": "要写入的内容", "hint": "必须给完整内容。若一份文件太大、生成到一半被截断，改成分几次写：第 1 次覆盖，之后每次加 mode=append 追加剩下部分", "default": "", "required": true },
+    { "name": "mode", "label": "写入方式", "hint": "overwrite=覆盖（默认）；append=追加到文件末尾（用于分多次写完一个大文件）", "default": "overwrite" }
+  ]
+}

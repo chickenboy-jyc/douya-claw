@@ -1,0 +1,710 @@
+/* ============================================================================
+   mindmap.css —— 思维导图模块（类名前缀一律 mm-）
+   ============================================================================
+   为什么单独成文件、不写进 style.css：见 src/renderer/index.jsx:19-31 ——
+   style.css 被 git stash 回退过一次，末尾 append 的整段样式归零，组件还在引用
+   ⇒ 页面变成一堆无样式裸元素。独立文件后 style.css 再被覆盖也影响不到这里。
+
+   配色：只用 round15.css 里已有的 token（--r15-green / -green-deep / -green-tint /
+   -line / -text / -text-2 / -muted / -radius），不新造变量。
+   老板明文约束：**不要黑色主调、不要蓝色**（见 modules/posterTemplates.js:24-31）。
+   所以这里的「灰」一律带一点绿（#F6FAF7 / #DCEBE2 / rgba(30,60,45,…)），
+   不用纯灰也用不到任何一个蓝。
+
+   mm- 前缀已经被竞品诊断页占用了 mm-hero / mm-brief / mm-oneline / mm-sched 一段
+   （src/renderer/styles/ia-diagnosis.css），所以本文件刻意避开这几个名字，
+   只用 mm-page / mm-toolbar / mm-canvas 这一族。
+   ========================================================================== */
+
+.mm-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
+  /* 一屏内排完：44px 是本仓 .titlebar 的高度（style.css:56）。 */
+  height: calc(100vh - 44px);
+  /**
+   * ⚠️ max-height:100% 必须有，且不能删。
+   * `.mm-page` 是直接挂在 `.app-body`（flex row）下的，而 `.app-body` 的高度
+   * **不恒等于** 100vh − 44px：一旦设了「当前目标」，`WorkflowSteps` 的 `.wf-bar`
+   * 是文档流内的元素（style.css:2612，只有 flex-shrink:0，没有 position:fixed），
+   * 会把 `.app-body` 压矮 40~70px。没有这条，本页会比容器高出一截，
+   * 再被 `.app{overflow:hidden}`（style.css:49）从底部切掉 —— 表现是
+   * 「设了目标之后，导图页的提示条和画布下沿不见了」，而窗口一变大又正常了。
+   * 有它以后：容器够高 → 用上面那个 calc；容器被压矮 → 跟着缩（画布 flex:1 自己让位）。
+   */
+  max-height: 100%;
+  min-height: 0;
+  padding: 18px 22px 20px;
+  overflow: hidden;
+}
+/* 页头在这个页里是「页内第一块」，下外边距由 .mm-page 的 gap 接管 */
+.mm-page .page-banner {
+  margin-bottom: 0;
+  flex: 0 0 auto;
+}
+
+/* ---- 工具栏：一行不换行，窄屏横向滚动 ---- */
+.mm-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  padding: 8px 10px;
+  background: var(--c-surface);
+  border: 1px solid var(--r15-line);
+  border-radius: var(--r15-radius);
+  box-shadow: 0 1px 3px var(--loc-mm-shadow-1);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.mm-toolbar::-webkit-scrollbar { height: 6px; }
+.mm-toolbar::-webkit-scrollbar-thumb { background: var(--loc-mm-bg-1); border-radius: 3px; }
+
+/* 复用 .r15-btn-g / .r15-btn-o，只压一下内边距让一行塞得下 */
+.mm-tb {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.mm-sep {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 20px;
+  margin: 0 2px;
+  background: var(--r15-line);
+}
+.mm-grow { flex: 1 1 auto; min-width: 8px; }
+.mm-zoomval {
+  flex: 0 0 auto;
+  min-width: 38px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--r15-text-2);
+  font-variant-numeric: tabular-nums;
+}
+.mm-stats {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--r15-muted);
+}
+
+/* ---- 「全屏」联动开关 ----
+   元素是 `<span role="link">` 而**不是** `<button>`：本页首屏 `<button>` 数被棘轮钉在
+   10 个（`scripts/smoke/unit-firstscreen.mjs` 的 `BUTTON_RATCHET.mindmap`），多一个
+   就 `11 > 10` 整条首屏门禁红。样式按 `.mm-tb` 的尺寸手写，让它与旁边的按钮等高。 */
+.mm-zen {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border: 1px solid var(--r15-line);
+  border-radius: 8px;
+  background: var(--c-surface);
+  color: var(--r15-text-2);
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+.mm-zen:hover {
+  border-color: var(--r15-green);
+  color: var(--r15-green-dark);
+}
+.mm-zen.on {
+  background: var(--r15-green-tint);
+  border-color: var(--r15-green);
+  color: var(--r15-green-dark);
+}
+.mm-zen:focus-visible {
+  outline: 2px solid var(--loc-mm-line-1);
+  outline-offset: 1px;
+}
+
+/* ---- 全屏（zen）----
+   zen 时页头与快捷键图例**不渲染**（条件渲染，见 MindMap.jsx），所以这里只做
+   「收紧内边距 + 让画布吃掉剩下的全部高度」。
+   ⚠️ **不许**改成 position:fixed 盖住左侧导航：`scripts/verify/module-sweep.mjs`
+   靠点 `.module-card` 遍历模块，导航被盖住会让后面 9 个模块全部被判「点击无响应」。
+   `.mm-page` 的高度本身已经是 `calc(100vh - 44px)`，不需要在这里再动高度。 */
+.mm-page.is-zen {
+  gap: 8px;
+  padding: 10px 12px 12px;
+}
+.mm-page.is-zen .mm-body { gap: 6px; }
+
+/* ---- 快捷键图例（工具栏与画布之间的一条常驻说明）----
+   ⚠️ 类名**不是** `.mm-hint`：那个类属于画布下方那条状态提示（三态之一，会变）。
+   这里是**常量图例**，两者的生命周期、位置、语义都不同，共用类名会让样式与选择器
+   一起串味（详见 MindMap.jsx 渲染处那段注释）。
+   `flex: 0 0 auto` + 允许换行：窄窗口下宁可占两行，也不许把画布挤成一条缝
+   （画布本身是 `flex: 1 1 auto; min-height: 0`，它会让位，但让到 0 就没法用了）。 */
+.mm-keys {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  background: var(--r15-green-tint);
+  border: 1px solid var(--loc-mm-line-2);
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--r15-text-2);
+}
+.mm-keys-t {
+  font-weight: 700;
+  color: var(--r15-green-dark);
+}
+.mm-keys-i {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+/* 键帽：白底细边，不用黑色块（本页配色纪律：绿色主调 + 浅色底，见文件头） */
+.mm-keys kbd {
+  padding: 1px 6px;
+  background: var(--c-surface);
+  border: 1px solid var(--loc-mm-line-3);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  font-family: var(--font);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--r15-green-dark);
+}
+
+/* ---- 主体：画布 + 画布下方的提示条 ---- */
+.mm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* ---- 画布 ----
+   位置：.mm-canvas 是**手势与事件委托的唯一入口**（见 MindMap.jsx 文件头）。
+   SVG 是字符串注入的，里面的节点挂不上 React 事件，所以所有点击都在这一层
+   用 e.target.closest('[data-node-id]') 判。 */
+.mm-canvas {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  background-color: var(--loc-mm-bg-2);
+  /* 细点阵底纹：让「空白处可以拖动」这件事一眼看得出来 */
+  background-image: radial-gradient(var(--loc-mm-bg-3) 1px, transparent 1px);
+  background-size: 22px 22px;
+  border: 1px solid var(--r15-line);
+  border-radius: var(--r15-radius);
+  cursor: grab;
+  outline: none;
+  /* 画布要接键盘（Tab/Enter/方向键），但不要在 Tab 时画一圈粗框 */
+  -webkit-tap-highlight-color: transparent;
+}
+.mm-canvas:focus { border-color: var(--loc-mm-line-4); }
+.mm-canvas:focus-visible { border-color: var(--loc-mm-line-1); }
+.mm-canvas.is-panning { cursor: grabbing; }
+/* 拖节点改上级时同样是「抓着东西」的手型 —— 与平移共用一个 cursor，
+   但类名分开：平移是画布在动、拖拽是节点在动，两件事的收尾逻辑完全不同。 */
+.mm-canvas.is-dragging { cursor: grabbing; }
+
+/* 注入的 SVG 放在左上角原尺寸，**不要**在这里缩放它：
+   pan/zoom 已经由 buildSvg 的 viewport 在 SVG 内部做完了，
+   外层再 transform 一次就会出现「拖动速度翻倍 / 编辑框错位」。 */
+.mm-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.mm-svg svg { display: block; }
+
+/* ---- 拖拽改上级时的落点高亮 ----
+   位置与尺寸由 `layout.nodes` 换算成屏幕矩形（screen = world*zoom + pan），
+   与 .mm-toggle / .mm-edit 用的是同一个公式，所以三者永远对得上。
+   `pointer-events:none` 是硬要求：它是纯反馈，如果把 mouseup / click 吃掉，
+   表现就是「松手没反应」—— 而松手恰恰是这次手势唯一的动作点。
+   ⚠️ 它是一层 DOM 而不是 SVG 里的元素：拖动时每次 mousemove 都重建整棵树的 SVG
+   是本页最贵的操作（见 MindMap.jsx 里 svg 那个 useMemo 的注释）。 */
+.mm-drop-hint {
+  position: absolute;
+  /* ★ 2026-11-11：2 → 3，**必须高于 `.mm-drag-ghost`（1）**。
+     修前影子是 3、高亮是 2，而影子跟着鼠标走、尺寸和原框一样大 ⇒
+     鼠标压到目标框中心时，影子正好盖住那块高亮。用户看到的是
+     "我拖过去了但什么都没亮"，实际上高亮一直在画，只是被自己的影子挡了。
+     这不是"反馈不够明显"，是反馈被遮住了 —— 所以调 z-index 比加强描边更对症。 */
+  z-index: 3;
+  pointer-events: none;
+  border: 2px solid var(--r15-green);
+  border-radius: 10px;
+  background: var(--loc-mm-bg-4);
+  box-shadow: 0 0 0 3px var(--loc-mm-shadow-2);
+}
+
+/* 插入位（`before` / `after`）：不再是"描整个框"，而是框的上/下边缘一条横线。
+   为什么要区分画法：描框的语义是"挂到它下面"，若插到兄弟前/后也描框，
+   用户看到的是"要挂进去"，松手却插到了旁边 —— 反馈与结果不一致，
+   比没有反馈更让人不信任这个交互（老板原话就是"还是无法拖动"）。
+   ⚠️ 这里**不加** `box-shadow`：那需要再引一个 `--loc-*`，而 mindmap.css 的展开序列
+      长度是 B 组门禁逐位置比对的对象（加一个变量 = 整串错位）。3px 实心绿线本身就够醒目。 */
+.mm-drop-hint[data-mm-drop-zone="before"],
+.mm-drop-hint[data-mm-drop-zone="after"] {
+  border: none;
+  border-radius: 2px;
+  background: var(--r15-green);
+}
+
+/* ---- 拖动中的跟手影（2026-11-10）----
+   修前：拖一个框时，**被拖的那个框自己一动不动**，画面里只有"别的框被高亮"。
+   老板看到的结论是「压根就没有拖动这个功能」—— 这个判断在当时是准确的，
+   因为干路上确实没有任何"我正提着这个东西"的视觉。
+   本层就是那个视觉：与原框同位置同尺寸（由 JS 把 layout 矩形 + 鼠标位移换算好），
+   稍微抬起一点（阴影 + 轻微放大）表示"被拎起来了"。
+   `pointer-events:none` 是硬要求：影子若吃掉 mouseup，松手就没反应了。 */
+.mm-drag-ghost {
+  position: absolute;
+  /* ★ 2026-11-11：3 → **1**，必须低于 `.mm-drop-hint`（3）。
+     它是"我正提着这个东西"的视觉，不是"我要放到哪里"的视觉；
+     两者叠在一起时，**该让位的是影子**。z-index 只比 SVG（auto/0）高一层，
+     所以影子本身仍然看得见（半透明地飘在原位和目标框之间）。 */
+  z-index: 1;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 2px solid var(--r15-green);
+  border-radius: 10px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-weight: 600;
+  line-height: 1.25;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .18), 0 2px 6px rgba(0, 0, 0, .10);
+  /* ★ 2026-11-11：.92 → **.55**。原来的 .92 几乎是不透明的白板，挡住底下的一切；
+     影子只需要"能看出是我提着的那个框"，不需要把下面的目标框糊住。 */
+  opacity: .55;
+  transform: scale(1.02);
+  transform-origin: left top;
+  transition: box-shadow .12s ease;
+}
+.mm-drag-ghost-t {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+/* ---- 折叠 / 展开标识（DOM 叠加层，不是 SVG 里的元素） ----
+   契约没规定 buildSvg 会画折叠标识，所以这一层由本模块自己画：
+   位置由 layout.nodes 的 x/y/w/h 换算成屏幕坐标（screen = world*zoom + pan），
+   再往外挪 10px，不压在节点上（否则点节点边缘会被它抢走）。 */
+.mm-toggle {
+  position: absolute;
+  z-index: 3;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--loc-mm-line-1);
+  border-radius: 50%;
+  background: var(--c-surface);
+  color: var(--r15-green-deep);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 4px var(--loc-mm-shadow-3);
+}
+.mm-toggle:hover { background: var(--r15-green-tint); }
+/* 展开态（−）：更轻，不跟节点抢视线；悬停才变实 */
+.mm-toggle.is-open {
+  width: 14px;
+  height: 14px;
+  font-size: 11px;
+  opacity: 0.5;
+  background: var(--loc-mm-bg-5);
+}
+.mm-toggle.is-open:hover { opacity: 1; background: var(--r15-green-tint); }
+
+/* ---- 行内编辑框（盖在节点屏幕位置上） ---- */
+.mm-edit {
+  position: absolute;
+  z-index: 5;
+  margin: 0;
+  padding: 6px 8px;
+  border: 2px solid var(--r15-green);
+  border-radius: 9px;
+  background: var(--c-surface);
+  color: var(--r15-text);
+  font-family: var(--font);
+  /* 字号由 JS 按当前 zoom 覆盖（内联 style），这里只是 1:1 时的默认值。
+     行高 1.35 与 JS 里算框高的公式必须一致，否则打一行字就被裁。 */
+  font-size: 14px;
+  line-height: 1.35;
+  resize: none;
+  overflow: hidden;
+  outline: none;
+  box-shadow: 0 6px 18px var(--loc-mm-shadow-4);
+}
+
+/* ---- 编辑态的字数计数：贴在编辑框右下角的一块透明浮层 ----
+   为什么是同位置同尺寸的浮层而不是框外单独一行：
+     · 框外位置在节点贴近画布底/右边时会被 .mm-canvas 的 overflow:hidden 切掉，
+       而看不见的提示等于没提示；贴框内右下角则永远在视野里；
+     · 也不能放进 <textarea>（替换元素，没有子元素）。
+   z-index 6 = 压在 .mm-edit(5) 之上、.mm-ask(20) 之下。
+   pointer-events:none 是硬要求：否则它会吃掉编辑框右下角的点击与光标定位。 */
+.mm-edit-cnt {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 0 5px 3px 0;
+  pointer-events: none;
+}
+.mm-edit-cnt > span {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--loc-mm-bg-6);
+  color: var(--r15-muted);
+  font-family: var(--font);
+  font-size: 10.5px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+/*
+ * 写满时加重，但**不用红色**：60/60 是「刚好写满」，不是出错 —— 一个字都没丢，
+ * 红色在这里是假警报（红色留给真的失败态，比如 AI 那条 error）。加重 + 变深
+ * 已经足够提示「再打一个字就进不去了」，同时不改变首屏配色口径。
+ */
+.mm-edit-cnt.is-full > span {
+  color: var(--r15-text);
+  font-weight: 600;
+}
+
+/* ---- 空状态 / 加载态（本模块私有：仓库没有公共空状态组件） ---- */
+.mm-empty,
+.mm-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--r15-muted);
+  background: var(--loc-mm-bg-7);
+  pointer-events: none;
+}
+.mm-loading { background: var(--loc-mm-bg-8); }
+.mm-empty .mm-empty-t { font-size: 15px; font-weight: 700; color: var(--r15-text-2); }
+.mm-empty button { pointer-events: auto; }
+
+@keyframes mm-spin { to { transform: rotate(360deg); } }
+.mm-spin {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--loc-mm-line-5);
+  border-top-color: var(--r15-green);
+  border-radius: 50%;
+  animation: mm-spin 0.9s linear infinite;
+}
+
+/* ---- 画布下方的一条提示：失败 / 成功 / 中性 ---- */
+.mm-error,
+.mm-ok,
+.mm-hint {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border: 1px solid;
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+.mm-error {
+  color: var(--loc-mm-ink-1);
+  background: var(--loc-mm-bg-9);
+  border-color: var(--loc-mm-line-6);
+}
+.mm-ok {
+  color: var(--r15-green-dark);
+  background: var(--r15-green-tint);
+  border-color: var(--loc-mm-line-5);
+}
+.mm-hint {
+  color: var(--r15-text-2);
+  background: var(--loc-mm-bg-10);
+  border-color: var(--r15-line);
+}
+
+/* ---- AI 输入面板（轻量遮罩，不引 antd Modal） ---- */
+.mm-ask {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--loc-mm-bg-11);
+}
+.mm-ask-card {
+  width: min(460px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  padding: 20px 22px 16px;
+  background: var(--c-surface);
+  border: 1px solid var(--r15-line);
+  border-radius: 16px;
+  box-shadow: 0 18px 48px var(--loc-mm-bg-11);
+}
+.mm-ask-t {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--r15-text);
+}
+.mm-ask-d {
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--r15-text-2);
+}
+.mm-ask-input {
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 12px;
+  background: var(--loc-mm-bg-12);
+  border: 1px solid var(--r15-line);
+  border-radius: 9px;
+  font-family: var(--font);
+  font-size: 13.5px;
+  color: var(--r15-text);
+  outline: none;
+}
+.mm-ask-input:focus {
+  background: var(--c-surface);
+  border-color: var(--loc-mm-line-1);
+}
+.mm-ask-err {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--loc-mm-ink-1);
+}
+.mm-ask-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* AI 换框架：框架单选（两列，窄屏一列） */
+.mm-fw {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+.mm-fw-i {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 11px;
+  text-align: left;
+  background: var(--c-surface);
+  border: 1px solid var(--r15-line);
+  border-radius: 10px;
+  font-family: var(--font);
+  cursor: pointer;
+}
+.mm-fw-i b {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--r15-text);
+}
+.mm-fw-i span {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--r15-muted);
+}
+.mm-fw-i.on {
+  background: var(--r15-green-tint);
+  border-color: var(--r15-green);
+}
+.mm-fw-i.on b { color: var(--r15-green-dark); }
+
+/* ---- 右键菜单 ----
+   绝对定位在 `.mm-canvas` 内（left/top = 鼠标的**画布内**坐标，由 JS 夹在画布边界内，
+   见 MindMap.jsx 的 ctxLeft / ctxTop）。
+   z-index 12 = 压住 .mm-toggle(3) / .mm-edit(5) / .mm-edit-cnt(6)，但留在 .mm-ask(20) 之下
+   —— AI 面板是模态的，菜单是轻量浮层，层级关系必须和这个事实一致。
+   配色继续守住本页纪律：绿 + 浅底，唯一允许的红是「删除」这一项。 */
+.mm-ctx {
+  position: absolute;
+  z-index: 12;
+  min-width: 168px;
+  padding: 6px;
+  background: var(--c-surface);
+  border: 1px solid var(--r15-line);
+  border-radius: 12px;
+  box-shadow: 0 14px 34px var(--loc-mm-shadow-5);
+}
+.mm-ctx-i {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 7px 10px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-family: var(--font);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--r15-text);
+  cursor: pointer;
+}
+.mm-ctx-i:hover:not(:disabled) {
+  background: var(--r15-green-tint);
+  color: var(--r15-green-dark);
+}
+/* 不可用项灰而不藏：菜单项跳来跳去比灰着一项更让人迷惑，
+   而"为什么不能用"就写在那一项还在（根节点不能删 / 没有子节点不可折叠） */
+.mm-ctx-i:disabled {
+  color: var(--loc-mm-ink-2);
+  cursor: default;
+}
+.mm-ctx-i.is-danger:hover:not(:disabled) {
+  background: var(--loc-mm-bg-9);
+  color: var(--loc-mm-ink-1);
+}
+.mm-ctx-sep {
+  display: block;
+  height: 1px;
+  margin: 5px 6px;
+  background: var(--r15-line);
+}
+
+@media (max-width: 900px) {
+  .mm-fw { grid-template-columns: 1fr; }
+  .mm-page { padding: 14px 14px 16px; }
+}
+
+/* ============================================================================
+   思维导图 · 主题变量（文件作用域，前缀 --loc-mm-）
+   ============================================================================
+   【为什么是局部变量而不是直接用 --c-*】
+     本文件用的是自己的一套绿灰色阶，与全局语义 token 的绿值**不等值**
+     （例如 #1f7a4d 与 --c-brand-dark:#177A46 相差 ΔE≈4.5，直接换会让绿主题可见变色）。
+     所以这里为每个去重色值建一条局部变量：
+       · 绿主题（无 data-theme 属性）= **原字面量逐字不变** ⇒ 绿主题像素不变；
+       · light / dark 各给一套值（白色主题去绿、深色主题反向）。
+   【铁律】三套必须齐全，缺一套 = 那套主题下拿到空值 = 白屏。门禁 unit-theme-cover-group-b 守这条。
+   ========================================================================== */
+:root {
+  --loc-mm-shadow-1: rgba(30, 60, 45, 0.04);
+  --loc-mm-bg-1: rgba(30, 90, 60, 0.16);
+  --loc-mm-line-1: #bfe7d0;
+  --loc-mm-line-2: #d5ebe0;
+  --loc-mm-line-3: #cfe4d8;
+  --loc-mm-bg-2: #f6faf7;
+  --loc-mm-bg-3: #dcebe2;
+  --loc-mm-line-4: #d7ecdf;
+  --loc-mm-bg-4: rgba(47, 175, 107, 0.14);
+  --loc-mm-shadow-2: rgba(47, 175, 107, 0.12);
+  --loc-mm-shadow-3: rgba(30, 60, 45, 0.14);
+  --loc-mm-bg-5: #f3fbf6;
+  --loc-mm-shadow-4: rgba(30, 90, 60, 0.14);
+  --loc-mm-bg-6: rgba(255, 255, 255, 0.94);
+  --loc-mm-bg-7: rgba(246, 250, 247, 0.78);
+  --loc-mm-bg-8: rgba(246, 250, 247, 0.62);
+  --loc-mm-line-5: #cfebda;
+  --loc-mm-ink-1: #c74444;
+  --loc-mm-bg-9: #fdeded;
+  --loc-mm-line-6: #f7d4d4;
+  --loc-mm-bg-10: #f6f8fa;
+  --loc-mm-bg-11: rgba(19, 46, 36, 0.22);
+  --loc-mm-bg-12: #fbfdfc;
+  --loc-mm-shadow-5: rgba(19, 46, 36, 0.18);
+  --loc-mm-ink-2: #b6c6bf;
+}
+html[data-theme="light"] {
+  --loc-mm-shadow-1: rgba(54, 54, 54, 0.04);
+  --loc-mm-bg-1: rgba(79, 79, 79, 0.16);
+  --loc-mm-line-1: #dedede;
+  --loc-mm-line-2: #e6e6e6;
+  --loc-mm-line-3: #dfdfdf;
+  --loc-mm-bg-2: #f6faf7;
+  --loc-mm-bg-3: #dcebe2;
+  --loc-mm-line-4: #e7e7e7;
+  --loc-mm-bg-4: rgba(154, 154, 154, 0.14);
+  --loc-mm-shadow-2: rgba(154, 154, 154, 0.12);
+  --loc-mm-shadow-3: rgba(54, 54, 54, 0.14);
+  --loc-mm-bg-5: #f3fbf6;
+  --loc-mm-shadow-4: rgba(79, 79, 79, 0.14);
+  --loc-mm-bg-6: rgba(255, 255, 255, 0.94);
+  --loc-mm-bg-7: rgba(246, 250, 247, 0.78);
+  --loc-mm-bg-8: rgba(246, 250, 247, 0.62);
+  --loc-mm-line-5: #e4e4e4;
+  --loc-mm-ink-1: #c74444;
+  --loc-mm-bg-9: #fdeded;
+  --loc-mm-line-6: #f7d4d4;
+  --loc-mm-bg-10: #f6f8fa;
+  --loc-mm-bg-11: rgba(41, 41, 41, 0.22);
+  --loc-mm-bg-12: #fbfdfc;
+  --loc-mm-shadow-5: rgba(41, 41, 41, 0.18);
+  --loc-mm-ink-2: #b6c6bf;
+}
+html[data-theme="dark"] {
+  --loc-mm-shadow-1: rgba(0, 0, 0, 0.42);
+  --loc-mm-bg-1: rgba(154, 221, 187, 0.24);
+  --loc-mm-line-1: #1e4f33;
+  --loc-mm-line-2: #204231;
+  --loc-mm-line-3: #254232;
+  --loc-mm-bg-2: #1e201f;
+  --loc-mm-bg-3: #223c2d;
+  --loc-mm-line-4: #1f412c;
+  --loc-mm-bg-4: rgba(118, 218, 165, 0.21);
+  --loc-mm-shadow-2: rgba(118, 218, 165, 0.18);
+  --loc-mm-shadow-3: rgba(0, 0, 0, 0.42);
+  --loc-mm-bg-5: #11321d;
+  --loc-mm-shadow-4: rgba(154, 221, 187, 0.21);
+  --loc-mm-bg-6: rgba(35, 39, 37, 0.94);
+  --loc-mm-bg-7: rgba(35, 39, 37, 0.78);
+  --loc-mm-bg-8: rgba(35, 39, 37, 0.62);
+  --loc-mm-line-5: #1d472e;
+  --loc-mm-ink-1: #db8686;
+  --loc-mm-bg-9: #3c0a0a;
+  --loc-mm-line-6: #4f0f0f;
+  --loc-mm-bg-10: #1e201f;
+  --loc-mm-bg-11: rgba(0, 0, 0, 0.42);
+  --loc-mm-bg-12: #1a1c1b;
+  --loc-mm-shadow-5: rgba(0, 0, 0, 0.42);
+  /* ★ 2026-11-08 修：原值 #374740（深墨绿）压在 `.mm-ctx` 的 `--c-surface` #232725 上
+     = **1.54:1** —— 思维导图右键菜单里不可用的那几项整条隐形（`.mm-ctx-i:disabled`）。
+     这一格在深色下是**文字**色（唯一消费点 `:535 color`，已核对全仓），必须浅。
+     取 `--c-text-2` 的同值 #9ba8a1：on #232725 = 6.13:1，且仍明显弱于正常项的 `--r15-text`
+     （#ecf1ee），"灰而不藏"的语义保住了。绿 / 白两格不动。 */
+  --loc-mm-ink-2: #9ba8a1;
+}

@@ -1,0 +1,9 @@
+{
+  "name": "查询商品",
+  "description": "在上游货源商城（supplier.example.com）中查询商品（返回 searchProductId、名称、品牌、原价 listPrice、折后价 netPrice、库存等）。**关键词必填**（keyword 为空不会去查、直接提示）。默认按销量排序（orderBy=1），适合导购推荐爆款；也支持 orderBy=0 综合、2 上架时间、3 价格。用户想买上游货源的商品、比价、查价格时必须先调用它，再用返回的 searchProductId 加入购物车。",
+  "type": "js",
+  "params": [
+    { "key": "keyword", "label": "搜索关键词（必填）", "required": true, "default": "" },
+    { "key": "orderBy", "label": "排序：1=销量(默认)、0=综合、2=上架时间、3=价格", "default": 1 }
+  ]
+}

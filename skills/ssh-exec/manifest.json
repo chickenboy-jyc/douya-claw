@@ -1,0 +1,20 @@
+{
+  "name": "连接服务器",
+  "description": "通过 SSH 登录服务器执行命令、上传/下载文件（用于修改网站等）。凭证每次临时传入（host/username/password，或改填 key_path 用私钥认证）。action 支持 exec（执行命令）、upload（上传本地文件到服务器）、download（从服务器下载文件）。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "timeoutMs": 660000,
+  "params": [
+    { "name": "action", "label": "操作(exec/upload/download)", "required": true },
+    { "name": "host", "label": "服务器地址(IP 或域名)", "required": true },
+    { "name": "username", "label": "用户名", "required": true },
+    { "name": "password", "label": "密码或密钥口令" },
+    { "name": "key_path", "label": "私钥文件路径（相对工作区或绝对路径），填了则优先于密码" },
+    { "name": "port", "label": "端口(默认 22)" },
+    { "name": "command", "label": "要执行的命令(exec 用)" },
+    { "name": "timeout", "label": "单条命令超时秒数(默认 600，最大 600)" },
+    { "name": "local_path", "label": "本地文件路径(upload/download 用)" },
+    { "name": "remote_path", "label": "远程文件路径(upload/download 用)" }
+  ]
+}

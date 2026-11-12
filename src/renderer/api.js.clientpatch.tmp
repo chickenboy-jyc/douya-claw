@@ -1,0 +1,201 @@
+/**
+ * 统一的 GEO 代理调用。
+ * 所有新媒体 / 活动 / 危机等模块（以及原 GEO 向导）都通过主进程 /api/geo-proxy
+ * 把请求转发到自建后端（https://api.example.com），自动带 Bearer token，避免渲染进程跨域。
+ */
+// 同 App.jsx：允许 window.__DOUYA_BACKEND__ 覆盖（真实浏览器验收用），生产不注入。
+const BACKEND =
+  (typeof window !== 'undefined' && window.__DOUYA_BACKEND__) || 'http://127.0.0.1:10119';
+
+/**
+ * 租户上下文（模块级，随当前企业/项目切换而更新）。
+ * geoProxy 自动把它作为顶层字段带给主进程，主进程据此给自建后端转发
+ * X-Company-Id / X-Project-Id / X-Workspace-Id 头（后端暂不支持也能忽略，为能力接入铺路）。
+ */
+let __tenant = { companyId: null, projectId: null, workspaceId: null, role: null };
+
+export function setTenantContext(ctx) {
+  __tenant = { ...__tenant, ...(ctx && typeof ctx === 'object' ? ctx : {}) };
+}
+export function getTenantContext() {
+  return __tenant;
+}
+
+/**
+ * 调用自建后端接口。
+ * @param {string} path 后端相对路径，如 '/api/geo/company-analyze'
+ * @param {string} [method='POST'] HTTP 方法
+ * @param {object} [body={}] 请求体（GET/DELETE 时会作为 query 参数）
+ * @returns {Promise<object>} 成功时返回后端 JSON（通常带 ok:true），失败时返回 { ok:false, error }
+ */
+/** AI 补全默认超时（毫秒）：超时直接中断 fetch，避免界面「点了没反应、只能干等」。 */
+export const CHAT_TIMEOUT_MS = 120000;
+
+/**
+ * 非流式补全：调用主进程 /api/chat-once，返回 { ok, content }。
+ * 供 projectAI.js 的结构化 AI 调用（AI 辅助建项目 / 一句话建任务 / AI 执行任务 / 助手问答 / 今日建议）使用。
+ * 与 geoProxy 不同：chat-once 走通用 LLM 补全（复用后端 injectExpertSystemMessage + compressContext），
+ * 不经过自建后端。
+ *
+ * 超时 / 中断（纯增量，不破坏现有调用方）：
+ *  - 默认 120 秒超时（opts.timeoutMs 可覆盖），到点 AbortController 中断 fetch；
+ *  - 可选传 opts.signal（外部 AbortController.signal），外部取消时同步中断本次请求；
+ *  - 现有调用方都不传 signal / timeoutMs，行为与原来一致，只是多了超时保护。
+ * @param {Array} messages 对话消息 [{ role, content }]
+ * @param {object} [context] buildAIContext 输出的上下文（含 text / 四段 / id 载荷）
+ * @param {object} [opts] { temperature, model, baseURL, apiKey, signal, timeoutMs }
+ * @returns {Promise<{ok:boolean, content?:string, error?:string}>}
+ */
+/** 当前登录用户名：chat-once 也要按账号记账，而 chatOnce 是纯 helper 拿不到 React 状态 => 直接读本地登录态。 */
+function readingUsername() {
+  try {
+    const u = JSON.parse(localStorage.getItem('douya-auth-user') || '{}');
+    return String((u && (u.username || u.name)) || '');
+  } catch {
+    return '';
+  }
+}
+
+export async function chatOnce(messages, context, opts = {}) {
+  const external = opts && opts.signal ? opts.signal : null;
+  const timeoutMs = opts && typeof opts.timeoutMs === 'number' && opts.timeoutMs > 0 ? opts.timeoutMs : CHAT_TIMEOUT_MS;
+  // 统一用一个内部 controller 承接「超时」与「外部取消」两种中断源
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const onExternalAbort = () => controller.abort();
+  if (external) {
+    if (external.aborted) controller.abort();
+    else external.addEventListener('abort', onExternalAbort, { once: true });
+  }
+  try {
+    const res = await fetch(`${BACKEND}/api/chat-once`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({
+        messages: Array.isArray(messages) ? messages : [],
+        context: context && typeof context === 'object' ? context : null,
+        // 用量按账号归属（主进程据此记账并上报；服务端最终以 access_token 为准）
+        username: readingUsername() || undefined,
+        temperature: typeof opts.temperature === 'number' ? opts.temperature : undefined,
+        model: opts.model,
+        baseURL: opts.baseURL,
+        apiKey: opts.apiKey,
+        enableSearch: opts.enableSearch === true ? true : undefined,
+        reasoningEffort: opts.reasoningEffort,
+        // 透传 maxTokens：后端 handleChatOnce 默认 8000，开思考后 reasoning_content 会占用预算，
+        // 长代码任务需要更高上限（否则正文可能被 reasoning 挤空）。
+        maxTokens: typeof opts.maxTokens === 'number' && opts.maxTokens > 0 ? opts.maxTokens : undefined,
+      }),
+    });
+    const j = await res.json().catch(() => null);
+    if (!j) return { ok: false, content: '', error: 'AI 请求失败（HTTP ' + res.status + '）' };
+    return j;
+  } catch (e) {
+    const isAbort = !!(e && (e.name === 'AbortError' || e.name === 'AbortError'.toLowerCase()));
+    if (isAbort) {
+      if (external && external.aborted) return { ok: false, content: '', error: '已取消 AI 请求' };
+      return { ok: false, content: '', error: 'AI 请求超时（超过 ' + Math.round(timeoutMs / 1000) + ' 秒未返回），请重试' };
+    }
+    return { ok: false, content: '', error: 'AI 请求失败：' + e.message };
+  } finally {
+    clearTimeout(timer);
+    if (external) external.removeEventListener('abort', onExternalAbort);
+  }
+}
+
+export async function geoProxy(path, method = 'POST', body = {}) {
+  try {
+    const res = await fetch(`${BACKEND}/api/geo-proxy`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, method: method || 'POST', body: body || {}, ...__tenant }),
+    });
+    const j = await res.json().catch(() => null);
+    if (!j) return { ok: false, error: 'GEO 请求失败（HTTP ' + res.status + '）' };
+    if (j.ok === false) {
+      const err = j.error || 'GEO 请求失败';
+      if (err.includes('连接豆芽AI') || err.includes('登录已过期')) {
+        alert(err);
+      }
+      return { ok: false, error: err };
+    }
+    return j;
+  } catch (e) {
+    return { ok: false, error: 'GEO 请求失败：' + e.message };
+  }
+}
+
+/**
+ * 抓取 RSS/Atom 源原始文本。
+ * 走主进程 /api/rss-fetch（主进程直连，规避渲染进程跨域与证书问题，并做 SSRF 防护）。
+ * 不带任何 token。
+ * @param {string} url RSS/Atom 地址
+ * @returns {Promise<{ok:boolean, text?:string, url?:string, status?:number, error?:string}>}
+ */
+export async function fetchRss(url) {
+  try {
+    const res = await fetch(`${BACKEND}/api/rss-fetch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: String(url || '') }),
+    });
+    const j = await res.json().catch(() => null);
+    if (!j) return { ok: false, error: 'RSS 抓取失败（HTTP ' + res.status + '）' };
+    return j;
+  } catch (e) {
+    return { ok: false, error: 'RSS 抓取失败：' + e.message };
+  }
+}
+
+export default geoProxy;
+
+/**
+ * 真实联网检索：走主进程 /api/web-search（主进程直连第三方搜索 API，规避渲染层跨域，
+ * 并把检索 API key 留在主进程、绝不回传渲染层）。
+ *
+ * 返回语义（与主进程一致，调用方**务必**区分）：
+ *   · { ok:true,  results:[...] }  真检到资料；
+ *   · { ok:true,  results:[]   }  **真没搜到**（provider 可用但无结果），不是失败；
+ *   · { ok:false, error }         检索失败（网络/超时/HTTP 非 2xx/无可用 provider）。
+ * provider 记实际生效者：'tavily-key' | 'tavily-keyless' | 'bocha' | 'none'。
+ *
+ * @param {string} query 检索词
+ * @param {object} [opts] { count, freshness, timeoutMs }
+ * @returns {Promise<{ok:boolean, provider:string, results:Array, elapsedMs:number, error:string}>}
+ */
+export async function fetchWebSearch(query, opts = {}) {
+  try {
+    const res = await fetch(`${BACKEND}/api/web-search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: String(query || ''),
+        count: opts && opts.count,
+        freshness: opts && opts.freshness,
+        timeoutMs: opts && opts.timeoutMs,
+      }),
+    });
+    const j = await res.json().catch(() => null);
+    if (!j) return { ok: false, provider: 'none', results: [], elapsedMs: 0, error: '联网检索失败（HTTP ' + res.status + '）' };
+    return j;
+  } catch (e) {
+    return { ok: false, provider: 'none', results: [], elapsedMs: 0, error: '联网检索失败：' + e.message };
+  }
+}
+
+/**
+ * 联网搜索兜底：走内网 LLM 的 enable_search 联网能力，让模型联网检索后作答。
+ * 用于豆芽工作台后端爬虫/接口返回空或失败时的降级，保证「舆情/竞品/调性」等
+ * 依赖真实数据的功能在后端缺口下仍能给出有据可查的结果，而非「无返回/失败」。
+ * @param {string} question 要联网检索的问题（尽量具体，含企业名/关键词）
+ * @param {object} [opts] { temperature }
+ * @returns {Promise<{ok:boolean, content?:string, error?:string}>}
+ */
+export async function searchWeb(question, opts = {}) {
+  return chatOnce([{ role: 'user', content: question }], opts && opts.context ? opts.context : null, {
+    temperature: typeof opts.temperature === 'number' ? opts.temperature : 0.4,
+    enableSearch: true,
+    reasoningEffort: 'none',
+  });
+}

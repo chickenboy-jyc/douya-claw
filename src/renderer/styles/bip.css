@@ -1,0 +1,261 @@
+/**
+ * bip.css —— 子品牌「搜索 → 候选 → 一键建档」首屏（0.21.14 老板需求 4）的新样式。
+ *
+ * 为什么独立成文件（共享知识 S2）：style.css 有 6697 行、16 个模块共用，
+ * 往里加一条就要担心撞名（scripts/smoke/lint-css-collisions.mjs 就是为这类事故写的）。
+ * 这里只定义**新**类名（.bip-search-* / .bip-cand* / .bip-results* / .bip-more*），
+ * 老的 .bip-row / .bip-name / .bip-web 等仍在 style.css，一条没动。
+ */
+
+/* ---------- 首屏第 1、2 块：母品牌 + 搜索 ---------- */
+.bip-search-box {
+  border: 1px solid var(--loc-bip-line-1);
+  background: var(--loc-bip-bg-1);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.bip-search-hd {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.bip-search-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--loc-bip-ink-1);
+}
+
+.bip-search-hint {
+  font-size: 12px;
+  color: var(--loc-bip-ink-2);
+}
+
+.bip-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bip-search-row .ant-input-affix-wrapper,
+.bip-search-row .ant-input {
+  flex: 1;
+}
+
+/* ---------- 首屏第 3 块：候选结果 ---------- */
+.bip-results {
+  border: 1px solid var(--loc-bip-line-2);
+  border-radius: 12px;
+  padding: 10px 14px 8px;
+  background: var(--c-surface);
+}
+
+.bip-results-hint {
+  font-size: 12.5px;
+  color: var(--loc-bip-ink-2);
+  line-height: 1.7;
+  padding: 6px 0;
+}
+
+.bip-results-empty {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--loc-bip-ink-3);
+  background: var(--loc-bip-bg-2);
+  border: 1px solid var(--loc-bip-line-3);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.bip-cands {
+  display: flex;
+  flex-direction: column;
+}
+
+.bip-cand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--loc-bip-line-4);
+}
+
+.bip-cand:last-child {
+  border-bottom: none;
+}
+
+.bip-cand-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.bip-cand-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--loc-bip-ink-4);
+}
+
+.bip-cand-note {
+  font-size: 11.5px;
+  color: var(--loc-bip-ink-5);
+  line-height: 1.5;
+}
+
+.bip-results-foot {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--loc-bip-line-5);
+  font-size: 11.5px;
+  color: var(--loc-bip-ink-5);
+}
+
+.bip-results-dot {
+  margin: 0 6px;
+}
+
+/* ---------- 更多设置（折叠） ---------- */
+.bip-more {
+  border: 1px solid var(--loc-bip-line-6);
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: var(--loc-bip-bg-3);
+}
+
+.bip-more-summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--loc-bip-ink-6);
+  list-style: none;
+}
+
+.bip-more-summary::-webkit-details-marker {
+  display: none;
+}
+
+.bip-more-summary::before {
+  content: '▸ ';
+  color: var(--loc-bip-ink-5);
+}
+
+.bip-more[open] .bip-more-summary::before {
+  content: '▾ ';
+}
+
+.bip-more-body {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ============================================================================
+ * 0.21.17 · 老板第 6 条：「子品牌…做的更加傻瓜式 一键式一点」
+ * 「⚡ 一键建档」进度与结果（与「搜索」按钮同一行，提示挂在搜索框内下方）。
+ * ========================================================================== */
+.bip-quick-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--loc-bip-ink-6);
+}
+
+.bip-quick-step.on {
+  color: var(--loc-bip-ink-1);
+  font-weight: 700;
+}
+
+.bip-quick-step.done {
+  color: var(--loc-bip-ink-7);
+}
+
+.bip-quick-msg {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--loc-bip-ink-8);
+}
+
+.bip-quick-msg.ok {
+  color: var(--loc-bip-ink-1);
+}
+
+/* ============================================================================
+   BIP · 主题变量（文件作用域，前缀 --loc-bip-）
+   ============================================================================
+   【为什么是局部变量而不是直接用 --c-*】
+     本文件用的是自己的一套绿灰色阶，与全局语义 token 的绿值**不等值**
+     （例如 #1f7a4d 与 --c-brand-dark:#177A46 相差 ΔE≈4.5，直接换会让绿主题可见变色）。
+     所以这里为每个去重色值建一条局部变量：
+       · 绿主题（无 data-theme 属性）= **原字面量逐字不变** ⇒ 绿主题像素不变；
+       · light / dark 各给一套值（白色主题去绿、深色主题反向）。
+   【铁律】三套必须齐全，缺一套 = 那套主题下拿到空值 = 白屏。门禁 unit-theme-cover-group-b 守这条。
+   ========================================================================== */
+:root {
+  --loc-bip-line-1: #e4efe7;
+  --loc-bip-bg-1: #f7fbf8;
+  --loc-bip-ink-1: #1d7a36;
+  --loc-bip-ink-2: #8e8e93;
+  --loc-bip-line-2: #e8e8e8;
+  --loc-bip-ink-3: #8a5200;
+  --loc-bip-bg-2: rgba(255, 159, 10, 0.1);
+  --loc-bip-line-3: #f0d3a8;
+  --loc-bip-line-4: #f0f0f0;
+  --loc-bip-ink-4: #1f1f1f;
+  --loc-bip-ink-5: #9ca3af;
+  --loc-bip-line-5: #f5f5f5;
+  --loc-bip-line-6: #eceff1;
+  --loc-bip-bg-3: #fcfcfc;
+  --loc-bip-ink-6: #6b7280;
+  --loc-bip-ink-7: #3aa76d;
+  --loc-bip-ink-8: #b45309;
+}
+html[data-theme="light"] {
+  --loc-bip-line-1: #e4efe7;
+  --loc-bip-bg-1: #f7fbf8;
+  --loc-bip-ink-1: #6a6a6a;
+  --loc-bip-ink-2: #8e8e93;
+  --loc-bip-line-2: #e8e8e8;
+  --loc-bip-ink-3: #8a5200;
+  --loc-bip-bg-2: rgba(255, 159, 10, 0.1);
+  --loc-bip-line-3: #f0d3a8;
+  --loc-bip-line-4: #f0f0f0;
+  --loc-bip-ink-4: #1f1f1f;
+  --loc-bip-ink-5: #a2a2a2;
+  --loc-bip-line-5: #f5f5f5;
+  --loc-bip-line-6: #eceff1;
+  --loc-bip-bg-3: #fcfcfc;
+  --loc-bip-ink-6: #727272;
+  --loc-bip-ink-7: #949494;
+  --loc-bip-ink-8: #b45309;
+}
+html[data-theme="dark"] {
+  --loc-bip-line-1: #213828;
+  --loc-bip-bg-1: #1d1f1e;
+  --loc-bip-ink-1: #9fe8b3;
+  --loc-bip-ink-2: #aaacab;
+  --loc-bip-line-2: #2c2e2d;
+  --loc-bip-ink-3: #efce9e;
+  --loc-bip-bg-2: rgba(228, 179, 103, 0.15);
+  --loc-bip-line-3: #624111;
+  --loc-bip-line-4: #262827;
+  --loc-bip-ink-4: #d6d8d7;
+  --loc-bip-ink-5: #a3a5a4;
+  --loc-bip-line-5: #212322;
+  --loc-bip-line-6: #272928;
+  --loc-bip-bg-3: #1a1c1b;
+  --loc-bip-ink-6: #b4b6b5;
+  --loc-bip-ink-7: #8ed8b1;
+  --loc-bip-ink-8: #ecb48a;
+}

@@ -1,0 +1,9 @@
+{
+  "name": "查询商品",
+  "description": "在上游货源商城（supplier.example.com）中查询商品及所有规格（含 searchProductId、名称、价格、库存、医保编码、相关分类等）。默认按销量排序（orderBy=1），返回卖得最好的商品，适合导购推荐爆款；也支持 orderBy=0 综合、2 上架时间、3 价格。用户想买商品、比价、查价格时必须先调用它拿到真实商品数据，再用返回的 searchProductId 加入购物车。",
+  "type": "js",
+  "params": [
+    { "key": "keyword", "label": "搜索关键词（可空，空则拉全量）", "default": "" },
+    { "key": "orderBy", "label": "排序：1=销量(默认)、0=综合、2=上架时间、3=价格", "default": 1 }
+  ]
+}

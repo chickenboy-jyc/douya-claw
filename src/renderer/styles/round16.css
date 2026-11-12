@@ -1,0 +1,593 @@
+/* ============================================================================
+   round16.css —— 第十九轮（2026-10-19）老板第 2、3 条需求专用
+   ============================================================================
+   为什么单独一个文件：style.css 有 6697 行、16 个模块共用，末尾 append 的规则
+   一次 git 回退就整段消失（round14 的由来）。本轮新增/覆盖的样式全部收在这里，
+   由 index.jsx 在 round14 / round15 之后引入 —— 同优先级下靠后者覆盖，不动任何既有选择器。
+
+   两件事：
+     ① 豆芽助手页（聊天页）改成 Apple 观感：圆角 12~22px、极浅边框 + 1px 阴影、
+        系统字体栈、行高 1.7、留白加大。**只改外观**，不动任何交互。
+        作用域统一挂在 `.wb-apple` 祖先类上（App.jsx 聊天页根节点已挂），
+        所以别的模块一个像素都不会被波及。
+     ② 统一任务栏（对话绿 / 开发黄 / 定时紫）+ 顶部「对话 / 工作」大号居中切换。
+   ========================================================================== */
+/* ────────────────────────────────────────────────────────────────────────────
+   文件作用域主题变量（主题可切换 · 三期工程）
+   ────────────────────────────────────────────────────────────────────────────
+   【为什么是局部变量，不是直接换全局 --c-*】
+     本文件这套色是自定义绿灰，与 theme-tokens.css 里 --c-* 的**绿主题值不相等**。
+     直接把字面量换掉，绿色主题就会肉眼可见地变色（背景、正文、品牌绿全都会漂）。
+     所以这里一条变量对一条原字面量：
+
+       · 绿主题（:root，不带 data-theme）  = **原字面量，一字不改** ⇒ 逐像素不变
+       · 白主题（html[data-theme="light"]）= 去绿中性，主色中性深灰（老板明令不许蓝）
+       · 深主题（html[data-theme="dark"]） = 带绿的深底浅字
+
+   【铁律：三套必须齐全】
+     少一套 ⇒ 那个主题下这些属性拿到空值 ⇒ 白屏 / 黑字黑底。新增变量必须同时补三套。
+     门禁 scripts/smoke/unit-theme-cover-group-a.mjs 的 C/D 两条断言守着这件事。
+
+   【命名】
+     --loc-r16-<角色><序号>。前缀是文件独占的，**不许跨文件复用**。
+     刻意不用 --c- 开头：那是全局 token 的命名空间，混进去会被核心层门禁误判。
+
+   【数据可视化系列色】
+     标签/系列色表达的是**数据身份**，不是界面语义 —— 它们也建了变量，但深色值
+     只调亮度、不改成同一个色，系列之间保持可区分。
+   ──────────────────────────────────────────────────────────────────────────── */
+:root {
+  --loc-r16-alphaBrand10: rgba(48, 209, 88, 0.1);
+  --loc-r16-alphaBrand12: rgba(48, 209, 88, 0.12);
+  --loc-r16-alphaBrand14: rgba(48, 209, 88, 0.14);
+  --loc-r16-alphaBrand18: rgba(48, 209, 88, 0.18);
+  --loc-r16-alphaBrand22: rgba(48, 209, 88, 0.22);
+  --loc-r16-alphaBrand35: rgba(48, 209, 88, 0.35);
+  --loc-r16-alphaBrand40: rgba(47, 175, 107, 0.4);
+  --loc-r16-alphaBrand40a: rgba(48, 209, 88, 0.4);
+  --loc-r16-alphaBrand45: rgba(48, 209, 88, 0.45);
+  --loc-r16-alphaBrand50: rgba(47, 175, 107, 0.5);
+  --loc-r16-alphaBrand55: rgba(48, 209, 88, 0.55);
+  --loc-r16-alphaDanger06: rgba(255, 59, 48, 0.06);
+  --loc-r16-alphaDanger14: rgba(255, 59, 48, 0.14);
+  --loc-r16-alphaDanger18: rgba(255, 59, 48, 0.18);
+  --loc-r16-alphaGlass86: rgba(255, 255, 255, 0.86);
+  --loc-r16-alphaGlass92: rgba(242, 242, 247, 0.92);
+  --loc-r16-alphaWarn16: rgba(255, 204, 0, 0.16);
+  --loc-r16-border: rgba(0, 0, 0, 0.04);
+  --loc-r16-bordera: rgba(0, 0, 0, 0.05);
+  --loc-r16-borderb: rgba(0, 0, 0, 0.06);
+  --loc-r16-borderc: rgba(0, 0, 0, 0.12);
+  --loc-r16-brand: #30d158;
+  --loc-r16-brandDark: #0f5c33;
+  --loc-r16-brandDeep: #17703a;
+  --loc-r16-brandDeepa: #1d7a36;
+  --loc-r16-brandTint: #f4fbf7;
+  --loc-r16-danger: #8a1c14;
+  --loc-r16-dangera: #b80012;
+  --loc-r16-dangerb: #d70015;
+  --loc-r16-hover: rgba(0, 0, 0, 0.04);
+  --loc-r16-hovera: rgba(0, 0, 0, 0.06);
+  --loc-r16-shadowSoft: rgba(0, 0, 0, 0.03);
+  --loc-r16-shadowSofta: rgba(0, 0, 0, 0.04);
+  --loc-r16-shadowSoftb: rgba(0, 0, 0, 0.06);
+  --loc-r16-shadowSoftc: rgba(0, 0, 0, 0.08);
+  --loc-r16-surface2: #f2f2f7;
+  --loc-r16-text: #1d1d1f;
+  --loc-r16-text2: #6e6e73;
+  --loc-r16-text2a: #8e8e93;
+}
+
+html[data-theme="light"] {
+  --loc-r16-alphaBrand10: rgba(58, 66, 71, 0.1);
+  --loc-r16-alphaBrand12: rgba(58, 66, 71, 0.12);
+  --loc-r16-alphaBrand14: rgba(58, 66, 71, 0.14);
+  --loc-r16-alphaBrand18: rgba(58, 66, 71, 0.18);
+  --loc-r16-alphaBrand22: rgba(58, 66, 71, 0.22);
+  --loc-r16-alphaBrand35: rgba(58, 66, 71, 0.35);
+  --loc-r16-alphaBrand40: rgba(58, 66, 71, 0.4);
+  --loc-r16-alphaBrand40a: rgba(58, 66, 71, 0.4);
+  --loc-r16-alphaBrand45: rgba(58, 66, 71, 0.45);
+  --loc-r16-alphaBrand50: rgba(58, 66, 71, 0.5);
+  --loc-r16-alphaBrand55: rgba(58, 66, 71, 0.55);
+  --loc-r16-alphaDanger06: rgba(192, 57, 43, 0.06);
+  --loc-r16-alphaDanger14: rgba(192, 57, 43, 0.14);
+  --loc-r16-alphaDanger18: rgba(192, 57, 43, 0.18);
+  --loc-r16-alphaGlass86: rgba(255, 255, 255, 0.86);
+  --loc-r16-alphaGlass92: rgba(255, 255, 255, 0.92);
+  --loc-r16-alphaWarn16: rgba(154, 106, 0, 0.16);
+  --loc-r16-border: #e3e6e6;
+  --loc-r16-bordera: #e3e6e6;
+  --loc-r16-borderb: #e3e6e6;
+  --loc-r16-borderc: #e3e6e6;
+  --loc-r16-brand: #3a4247;
+  --loc-r16-brandDark: #14181a;
+  --loc-r16-brandDeep: #23282d;
+  --loc-r16-brandDeepa: #23282d;
+  --loc-r16-brandTint: #f1f4f2;
+  --loc-r16-danger: #c0392b;
+  --loc-r16-dangera: #c0392b;
+  --loc-r16-dangerb: #c0392b;
+  --loc-r16-hover: #edefee;
+  --loc-r16-hovera: #edefee;
+  --loc-r16-shadowSoft: rgba(0, 0, 0, 0.04);
+  --loc-r16-shadowSofta: rgba(0, 0, 0, 0.04);
+  --loc-r16-shadowSoftb: rgba(0, 0, 0, 0.04);
+  --loc-r16-shadowSoftc: rgba(0, 0, 0, 0.04);
+  --loc-r16-surface2: #f4f5f5;
+  --loc-r16-text: #1d2124;
+  --loc-r16-text2: #565e63;
+  --loc-r16-text2a: #565e63;
+}
+
+html[data-theme="dark"] {
+  --loc-r16-alphaBrand10: rgba(60, 196, 124, 0.1);
+  --loc-r16-alphaBrand12: rgba(60, 196, 124, 0.12);
+  --loc-r16-alphaBrand14: rgba(60, 196, 124, 0.14);
+  --loc-r16-alphaBrand18: rgba(60, 196, 124, 0.18);
+  --loc-r16-alphaBrand22: rgba(60, 196, 124, 0.22);
+  --loc-r16-alphaBrand35: rgba(60, 196, 124, 0.35);
+  --loc-r16-alphaBrand40: rgba(60, 196, 124, 0.4);
+  --loc-r16-alphaBrand40a: rgba(60, 196, 124, 0.4);
+  --loc-r16-alphaBrand45: rgba(60, 196, 124, 0.45);
+  --loc-r16-alphaBrand50: rgba(60, 196, 124, 0.5);
+  --loc-r16-alphaBrand55: rgba(60, 196, 124, 0.55);
+  --loc-r16-alphaDanger06: rgba(240, 121, 107, 0.06);
+  --loc-r16-alphaDanger14: rgba(240, 121, 107, 0.14);
+  --loc-r16-alphaDanger18: rgba(240, 121, 107, 0.18);
+  --loc-r16-alphaGlass86: rgba(255, 255, 255, 0.19);
+  --loc-r16-alphaGlass92: rgba(255, 255, 255, 0.2);
+  --loc-r16-alphaWarn16: rgba(227, 163, 58, 0.16);
+  --loc-r16-border: rgba(255, 255, 255, 0.10);
+  --loc-r16-bordera: rgba(255, 255, 255, 0.10);
+  --loc-r16-borderb: rgba(255, 255, 255, 0.10);
+  --loc-r16-borderc: rgba(255, 255, 255, 0.10);
+  --loc-r16-brand: #3cc47c;
+  --loc-r16-brandDark: #25985a;
+  --loc-r16-brandDeep: #2faf6b;
+  --loc-r16-brandDeepa: #2faf6b;
+  --loc-r16-brandTint: #1b2a22;
+  --loc-r16-danger: #f0796b;
+  --loc-r16-dangera: #f0796b;
+  --loc-r16-dangerb: #f0796b;
+  --loc-r16-hover: #323835;
+  --loc-r16-hovera: #323835;
+  --loc-r16-shadowSoft: rgba(0, 0, 0, 0.28);
+  --loc-r16-shadowSofta: rgba(0, 0, 0, 0.28);
+  --loc-r16-shadowSoftb: rgba(0, 0, 0, 0.28);
+  --loc-r16-shadowSoftc: rgba(0, 0, 0, 0.28);
+  --loc-r16-surface2: #2a2f2c;
+  --loc-r16-text: #ecf1ee;
+  --loc-r16-text2: #9ba8a1;
+  --loc-r16-text2a: #9ba8a1;
+}
+
+
+/* ============================================================================
+   一、Apple 观感（作用域：.wb-apple，只覆盖聊天页）
+   ========================================================================== */
+.wb-apple {
+  --wb-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+    'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+  --wb-line: rgba(0, 0, 0, 0.06);
+  --wb-line-2: rgba(0, 0, 0, 0.04);
+  --wb-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --wb-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --wb-fill: #f2f2f7;
+  font-family: var(--wb-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- 消息气泡：18px 圆角、内边距 12/16、行高 1.7 ---- */
+.wb-apple .msg { margin-bottom: 14px; }
+.wb-apple .msg-bubble {
+  border-radius: 18px;
+  padding: 12px 16px;
+  line-height: 1.7;
+  font-size: 13.5px;
+  border: 1px solid var(--wb-line);
+  box-shadow: var(--wb-shadow-sm);
+}
+.wb-apple .msg.user .msg-bubble {
+  /* 保留项目绿色主色（--accent / #30d158），只补圆润与阴影 */
+  border-color: var(--loc-r16-border);
+  box-shadow: 0 1px 2px var(--loc-r16-shadowSoftb), 0 6px 18px var(--loc-r16-alphaBrand18);
+}
+.wb-apple .msg.assistant .msg-bubble {
+  background: var(--loc-r16-alphaGlass92);
+  border-color: var(--wb-line);
+  box-shadow: var(--wb-shadow-sm);
+}
+.wb-apple .msg-bubble p { line-height: 1.7; }
+.wb-apple .msg-bubble li { line-height: 1.7; }
+
+/* ---- 卡片类（自检卡 / 成果卡 / 澄清卡 / 工具组）：16px 圆角 + 一致阴影 ---- */
+.wb-apple .review-card,
+.wb-apple .msg-deliverable,
+.wb-apple .msg-clarify,
+.wb-apple .msg-tool-group {
+  border-radius: 16px !important;
+  border: 1px solid var(--wb-line) !important;
+  box-shadow: var(--wb-shadow-sm);
+}
+.wb-apple .msg-tool-card { border-radius: 14px; border-color: var(--wb-line); }
+
+/* ---- 输入区：容器 22px 圆角、无硬边框、靠阴影浮起来 ---- */
+.wb-apple .inputbar {
+  border-top: 0;
+  padding: 10px 18px 18px;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  gap: 10px;
+}
+.wb-apple .inputbar textarea {
+  border-radius: 22px !important;
+  border: 1px solid var(--loc-r16-borderb) !important;
+  padding: 13px 18px !important;
+  font-family: var(--wb-font) !important;
+  font-size: 13.5px !important;
+  line-height: 1.7 !important;
+  box-shadow: var(--wb-shadow-sm);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.wb-apple .inputbar textarea:focus {
+  border-color: var(--loc-r16-alphaBrand45) !important;
+  box-shadow: 0 0 0 4px var(--loc-r16-alphaBrand12), var(--wb-shadow-sm);
+}
+/* 输入区左右两个圆形按钮：与 22px 输入框等高、同色系 */
+.wb-apple .mic-btn,
+.wb-apple .attach-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--wb-line);
+  background: var(--c-surface);
+  box-shadow: var(--wb-shadow-sm);
+}
+.wb-apple .mic-btn:hover,
+.wb-apple .attach-btn:hover { background: var(--loc-r16-alphaBrand10); border-color: var(--loc-r16-alphaBrand35); }
+
+/* ---- 按钮：12px 圆角（antd 全局 6~8px 太方） ---- */
+.wb-apple .ant-btn {
+  border-radius: 12px;
+  font-family: var(--wb-font);
+  box-shadow: none;
+}
+.wb-apple .ant-btn-primary { box-shadow: 0 1px 2px var(--loc-r16-shadowSoftb), 0 4px 12px var(--loc-r16-alphaBrand22); }
+
+/* ---- 快捷胶囊：12px 圆角、更大内边距、悬浮有点阴影 ---- */
+.wb-apple .wb-quick { padding: 2px 18px 8px; gap: 8px; }
+.wb-apple .wb-quick-chip {
+  border-radius: 12px;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-family: var(--wb-font);
+  background: var(--c-surface);
+  border: 1px solid var(--wb-line);
+  box-shadow: var(--wb-shadow-sm);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+.wb-apple .wb-quick-chip:hover {
+  border-color: var(--loc-r16-alphaBrand40a);
+  box-shadow: 0 2px 8px var(--loc-r16-shadowSoftb);
+  transform: translateY(-1px);
+}
+
+/* ---- 右上角两个次要开关（此前 style.css 里根本没有它们的样式 = 裸按钮） ---- */
+.main-toggles {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 6px 18px 0;
+}
+.toggle-btn {
+  font-family: var(--wb-font);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim, var(--loc-r16-text2));
+  padding: 7px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--loc-r16-borderb);
+  background: var(--c-surface);
+  cursor: pointer;
+  box-shadow: 0 1px 2px var(--loc-r16-shadowSofta);
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
+}
+.toggle-btn:hover { color: var(--text, var(--loc-r16-text)); border-color: var(--loc-r16-borderc); }
+.toggle-btn.open {
+  color: var(--loc-r16-brandDeep);
+  background: var(--loc-r16-alphaBrand12);
+  border-color: var(--loc-r16-alphaBrand35);
+}
+
+/* ---- 右侧历史成果栏：卡片化 ---- */
+.wb-apple .right-panel { border-radius: 16px; border: 1px solid var(--wb-line); }
+
+/* ============================================================================
+   二、统一任务栏（老板第 3 条）：一个栏混排 对话(绿) / 开发(黄) / 定时(紫)
+   ========================================================================== */
+/* 常驻语义：sessionsOpen 默认 true；点右上「对话记录」可收起（保留这个能力，
+   只是不再是「抽屉」—— 抽屉在这个项目里从来没有 overlay 样式，一直是常驻）。
+
+   ⚠️ 收起是**组件行为**，不是这里的 CSS：TaskCenter.jsx:42 是 `if (!open) return null`，
+   收起时组件根本不渲染，所以不需要（也无法）用 CSS 让它不占宽。
+   这里原来有一条 `.sidebar.sidebar-drawer:not(.open) { display: none; }`，已删除 ——
+   TaskCenter.jsx:47 的 className 是硬编码 `"sidebar sidebar-drawer task-center open"`，
+   `open` 恒在 ⇒ `:not(.open)` 永不命中，那条规则从未生效过，留着只会引诱下一个人
+   去「修」它（改 CSS 控制收起是死路，真机制在 `return null`）。
+
+   ⚠️ 下面 .task-center 系列规则**故意不带** .wb-apple 前缀。
+   App.jsx 里 <TaskCenter>（:2837）与 <div className="main wb-apple">（:2855）是**兄弟节点**
+   （同在 `effectiveModule === 'workbench' && wbTab === 'chat'` 的 Fragment 里），不是父子
+   ⇒ `.wb-apple .task-center` **物理上匹配不到任何元素**。
+   加前缀 = 整段任务栏样式静默失效：不报错、不越界、门禁全绿，只是不变圆润。
+   要加前缀，先改 App.jsx 的嵌套结构（把 TaskCenter 放进 .main 里）。 */
+
+.task-center {
+  width: 264px;
+  background: var(--loc-r16-alphaGlass86);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  border-right: 1px solid var(--loc-r16-borderb);
+}
+.task-center .sidebar-header { padding: 14px 14px 8px; }
+.task-center .tc-list { padding: 4px 8px 8px; gap: 2px; }
+.tc-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--text-faint, var(--loc-r16-text2a));
+  padding: 14px 8px 6px;
+}
+.tc-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border-radius: 14px;
+  /* 0.21.11：删除入口用绝对定位贴在行右侧，需要本行做定位父级 */
+  position: relative;
+}
+.tc-item .tc-body { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.tc-item .tc-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text, var(--loc-r16-text));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tc-item .tc-time { font-size: 10.5px; color: var(--text-faint, var(--loc-r16-text2a)); margin: 0; }
+.tc-item.active { background: var(--loc-r16-alphaBrand14); }
+.tc-item.active .tc-name { color: var(--loc-r16-brandDeep); }
+
+/* 三类任务的圆点：对话绿 #34c759 / 开发黄 #ffcc00 / 定时紫 #af52de */
+.tc-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 3px var(--loc-r16-shadowSoft);
+}
+.tc-dot-chat { background: #34c759; }
+.tc-dot-dev { background: #ffcc00; }
+.tc-dot-auto { background: #af52de; }
+/* 开发任务的黄点在白底上偏淡，补一圈极浅描边保证可辨 */
+.tc-dot-dev { box-shadow: 0 0 0 3px var(--loc-r16-alphaWarn16); }
+
+/* ---- 0.21.11：任务栏条目删除（老板「任务栏是可以删除的」）----
+   平时完全隐形（opacity:0 + pointer-events:none），hover 或键盘聚焦到该行才浮出，
+   这样 264px 宽的栏里不会每条都挂一个红色 ×，和「简单干净点」不冲突。 */
+.tc-del {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--loc-r16-hovera);
+  color: var(--loc-r16-text2a);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+.tc-item:hover .tc-del,
+.tc-item:focus-within .tc-del {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* hover 时把正文右缩按钮那么宽，避免 × 压住「3 分钟前」的尾部 */
+.tc-item:hover .tc-body { padding-right: 20px; }
+.tc-del:hover { background: var(--loc-r16-alphaDanger14); color: var(--loc-r16-dangerb); }
+.tc-del:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  outline: 2px solid var(--loc-r16-brandDeepa);
+  outline-offset: 1px;
+}
+
+/* 行内确认条：与任务行同高，不弹层、不遮列表（任务栏窄，弹窗会盖住正要对比的几条） */
+.tc-confirm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: var(--loc-r16-alphaDanger06);
+  border: 1px solid var(--loc-r16-alphaDanger18);
+}
+.tc-confirm-t {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--loc-r16-danger);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tc-confirm-yes,
+.tc-confirm-no {
+  flex: 0 0 auto;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tc-confirm-yes { background: var(--loc-r16-dangerb); color: var(--c-on-brand); }
+.tc-confirm-yes:hover { background: var(--loc-r16-dangera); }
+.tc-confirm-no { background: var(--c-surface); color: var(--loc-r16-text); border-color: var(--loc-r16-borderc); }
+.tc-confirm-no:hover { background: var(--loc-r16-hover); }
+
+/* 「+ 新建」等头部小按钮 */
+.task-center .ant-btn { border-radius: 12px; }
+.task-center .sidebar-foot { border-top: 1px solid var(--loc-r16-bordera); }
+/* 头部收起按钮（此前 style.css 里同样没有 .sidebar-close 的样式 = 一个裸 ×） */
+.sidebar-close {
+  width: 24px;
+  height: 24px;
+  line-height: 1;
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-faint, var(--loc-r16-text2a));
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.sidebar-close:hover { background: var(--loc-r16-hovera); color: var(--text, var(--loc-r16-text)); }
+
+/* ============================================================================
+   三、顶部「对话 / 工作」大号居中切换（老板：删掉三页签，只留这个大切换）
+   ========================================================================== */
+.scope-switch-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 12px 16px 4px;
+}
+.scope-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--loc-r16-surface2);
+  border: 1px solid var(--loc-r16-border);
+}
+.scope-switch-btn {
+  min-width: 108px;
+  height: 44px;
+  padding: 0 26px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--loc-r16-text2);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+.scope-switch-btn:hover { color: var(--loc-r16-text); }
+.scope-switch-btn.on {
+  background: var(--c-surface);
+  color: var(--loc-r16-text);
+  box-shadow: 0 1px 2px var(--loc-r16-shadowSoftb), 0 6px 18px var(--loc-r16-shadowSoftc);
+}
+.scope-switch-btn:focus-visible { outline: 2px solid var(--loc-r16-alphaBrand55); outline-offset: 2px; }
+
+/* 开发工作台里的同一个切换：位置在它自己的主列顶部，与聊天页同高同款 */
+.dw-scope-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 12px 16px 4px;
+  flex: 0 0 auto;
+}
+
+/* ============================================================================
+   四、空态：只留一行极简欢迎语（老板：能力胶囊 / 示例问答 / 说明文案全删）
+   ========================================================================== */
+.welcome-min {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+  padding: 40px 16px;
+}
+.welcome-min-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--loc-r16-text);
+}
+.welcome-min-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--loc-r16-brand);
+  box-shadow: 0 0 0 5px var(--loc-r16-alphaBrand14);
+}
+
+/* 空态里的模块快捷入口：与 Apple 观感对齐（保留功能，只换外观） */
+.wb-apple .welcome-quick {
+  border-radius: 12px;
+  border: 1px solid var(--loc-r16-borderb);
+  background: var(--c-surface);
+  box-shadow: 0 1px 2px var(--loc-r16-shadowSofta);
+  font-family: var(--wb-font, inherit);
+}
+
+/* ============================================================================
+   五、返回按钮（老板第 10 条：活动与档期「看档期」没有返回）
+   与 ActivityHub 的「← 返回看板」同一套观感，只是这里做成可点胶囊。
+   ========================================================================== */
+/* 返回按钮所在的页头改成纵向排列：ia-miaomiao.css 里 .mm-sched-head 是普通块容器，
+   按钮（inline-flex）与标题（block）混排会让间距不一致。 */
+.mm-sched-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.mm-sched-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  margin: 0 0 8px;
+  padding: 7px 14px;
+  border: 1px solid var(--loc-r16-borderb);
+  border-radius: 12px;
+  background: var(--c-surface);
+  color: var(--green-dark, var(--c-brand-dark));
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: 0 1px 2px var(--loc-r16-shadowSofta);
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.mm-sched-back:hover {
+  color: var(--loc-r16-brandDark);
+  border-color: var(--loc-r16-alphaBrand40);
+  background: var(--loc-r16-brandTint);
+}
+.mm-sched-back:focus-visible { outline: 2px solid var(--loc-r16-alphaBrand50); outline-offset: 2px; }

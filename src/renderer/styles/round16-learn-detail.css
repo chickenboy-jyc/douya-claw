@@ -1,0 +1,195 @@
+/**
+ * 学习中心「文章二级页」样式（0.21.11 · 老板第 4 条）。
+ *
+ * 原话：「图片要获取那篇文章的图片 而且你现在UI太过于不一致 有的很长很长 这个缩略起来
+ *        点击后进入文章二级页 二级页再显示 原文 翻译 还有AI解读」。
+ *
+ * 为什么单开一个文件、不写进 style.css：
+ *   style.css 6697 行、16 个模块共用，同优先级后定义会静默改坏别人的样式
+ *   （见 scripts/smoke/lint-css-collisions.mjs 顶部那次真实事故）。新页面一律走独立文件。
+ *
+ * 为什么封面在二级页换 21:9、卡片里仍是 16:9：
+ *   卡片是网格里的一格，16:9 才能三列排齐；二级页是单栏阅读，21:9 的横幅不会一进页就把
+ *   标题和正文挤出首屏。两处的「不跳版」目标一致（都固定比例 + object-fit: cover）。
+ */
+
+.learn-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  /* 单栏阅读宽度：正文一行别超过 ~40 个汉字，长了眼睛回行会丢行 */
+  max-width: 980px;
+}
+
+.learn-detail-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.learn-detail-back.ant-btn {
+  padding-left: 0;
+  color: var(--loc-ldet-ink-1);
+  font-weight: 600;
+}
+.learn-detail-back.ant-btn:hover {
+  color: var(--loc-ldet-ink-2);
+  background: transparent;
+}
+
+/* 复合选择器提权，压过 .learn-cover 的 16:9 与上方圆角（那个是给卡片顶图用的） */
+.learn-cover.learn-detail-cover {
+  aspect-ratio: 21 / 9;
+  border-radius: 16px;
+}
+
+.learn-detail-hd {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.learn-detail-title {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.35;
+  font-weight: 700;
+  color: var(--loc-ldet-ink-3);
+}
+
+.learn-detail-why {
+  background: var(--loc-ldet-bg-1);
+  color: var(--loc-ldet-ink-1);
+  font-size: 13px;
+  line-height: 1.7;
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.learn-detail-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.learn-detail-t2 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--loc-ldet-ink-3);
+}
+
+/* 正文：14.5px / 行高 1.95。二级页是要"读"的，不是要"扫"的，所以行高比卡片摘要松 */
+.learn-detail-body {
+  font-size: 14.5px;
+  line-height: 1.95;
+  color: var(--loc-ldet-ink-4);
+  word-break: break-word;
+}
+.learn-detail-body p {
+  margin: 0 0 12px;
+}
+.learn-detail-body p:last-child {
+  margin-bottom: 0;
+}
+
+.learn-detail-note {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--loc-ldet-ink-5);
+  background: var(--loc-ldet-bg-2);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+
+/* 空态/待操作态：虚线框，明确"这里还没有东西，需要你点一下"，不是加载失败 */
+.learn-detail-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 34px 20px;
+  border: 1px dashed var(--loc-ldet-line-1);
+  border-radius: 14px;
+  text-align: center;
+}
+.learn-detail-empty-t {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--loc-ldet-ink-3);
+}
+.learn-detail-empty-h {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--loc-ldet-ink-5);
+  max-width: 520px;
+}
+
+/* AI 解读：四段一问一答的纵向排布，标签绿、正文深灰，不用表格（表格在窄屏会挤成两行） */
+.learn-detail-interp {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.learn-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.learn-detail-k {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--loc-ldet-ink-1);
+}
+.learn-detail-v {
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--loc-ldet-ink-4);
+  word-break: break-word;
+}
+
+.learn-detail-actions {
+  padding-top: 2px;
+}
+
+/* ============================================================================
+   学习详情 · 主题变量（文件作用域，前缀 --loc-ldet-）
+   ============================================================================
+   【为什么是局部变量而不是直接用 --c-*】
+     本文件用的是自己的一套绿灰色阶，与全局语义 token 的绿值**不等值**
+     （例如 #1f7a4d 与 --c-brand-dark:#177A46 相差 ΔE≈4.5，直接换会让绿主题可见变色）。
+     所以这里为每个去重色值建一条局部变量：
+       · 绿主题（无 data-theme 属性）= **原字面量逐字不变** ⇒ 绿主题像素不变；
+       · light / dark 各给一套值（白色主题去绿、深色主题反向）。
+   【铁律】三套必须齐全，缺一套 = 那套主题下拿到空值 = 白屏。门禁 unit-theme-cover-group-b 守这条。
+   ========================================================================== */
+:root {
+  --loc-ldet-ink-1: #1d7a36;
+  --loc-ldet-ink-2: #16632b;
+  --loc-ldet-ink-3: #1f1f1f;
+  --loc-ldet-bg-1: rgba(48, 209, 88, 0.08);
+  --loc-ldet-ink-4: #333333;
+  --loc-ldet-ink-5: #8e8e93;
+  --loc-ldet-bg-2: #f7f7f9;
+  --loc-ldet-line-1: #e3e3e8;
+}
+html[data-theme="light"] {
+  --loc-ldet-ink-1: #6a6a6a;
+  --loc-ldet-ink-2: #565656;
+  --loc-ldet-ink-3: #1f1f1f;
+  --loc-ldet-bg-1: rgba(182, 182, 182, 0.08);
+  --loc-ldet-ink-4: #333333;
+  --loc-ldet-ink-5: #8e8e93;
+  --loc-ldet-bg-2: #f7f7f9;
+  --loc-ldet-line-1: #e3e3e8;
+}
+html[data-theme="dark"] {
+  --loc-ldet-ink-1: #9fe8b3;
+  --loc-ldet-ink-2: #a9ecbb;
+  --loc-ldet-ink-3: #d6d8d7;
+  --loc-ldet-bg-1: rgba(110, 223, 138, 0.12);
+  --loc-ldet-ink-4: #cdcfce;
+  --loc-ldet-ink-5: #aaacab;
+  --loc-ldet-bg-2: #1e201f;
+  --loc-ldet-line-1: #2d2f2e;
+}

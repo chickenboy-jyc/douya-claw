@@ -1,0 +1,182 @@
+/**
+ * 经销商采购专区样式（DealerPurchase.jsx 专用）
+ * 2026-10-14 新建。页签条复用 store-ops.css 的 .so-tabs（同一套二级导航语言）。
+ */
+
+.dealer-purchase { display: flex; flex-direction: column; }
+
+.dp-panel {
+  background: var(--c-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px 24px 26px;
+}
+.dp-sec-hd { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.dp-sec-t {
+  display: inline-flex; align-items: center;
+  font-size: 18.5px; font-weight: 700; color: var(--text);
+}
+.dp-sec-t::before {
+  content: '';
+  display: inline-block; flex-shrink: 0;
+  width: 9px; height: 9px; margin-right: 10px;
+  border-radius: 3px;
+  background: linear-gradient(140deg, var(--loc-dp-bg-1) 0%, var(--brand-fill) 100%);
+}
+.dp-lead {
+  margin: 0 0 18px;
+  font-size: 14.5px; line-height: 1.7;
+  color: var(--text-dim);
+}
+.dp-lead b { color: var(--brand-fill); }
+
+.dp-seedtag {
+  display: inline-flex; align-items: center;
+  padding: 2px 9px; border-radius: 999px;
+  background: var(--loc-dp-bg-2);
+  border: 1px solid var(--loc-dp-line-1);
+  color: var(--loc-dp-ink-1);
+  font-size: 12px; font-weight: 600;
+}
+.dp-tag { margin-inline-end: 0; font-size: 12px; }
+
+/* ── 批量采购 ── */
+.dp-bulk-list { display: flex; flex-direction: column; gap: 10px; }
+.dp-bulk {
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 15px 17px;
+  border: 1px solid var(--border); border-radius: 12px;
+  background: var(--c-surface);
+}
+.dp-bulk-main { flex: 1; min-width: 0; }
+.dp-bulk-t {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 15.5px; font-weight: 600; color: var(--text);
+  margin-bottom: 9px;
+}
+.dp-bulk-cat { font-size: 13px; color: var(--text-faint); font-weight: 400; }
+
+.dp-tiers { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 9px; }
+.dp-tier {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--loc-dp-bg-3);
+  font-size: 12.5px; color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.dp-tier.on {
+  background: var(--brand-tint);
+  border-color: var(--brand-line);
+  color: var(--brand-ink);
+  font-weight: 700;
+}
+
+.dp-bulk-meta {
+  display: flex; flex-wrap: wrap; gap: 14px;
+  font-size: 13px; color: var(--text-faint);
+}
+.dp-next { color: var(--brand-fill); font-weight: 600; }
+.dp-warn { color: var(--loc-dp-ink-2); font-weight: 600; }
+
+.dp-bulk-side {
+  flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 7px;
+}
+.dp-price { display: flex; align-items: baseline; gap: 3px; }
+.dp-price-n { font-size: 20px; font-weight: 800; color: var(--brand-fill); }
+.dp-price-u { font-size: 12.5px; color: var(--text-faint); }
+.dp-sub { font-size: 13.5px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+
+.dp-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 20px; padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 16px;
+}
+.dp-bar b { font-size: 24px; font-weight: 800; color: var(--brand-fill); font-variant-numeric: tabular-nums; }
+.dp-bar em { font-style: normal; font-size: 14px; color: var(--brand-ink); margin-left: 8px; }
+
+/* ── 优惠专区 ── */
+.dp-promos { display: flex; flex-direction: column; gap: 12px; }
+.dp-promo {
+  position: relative;
+  padding: 16px 18px 15px;
+  border: 1px solid var(--brand-line); border-radius: 14px;
+  background: linear-gradient(140deg, var(--c-surface) 0%, var(--loc-dp-bg-4) 100%);
+}
+.dp-promo-badge {
+  position: absolute; top: 0; right: 0;
+  padding: 5px 14px;
+  border-radius: 0 14px 0 12px;
+  background: var(--brand-fill); color: var(--c-on-brand);
+  font-size: 12.5px; font-weight: 800;
+}
+.dp-promo-t { font-size: 16.5px; font-weight: 700; margin-bottom: 3px; }
+.dp-promo-p { font-size: 13.5px; color: var(--text-dim); margin-bottom: 10px; }
+.dp-promo-price {
+  display: flex; align-items: baseline; gap: 9px;
+  margin-bottom: 7px;
+}
+.dp-promo-price s { font-size: 15px; color: var(--text-faint); }
+.dp-promo-price b { font-size: 26px; font-weight: 800; color: var(--brand-fill); font-variant-numeric: tabular-nums; }
+.dp-promo-price em {
+  font-style: normal;
+  padding: 2px 9px; border-radius: 999px;
+  background: var(--loc-dp-bg-5); color: var(--loc-dp-ink-3);
+  font-size: 13px; font-weight: 800;
+}
+.dp-promo-note { font-size: 13px; color: var(--text-faint); margin-bottom: 12px; }
+.dp-promo-ft {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 11px; border-top: 1px solid var(--loc-dp-line-2);
+}
+.dp-promo-end { font-size: 13px; color: var(--text-faint); }
+
+/* ============================================================================
+   经销商采购 · 主题变量（文件作用域，前缀 --loc-dp-）
+   ============================================================================
+   【为什么是局部变量而不是直接用 --c-*】
+     本文件用的是自己的一套绿灰色阶，与全局语义 token 的绿值**不等值**
+     （例如 #1f7a4d 与 --c-brand-dark:#177A46 相差 ΔE≈4.5，直接换会让绿主题可见变色）。
+     所以这里为每个去重色值建一条局部变量：
+       · 绿主题（无 data-theme 属性）= **原字面量逐字不变** ⇒ 绿主题像素不变；
+       · light / dark 各给一套值（白色主题去绿、深色主题反向）。
+   【铁律】三套必须齐全，缺一套 = 那套主题下拿到空值 = 白屏。门禁 unit-theme-cover-group-b 守这条。
+   ========================================================================== */
+:root {
+  --loc-dp-bg-1: #17b183;
+  --loc-dp-bg-2: rgba(15, 68, 78, 0.06);
+  --loc-dp-line-1: rgba(15, 68, 78, 0.14);
+  --loc-dp-ink-1: #5a6b67;
+  --loc-dp-bg-3: rgba(0, 0, 0, 0.025);
+  --loc-dp-ink-2: #b45309;
+  --loc-dp-bg-4: #f1faf5;
+  --loc-dp-bg-5: #fde8e2;
+  --loc-dp-ink-3: #c2410c;
+  --loc-dp-line-2: rgba(0, 0, 0, 0.05);
+}
+html[data-theme="light"] {
+  --loc-dp-bg-1: #9c9c9c;
+  --loc-dp-bg-2: rgba(62, 62, 62, 0.06);
+  --loc-dp-line-1: rgba(62, 62, 62, 0.14);
+  --loc-dp-ink-1: #5a6b67;
+  --loc-dp-bg-3: rgba(0, 0, 0, 0.025);
+  --loc-dp-ink-2: #b45309;
+  --loc-dp-bg-4: #f1faf5;
+  --loc-dp-bg-5: #fde8e2;
+  --loc-dp-ink-3: #c2410c;
+  --loc-dp-line-2: rgba(0, 0, 0, 0.05);
+}
+html[data-theme="dark"] {
+  --loc-dp-bg-1: #86ebcd;
+  --loc-dp-bg-2: rgba(188, 198, 192, 0.09);
+  --loc-dp-line-1: rgba(188, 198, 192, 0.21);
+  --loc-dp-ink-1: #b3bfbc;
+  --loc-dp-bg-3: rgba(0, 0, 0, 0.42);
+  --loc-dp-ink-2: #ecb48a;
+  --loc-dp-bg-4: #123321;
+  --loc-dp-bg-5: #45180b;
+  --loc-dp-ink-3: #eba283;
+  --loc-dp-line-2: rgba(0, 0, 0, 0.42);
+}

@@ -1,0 +1,11 @@
+{
+  "name": "读取文档",
+  "description": "读取本地文档内容（txt/md/csv/json/docx/pdf/xlsx/pptx），自动按扩展名识别格式并提取文本返回。适合先读文件内容再分析、总结、改写。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "timeoutMs": 120000,
+  "params": [
+    { "name": "path", "label": "文件路径(相对工作区或绝对路径)", "required": true }
+  ]
+}

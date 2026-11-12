@@ -1,0 +1,19 @@
+{
+  "name": "口碑监测",
+  "description": "在自建后端（api.example.com）做口碑/舆情监测：analyze=分析一条舆情并生成公开回复+私信回复建议；list=按公司列危机清单（可按 level/status 过滤）；trend=看舆情时间趋势+等级分布；status=把某条危机标记为已处理。",
+  "type": "js",
+  "timeoutMs": 180000,
+  "params": [
+    { "key": "action", "label": "操作：analyze=分析(默认) / list=清单 / trend=趋势 / status=标记已处理", "default": "analyze" },
+    { "key": "company_id", "label": "公司ID（必填）", "default": "", "required": true },
+    { "key": "crisis_id", "label": "危机记录ID（status 必填）", "default": "" },
+    { "key": "platform", "label": "来源平台", "default": "" },
+    { "key": "post_text", "label": "舆情正文（analyze 必填）", "default": "" },
+    { "key": "post_url", "label": "原文链接", "default": "" },
+    { "key": "author", "label": "作者", "default": "" },
+    { "key": "level", "label": "等级过滤（list 用：L1/L2/L3/L4）", "default": "" },
+    { "key": "status", "label": "状态过滤（list 用：pending/handled）或要改成的状态（status 用，默认 handled）", "default": "" },
+    { "key": "limit", "label": "返回条数（list 用）", "default": 50 },
+    { "key": "days", "label": "趋势天数（trend 用，默认 30）", "default": 30 }
+  ]
+}

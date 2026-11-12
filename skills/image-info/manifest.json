@@ -1,0 +1,10 @@
+{
+  "name": "识别图片",
+  "description": "量一张本地图片的几何事实：像素尺寸、有没有透明通道、alpha 包围盒（x0,y0,x1,y1）、主体占画布的比例、主体是否贴到画布边缘。用来判断一张抠图是不是只抠出了半身、或者主体被裁掉了。不做视觉理解，只出可核对的数字。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "params": [
+    { "name": "path", "label": "图片路径(相对工作区或绝对路径)", "required": true }
+  ]
+}

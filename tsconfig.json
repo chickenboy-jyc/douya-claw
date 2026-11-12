@@ -1,0 +1,22 @@
+{
+  // solution 风格根配置：只做索引与编辑器入口，不含实际文件。
+  //
+  // · `files: []` 是**显式**声明「本配置不直接编译任何文件」。写成缺省，
+  //   tsc 会把它当成「忘了配」而不是「故意不配」。
+  //
+  // · 本项目**不用** `tsc -b`：叶子配置都是 `noEmit: true`，
+  //   而 `composite` 与 `noEmit` 互斥（TS6304）⇒ references 只作索引用。
+  //   门禁逐个跑 `tsc -p tsconfig.<slice>.json --noEmit`
+  //   （见 scripts/smoke/unit-ts-strict.mjs）。
+  //
+  // · 切片只 include **新写的 TS 目录**（src/poster、src/shared、src/main 下的 .ts）。
+  //   **不写 `src/**`**。理由不是「存量会产出几千条错误」—— 2026-11-01 实测那句话是错的
+  //   （`allowJs:+checkJs:false` 下 include src/** 是 0 错误 / 239 文件 / 4.5s），
+  //   真实理由是「范围」：本轮只给新代码铺地基，存量迁移不在范围内；
+  //   而 checkJs:true 在本仓会让 tsc 直接崩溃（Debug Failure）。详见 tsconfig.renderer.json 的注释。
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.renderer.json" },
+    { "path": "./tsconfig.main.json" }
+  ]
+}

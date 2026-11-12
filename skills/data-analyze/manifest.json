@@ -1,0 +1,12 @@
+{
+  "name": "分析数据",
+  "description": "用 pandas 读取 CSV/Excel 文件，返回数据概览（行列数、列名、类型）、数值列的描述统计、前几行样例。适合先摸清数据结构再做进一步分析。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "timeoutMs": 120000,
+  "params": [
+    { "name": "path", "label": "CSV/Excel 文件路径", "required": true },
+    { "name": "head", "label": "显示前几行(默认 5)" }
+  ]
+}

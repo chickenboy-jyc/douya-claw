@@ -1,0 +1,111 @@
+/**
+ * AI 补货（Replenish）—— 绿色主题 #30d158，Apple 极简（同 ia-direction.css 的取色与圆角）
+ *
+ * 只补本页特有元素；页面外壳（`.module-page` / `.module-page-head` / `.module-page-title`
+ * / `.module-page-sub`）复用 `src/renderer/style.css:1942` 起的全局定义，不重复写。
+ */
+
+.rp-page { gap: 14px; }
+
+/* ===== 官方档期横幅（后台在 api.example.com 配） ===== */
+.rp-banner {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--c-surface);
+  box-shadow: 0 1px 3px var(--c-shadow-color);
+  line-height: 0;
+}
+.rp-banner img { display: block; width: 100%; height: auto; max-height: 132px; object-fit: cover; }
+
+/* ===== 两个入口按钮 ===== */
+.rp-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 720px) { .rp-actions { grid-template-columns: 1fr; } }
+
+.rp-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 16px 18px;
+  background: var(--c-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px var(--c-shadow-color);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  font: inherit;
+  color: inherit;
+}
+.rp-action:hover {
+  border-color: var(--loc-rpl-line-1);
+  box-shadow: 0 4px 14px var(--loc-rpl-shadow-1);
+  transform: translateY(-1px);
+}
+.rp-action:active { transform: translateY(0); }
+.rp-action:focus-visible { outline: 2px solid var(--loc-rpl-line-1); outline-offset: 2px; }
+
+.rp-action-emoji { font-size: 22px; line-height: 1; }
+.rp-action-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.rp-action-desc { font-size: 12.5px; color: var(--text-dim); line-height: 1.6; }
+
+/* ===== 提示条（按钮暂无实际面板时的出口，2.6s 自动消失） ===== */
+.rp-toast {
+  align-self: flex-start;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--loc-rpl-bg-1);
+  border: 1px solid var(--loc-rpl-line-2);
+  color: var(--loc-rpl-ink-1);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* ===== 空态 ===== */
+.rp-empty {
+  margin: 8px auto 0;
+  max-width: 460px;
+  text-align: center;
+  background: var(--c-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 26px 24px;
+  box-shadow: 0 1px 3px var(--c-shadow-color);
+}
+.rp-empty-emoji { font-size: 34px; line-height: 1; margin-bottom: 8px; }
+.rp-empty-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.rp-empty-desc { font-size: 12.5px; color: var(--text-dim); line-height: 1.75; }
+
+/* ============================================================================
+   补货 · 主题变量（文件作用域，前缀 --loc-rpl-）
+   ============================================================================
+   【为什么是局部变量而不是直接用 --c-*】
+     本文件用的是自己的一套绿灰色阶，与全局语义 token 的绿值**不等值**
+     （例如 #1f7a4d 与 --c-brand-dark:#177A46 相差 ΔE≈4.5，直接换会让绿主题可见变色）。
+     所以这里为每个去重色值建一条局部变量：
+       · 绿主题（无 data-theme 属性）= **原字面量逐字不变** ⇒ 绿主题像素不变；
+       · light / dark 各给一套值（白色主题去绿、深色主题反向）。
+   【铁律】三套必须齐全，缺一套 = 那套主题下拿到空值 = 白屏。门禁 unit-theme-cover-group-b 守这条。
+   ========================================================================== */
+:root {
+  --loc-rpl-line-1: #30d158;
+  --loc-rpl-shadow-1: rgba(48, 209, 88, 0.14);
+  --loc-rpl-bg-1: rgba(48, 209, 88, 0.1);
+  --loc-rpl-line-2: rgba(48, 209, 88, 0.35);
+  --loc-rpl-ink-1: #1f7a3d;
+}
+html[data-theme="light"] {
+  --loc-rpl-line-1: #b6b6b6;
+  --loc-rpl-shadow-1: rgba(182, 182, 182, 0.14);
+  --loc-rpl-bg-1: rgba(182, 182, 182, 0.1);
+  --loc-rpl-line-2: rgba(182, 182, 182, 0.35);
+  --loc-rpl-ink-1: #6a6a6a;
+}
+html[data-theme="dark"] {
+  --loc-rpl-line-1: #81e399;
+  --loc-rpl-shadow-1: rgba(110, 223, 138, 0.21);
+  --loc-rpl-bg-1: rgba(110, 223, 138, 0.15);
+  --loc-rpl-line-2: rgba(110, 223, 138, 0.52);
+  --loc-rpl-ink-1: #9fe7b7;
+}

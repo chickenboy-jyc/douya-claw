@@ -1,0 +1,70 @@
+{
+  // 渲染层（Vite 5 + React 18）切片：只编译新写的 TS/TSX。
+  //
+  // include 只列**新代码目录**。不写 `src/**`。
+  //
+  // ⚠ 这里原先写的理由是「src/** 会拖进 156 个 .js + 81 个 .jsx，产出几千条错误」
+  //   —— **2026-11-01 实测证明这句话是错的，已订正**：
+  //     · `allowJs:true + checkJs:false + include src/**` ⇒ **EXIT=0、0 错误**、239 个文件、4.5s
+  //       （`checkJs` 默认 false ⇒ JS 进 program 但**不被检查**，所以不会产生错误）
+  //     · `allowJs:true + checkJs:true`              ⇒ **tsc 直接崩溃**：
+  //       `Error: Debug Failure. No error for last overload signature`（lib/_tsc.js:76541）
+  //
+  //   所以窄 include 的**真实**理由只有两条，都不涉及「错误数量」：
+  //     ① 本轮范围就是「只给新代码地基」，存量 JS 迁移是另一件事（明确不做）；
+  //     ② include src/** 会让 program 从 2 个文件变成 239 个文件 —— 检查范围一口气
+  //        扩到存量上，等于给一个不打算关的口子开了头（而且 checkJs 一旦被谁打开就崩）。
+  //
+  //   将来若要「让 .ts import 既有 .js」，正确的口子不是放宽 include，
+  //   而是在 allowJs / .d.ts 之间做一次有据的选择（实测数据见 GEAR-UP 报告）。
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+
+    "noEmit": true,
+    // Vite 逐文件转译（无跨文件类型信息），所以每个文件必须能独立成立。
+    // 开着它才能拦住「Vite 转出来是空值」的那类写法（如非类型的 `export { SomeType }`）。
+    "isolatedModules": true,
+    // 只跳过**第三方** .d.ts 的检查（antd / @types/react 的 lib 自身噪声），
+    // 不跳过我们自己的代码 —— 这是本次唯一放宽项，理由见提交说明。
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+
+    // ── 严格性全开 ──────────────────────────────────────────────────────
+    // 老板要求「一个 any 都没有」。下面 14 项与 unit-ts-strict.mjs 的静态扫描
+    // 是**两道**独立防线：tsc 抓「隐式 any」，静态扫描抓「显式 any」。
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    // 可选属性 `x?: T` 不再隐式接受 `undefined`。代价：`{ x: maybeUndef }` 会红，
+    // 必须写成条件展开。**这是故意的** —— 它挡住「我传了 undefined 但以为是没传」。
+    "exactOptionalPropertyTypes": true,
+    // `arr[i]` 的类型是 `T | undefined`。代价：每次下标访问都要窄化。
+    // **这是故意的** —— 它挡住「数组越界读到 undefined 却当 T 用」。
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "useUnknownInCatchVariables": true,
+
+    // 未使用变量在本轮不拦：占位模块与渐进补全会先写壳。
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "include": [
+    "src/poster/**/*.ts",
+    "src/poster/**/*.tsx",
+    "src/shared/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", "release", "posters", "build"]
+}

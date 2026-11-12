@@ -1,0 +1,593 @@
+/**
+ * AI 补货页（`modules/Replenish.jsx`）的样式。
+ *
+ * 命名一律 `rp-` 前缀：本仓的 CSS 冲突检查（`scripts/smoke/lint-css-collisions.mjs`）
+ * 就是被「两个功能共用 `.pa-` 前缀把对方空态样式改坏」教出来的，新页面自己占一个前缀最省事。
+ *
+ * 尺寸只用 8 的倍数（8 / 12 / 16），与现有模块页保持同一套节奏；
+ * 不引入新字体、不覆盖 antd 全局变量 —— 这一页没有需要特殊外观的理由。
+ */
+/* ────────────────────────────────────────────────────────────────────────────
+   文件作用域主题变量（主题可切换 · 三期工程）
+   ────────────────────────────────────────────────────────────────────────────
+   【为什么是局部变量，不是直接换全局 --c-*】
+     本文件这套色是自定义绿灰，与 theme-tokens.css 里 --c-* 的**绿主题值不相等**。
+     直接把字面量换掉，绿色主题就会肉眼可见地变色（背景、正文、品牌绿全都会漂）。
+     所以这里一条变量对一条原字面量：
+
+       · 绿主题（:root，不带 data-theme）  = **原字面量，一字不改** ⇒ 逐像素不变
+       · 白主题（html[data-theme="light"]）= 去绿中性，主色中性深灰（老板明令不许蓝）
+       · 深主题（html[data-theme="dark"]） = 带绿的深底浅字
+
+   【铁律：三套必须齐全】
+     少一套 ⇒ 那个主题下这些属性拿到空值 ⇒ 白屏 / 黑字黑底。新增变量必须同时补三套。
+     门禁 scripts/smoke/unit-theme-cover-group-a.mjs 的 C/D 两条断言守着这件事。
+
+   【命名】
+     --loc-rp-<角色><序号>。前缀是文件独占的，**不许跨文件复用**。
+     刻意不用 --c- 开头：那是全局 token 的命名空间，混进去会被核心层门禁误判。
+
+   【数据可视化系列色】
+     标签/系列色表达的是**数据身份**，不是界面语义 —— 它们也建了变量，但深色值
+     只调亮度、不改成同一个色，系列之间保持可区分。
+   ──────────────────────────────────────────────────────────────────────────── */
+:root {
+  --loc-rp-border: #e6e8eb;
+  --loc-rp-bordera: #f0f2f5;
+  --loc-rp-brandDeep: #0e7d59;
+  --loc-rp-danger: #d83931;
+  --loc-rp-dangerTint: #fef1f1;
+  --loc-rp-surface2: #f0f2f5;
+  --loc-rp-surface2a: #f2f3f5;
+  --loc-rp-text: #1f2329;
+  --loc-rp-text2: #4e5969;
+  --loc-rp-text2a: #646a73;
+  --loc-rp-text3: #8f959e;
+  --loc-rp-window: #f5f7fa;
+  --loc-rp-windowa: #fafbfc;
+}
+
+html[data-theme="light"] {
+  --loc-rp-border: #e3e6e6;
+  --loc-rp-bordera: #e3e6e6;
+  --loc-rp-brandDeep: #23282d;
+  --loc-rp-danger: #c0392b;
+  --loc-rp-dangerTint: #fbedeb;
+  --loc-rp-surface2: #f4f5f5;
+  --loc-rp-surface2a: #f4f5f5;
+  --loc-rp-text: #1d2124;
+  --loc-rp-text2: #565e63;
+  --loc-rp-text2a: #565e63;
+  --loc-rp-text3: #6e767c;
+  --loc-rp-window: #f6f7f7;
+  --loc-rp-windowa: #f6f7f7;
+}
+
+html[data-theme="dark"] {
+  --loc-rp-border: rgba(255, 255, 255, 0.10);
+  --loc-rp-bordera: rgba(255, 255, 255, 0.10);
+  --loc-rp-brandDeep: #2faf6b;
+  --loc-rp-danger: #f0796b;
+  --loc-rp-dangerTint: rgba(240, 121, 107, 0.16);
+  --loc-rp-surface2: #2a2f2c;
+  --loc-rp-surface2a: #2a2f2c;
+  --loc-rp-text: #ecf1ee;
+  --loc-rp-text2: #9ba8a1;
+  --loc-rp-text2a: #9ba8a1;
+  --loc-rp-text3: #7e8c85;
+  --loc-rp-window: #171a18;
+  --loc-rp-windowa: #171a18;
+}
+
+.rp-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── 活动 banner（上游货源后台配置的那张图）──────────────────────────────── */
+.rp-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--loc-rp-border);
+  background: var(--loc-rp-windowa);
+}
+
+.rp-banner-img {
+  width: 168px;
+  height: 63px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--loc-rp-surface2);
+}
+
+.rp-banner-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.rp-banner-t {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--loc-rp-text);
+}
+
+.rp-banner-d {
+  font-size: 12px;
+  color: var(--loc-rp-text2a);
+}
+
+/* ── 工具条 ─────────────────────────────────────────────────────────────── */
+.rp-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rp-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rp-kw {
+  width: 280px;
+  max-width: 100%;
+}
+
+/* ── 行动条：「补什么 · 怎么加 · 去哪看」放这里，**不塞进空态**（S5）────────── */
+.rp-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--loc-rp-brandDeep);
+  background: var(--loc-rp-window);
+  border-radius: 0 8px 8px 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--loc-rp-text2);
+}
+
+.rp-guide b {
+  color: var(--loc-rp-text);
+}
+
+/* ── 块与行 ─────────────────────────────────────────────────────────────── */
+.rp-block {
+  border: 1px solid var(--loc-rp-border);
+  border-radius: 12px;
+  padding: 8px 12px;
+  background: var(--c-surface);
+}
+
+.rp-block-hd {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--loc-rp-text);
+  padding: 4px 0 8px;
+}
+
+.rp-row,
+.rp-srow,
+.rp-vrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--loc-rp-bordera);
+}
+
+.rp-row {
+  flex-wrap: wrap;
+}
+
+.rp-row-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.rp-row-act {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.rp-row-oos .rp-name {
+  color: var(--loc-rp-text2a);
+}
+
+.rp-name {
+  font-size: 13px;
+  color: var(--loc-rp-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rp-price {
+  font-size: 12px;
+  color: var(--loc-rp-text2a);
+}
+
+.rp-stock {
+  font-size: 12px;
+  color: var(--loc-rp-text2a);
+}
+
+.rp-oos {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--loc-rp-danger);
+}
+
+.rp-tag {
+  font-size: 11px;
+  color: var(--loc-rp-text2);
+  background: var(--loc-rp-surface2a);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+.rp-rank {
+  width: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--loc-rp-text3);
+  text-align: right;
+}
+
+/* ── 同品类替代 ─────────────────────────────────────────────────────────── */
+.rp-alt {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0 4px 12px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--loc-rp-border);
+  background: var(--loc-rp-windowa);
+  border-radius: 0 8px 8px 0;
+}
+
+.rp-alt-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+/* ── 本次补货单 ─────────────────────────────────────────────────────────── */
+.rp-order {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px 12px;
+  border: 1px solid var(--loc-rp-border);
+  border-radius: 12px;
+  background: var(--c-surface);
+}
+
+.rp-order-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--loc-rp-text);
+}
+
+.rp-order-sum {
+  font-size: 12px;
+  color: var(--loc-rp-text2a);
+  padding: 4px 0 8px;
+}
+
+/* ── 三种「没有」与提示（语气必须分得开：故障 ≠ 空态 ≠ 没货）────────────── */
+.rp-empty {
+  padding: 24px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--loc-rp-text3);
+}
+
+.rp-fail {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--loc-rp-dangerTint);
+  font-size: 12px;
+  color: var(--loc-rp-danger);
+}
+
+.rp-msg {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--loc-rp-window);
+  font-size: 12px;
+  color: var(--loc-rp-text2);
+}
+
+.rp-muted {
+  font-size: 12px;
+  color: var(--loc-rp-text3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * 0.21.15 · 老板需求 9：「AI补货 要支持多商品补货 页面做的跟表格一样」
+ *
+ * 这一节全部是**新增**规则（只在文件末尾追加，不改上面任何一条已生效的样式），
+ * 前缀仍是本页独占的 `rp-`。表格本体用 antd 默认视觉（不覆盖 `.ant-table` 全局），
+ * 这里只补三件 antd 没有默认值的东西：
+ *   ① 窄屏横向滚动（需求 9 · B4）；
+ *   ② 「建议补货量」格子里输入框 + 报错文案的竖排；
+ *   ③ 批量工具条与表底合计的排版。
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 表格容器：≥900px 正常铺开；窄了横向滚动，不把每列挤成一个字 ──────────── */
+.rp-table-block {
+  padding: 8px 12px 4px;
+}
+
+.rp-table {
+  width: 100%;
+  /* antd Table 的 `scroll.x` 会在内部生成横向滚动区；这一层兜底，
+     防止外层 flex/grid 把它压到 0 宽（jsdom 量不到，但真机在窄侧栏里会看到）。 */
+  min-width: 0;
+  overflow-x: auto;
+}
+
+/* 窄屏（< 900px，老板的「不低于 900px 才叫正常表格」那条线）：
+   锁定表格的最小宽度，多出来的部分交给上面的 `overflow-x` —— 宁可横滚，不许压字。 */
+@media (max-width: 900px) {
+  .rp-table .ant-table {
+    min-width: 1030px;
+  }
+}
+
+/* 表格内的行高与分隔线跟本页 8 的倍数节奏对齐 */
+.rp-table .ant-table-thead > tr > th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--loc-rp-text2);
+  background: var(--loc-rp-windowa);
+}
+
+.rp-table .ant-table-tbody > tr > td {
+  font-size: 13px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+/* 缺货行的商品名压暗（与改前 `.rp-row-oos .rp-name` 同一语义） */
+.rp-table .rp-row-oos .rp-name {
+  color: var(--loc-rp-text2a);
+}
+
+/* 商品名 + 品牌标签同一格内横向排列 */
+.rp-cell-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* ── 「建议补货量」格子：输入框在上、拒绝原因在下（原因不许藏进 tooltip）──── */
+.rp-cell-qty {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+
+.rp-qty {
+  width: 96px;
+}
+
+.rp-qty-err {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--loc-rp-danger);
+}
+
+/* ── 批量工具条 ───────────────────────────────────────────────────────────── */
+.rp-bulk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border: 1px solid var(--loc-rp-border);
+  border-radius: 8px;
+  background: var(--loc-rp-windowa);
+}
+
+.rp-bulk-lb {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--loc-rp-text);
+}
+
+.rp-bulk-qty {
+  width: 88px;
+}
+
+/* 工具条里的即时反馈：成功走中性灰、被拒走红（与 `.rp-fail` 同一套颜色） */
+.rp-msg-inline {
+  font-size: 12px;
+  color: var(--loc-rp-text2);
+}
+
+.rp-fail-inline {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--loc-rp-danger);
+}
+
+/* ── 表底合计（「条数 + 金额」）──────────────────────────────────────────── */
+.rp-sum {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--loc-rp-text2);
+}
+
+.rp-sum-pick {
+  font-weight: 600;
+  color: var(--loc-rp-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * 0.21.19 · 老板需求：「AI补货 现在要做成商品管理页一样，第一页选商品，
+ *                    第二页是补货的商品页面（类似于购物车）」
+ *
+ * 这一节同样只**末尾追加**，不改上面任何已生效的规则。三块：
+ *   ① 两步导航条（`① 选商品 / ② 补货清单` + 常买数 + 一键按预设补货）；
+ *   ② 第二页购物车的分组与行（常买组恒在上、一次性组恒在下）；
+ *   ③ 「预设」那一列输入框的宽度（与「建议补货量」分开，两个数不是一回事）。
+ *
+ * 为什么导航条用 `<span role="link">` 而不是 `<button>`：
+ *   这两步是**位置指示 + 就地跳转**，不是提交动作；而且首屏按钮预算是硬账
+ *   （`scripts/smoke/unit-firstscreen.mjs` 里 `replenish` 那一格），
+ *   把导航算进按钮数会把「按预设一键补货」这个真主按钮挤掉预算。
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 两步导航条 ───────────────────────────────────────────────────────────── */
+.rp-steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border: 1px solid var(--loc-rp-border);
+  border-radius: 8px;
+  background: var(--loc-rp-windowa);
+}
+
+.rp-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  color: var(--loc-rp-text2);
+  background: var(--loc-rp-surface2a);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* 当前所在的那一步：绿底白字（与 antd 主色 #0E7D59 同色系，一眼看出「我在这」）
+   ⚠️ 2026-11-03：原为蓝底 #3370ff，违反「禁用蓝色」的 UI 约定，改为主色绿。 */
+.rp-step-on {
+  background: var(--loc-rp-brandDeep);
+  color: var(--c-on-brand);
+  font-weight: 600;
+}
+
+/* 第二步后面的条数角标（0 也显示：空清单是一个事实，不该靠"看不见"来表达） */
+.rp-step-n {
+  min-width: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--loc-rp-brandDeep);
+  background: var(--c-surface);
+}
+
+.rp-step-on .rp-step-n {
+  color: var(--loc-rp-brandDeep);
+  background: var(--c-surface);
+}
+
+/* ── 第二页：补货清单（购物车）──────────────────────────────────────────── */
+.rp-cart {
+  gap: 12px;
+}
+
+/* 一个分组 = 一块卡片。**两组始终都渲染**（哪怕空），
+   分组先后因此是 DOM 事实，不依赖"这次刚好有没有一次性"。 */
+.rp-cart-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px 12px;
+  border: 1px solid var(--loc-rp-border);
+  border-radius: 12px;
+  background: var(--c-surface);
+}
+
+.rp-cart-group-hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0 8px;
+  border-bottom: 1px solid var(--loc-rp-bordera);
+}
+
+.rp-cart-group-t {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--loc-rp-text);
+}
+
+/* 一行购物车：名字 | 预设/一次性标签 | 这次数量 | 单价 | 小计 | 取出 */
+.rp-cart-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--loc-rp-bordera);
+  flex-wrap: wrap;
+}
+
+/* 名字占掉剩余宽度，右侧的数量与金额才不会被长商品名挤成竖排 */
+.rp-cart-row .rp-name {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+/* 「这次 <数量>」：输入框与它前面的小字同一行 */
+.rp-cart-row .rp-cell-qty {
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 单价 / 小计右对齐且等宽，上下扫一眼就能比 */
+.rp-cart-row .rp-price {
+  min-width: 64px;
+  text-align: right;
+}
+
+.rp-cart-sum {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--loc-rp-window);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--loc-rp-text);
+}
+
+/* ── 「预设」那一列：与「建议补货量」是两件事，宽度分开 ─────────────────── */
+.rp-preset {
+  width: 88px;
+}
+

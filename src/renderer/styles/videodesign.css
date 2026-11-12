@@ -1,0 +1,1636 @@
+/**
+ * 视频设计页（`modules/VideoDesign.jsx`）的样式。
+ *
+ * 命名一律 `vd-` 前缀 —— 本仓有过「两个功能共用一个前缀把对方样式改坏」的先例
+ * （见 `scripts/smoke/lint-css-collisions.mjs` 的来历），新页面自己占一个前缀最省事。
+ *
+ * 版式：页头（模式切换 / 额度）→ 常驻目录行 → 三栏（素材 / 创作 / 参数）
+ *       → 结果 → 作品库 → 账本。三栏在窄窗口下依次降成两栏、一栏，
+ *       所有栅格列都是 `minmax(0, 1fr)` 且子项 `min-width:0`，避免长路径把页面撑出横向滚动。
+ *
+ * 配色沿用本仓既有的浅底 + 绿主色（老板偏好绿色 / macOS 极简）：
+ * 主色 `#0e7d59` 与 App.jsx 的 ConfigProvider 同一个值，只用在主按钮、选中态、角标上；
+ * 其余一律中性灰 + 白底 + 大圆角 + 极浅阴影。不用黑色块、不用蓝色强调。
+ */
+/* ────────────────────────────────────────────────────────────────────────────
+   文件作用域主题变量（主题可切换 · 三期工程）
+   ────────────────────────────────────────────────────────────────────────────
+   【为什么是局部变量，不是直接换全局 --c-*】
+     本文件这套色是自定义绿灰，与 theme-tokens.css 里 --c-* 的**绿主题值不相等**。
+     直接把字面量换掉，绿色主题就会肉眼可见地变色（背景、正文、品牌绿全都会漂）。
+     所以这里一条变量对一条原字面量：
+
+       · 绿主题（:root，不带 data-theme）  = **原字面量，一字不改** ⇒ 逐像素不变
+       · 白主题（html[data-theme="light"]）= 去绿中性，主色中性深灰（老板明令不许蓝）
+       · 深主题（html[data-theme="dark"]） = 带绿的深底浅字
+
+   【铁律：三套必须齐全】
+     少一套 ⇒ 那个主题下这些属性拿到空值 ⇒ 白屏 / 黑字黑底。新增变量必须同时补三套。
+     门禁 scripts/smoke/unit-theme-cover-group-a.mjs 的 C/D 两条断言守着这件事。
+
+   【命名】
+     --loc-vd-<角色><序号>。前缀是文件独占的，**不许跨文件复用**。
+     刻意不用 --c- 开头：那是全局 token 的命名空间，混进去会被核心层门禁误判。
+
+   【数据可视化系列色】
+     标签/系列色表达的是**数据身份**，不是界面语义 —— 它们也建了变量，但深色值
+     只调亮度、不改成同一个色，系列之间保持可区分。
+   ──────────────────────────────────────────────────────────────────────────── */
+:root {
+  --loc-vd-alphaBrand08: rgba(14, 125, 89, 0.08);
+  --loc-vd-alphaBrand92: rgba(14, 125, 89, 0.92);
+  --loc-vd-alphaGlass06: rgba(255, 255, 255, 0.06);
+  --loc-vd-alphaGlass35: rgba(255, 255, 255, 0.35);
+  --loc-vd-alphaGlass62: rgba(240, 242, 244, 0.62);
+  --loc-vd-alphaGlass78: rgba(240, 242, 244, 0.78);
+  --loc-vd-alphaGlass90: rgba(255, 255, 255, 0.9);
+  --loc-vd-alphaGlass96: rgba(255, 255, 255, 0.96);
+  --loc-vd-border: #e6e8eb;
+  --loc-vd-bordera: #eef0f2;
+  --loc-vd-brandDeep: #0e7d59;
+  --loc-vd-brandLine: #cfd8d3;
+  --loc-vd-brandTint: #dfeae5;
+  --loc-vd-brandTinta: #e3ece8;
+  --loc-vd-brandTintb: #e6efe9;
+  --loc-vd-brandTintc: #eaf5f0;
+  --loc-vd-brandTintd: #eef4f1;
+  --loc-vd-brandTinte: #eef7f3;
+  --loc-vd-brandTintf: #f3faf6;
+  --loc-vd-danger: #dc2626;
+  --loc-vd-onBrand: #f0f2f4;
+  --loc-vd-shadow: rgba(15, 40, 30, 0.14);
+  --loc-vd-shadowSoft: rgba(16, 40, 32, 0.06);
+  --loc-vd-surface2: #eceef1;
+  --loc-vd-surface2a: #eef2f0;
+  --loc-vd-surface2b: #eef2f5;
+  --loc-vd-surface2c: #f2f4f6;
+  --loc-vd-surface2d: #f2f5f3;
+  --loc-vd-surface2e: #f4f6f8;
+  --loc-vd-surface2f: #f4faf7;
+  --loc-vd-surface2g: #f6f8f7;
+  --loc-vd-text: #1f2328;
+  --loc-vd-text2: #4b5260;
+  --loc-vd-text2a: #6b7280;
+  --loc-vd-text2b: #7b838f;
+  --loc-vd-text2c: #8a919c;
+  --loc-vd-text2d: #8c8c8c;
+  --loc-vd-text3: #9aa1ac;
+  --loc-vd-text3a: #a1a8b3;
+  --loc-vd-warn: #8a6d1d;
+  --loc-vd-warna: #b45309;
+  --loc-vd-warnTint: #fdf7ec;
+  --loc-vd-window: #f5faf7;
+  --loc-vd-windowa: #f7f8f7;
+  --loc-vd-windowb: #f7fbf9;
+  --loc-vd-windowc: #fafbfc;
+  --loc-vd-windowd: #fbfcfb;
+  --loc-vd-windowe: #fbfcfc;
+  --loc-vd-windowf: #fcfdfd;
+  --loc-vd-windowg: #fdfefd;
+}
+
+html[data-theme="light"] {
+  --loc-vd-alphaBrand08: rgba(58, 66, 71, 0.08);
+  --loc-vd-alphaBrand92: rgba(58, 66, 71, 0.92);
+  --loc-vd-alphaGlass06: rgba(255, 255, 255, 0.06);
+  --loc-vd-alphaGlass35: rgba(255, 255, 255, 0.35);
+  --loc-vd-alphaGlass62: rgba(255, 255, 255, 0.62);
+  --loc-vd-alphaGlass78: rgba(255, 255, 255, 0.78);
+  --loc-vd-alphaGlass90: rgba(255, 255, 255, 0.9);
+  --loc-vd-alphaGlass96: rgba(255, 255, 255, 0.96);
+  --loc-vd-border: #e3e6e6;
+  --loc-vd-bordera: #e3e6e6;
+  --loc-vd-brandDeep: #23282d;
+  --loc-vd-brandLine: #d5dbd8;
+  --loc-vd-brandTint: #f1f4f2;
+  --loc-vd-brandTinta: #f1f4f2;
+  --loc-vd-brandTintb: #f1f4f2;
+  --loc-vd-brandTintc: #f1f4f2;
+  --loc-vd-brandTintd: #f1f4f2;
+  --loc-vd-brandTinte: #f1f4f2;
+  --loc-vd-brandTintf: #f1f4f2;
+  --loc-vd-danger: #c0392b;
+  --loc-vd-onBrand: #ffffff;
+  --loc-vd-shadow: rgba(0, 0, 0, 0.07);
+  --loc-vd-shadowSoft: rgba(0, 0, 0, 0.04);
+  --loc-vd-surface2: #f4f5f5;
+  --loc-vd-surface2a: #f4f5f5;
+  --loc-vd-surface2b: #f4f5f5;
+  --loc-vd-surface2c: #f4f5f5;
+  --loc-vd-surface2d: #f4f5f5;
+  --loc-vd-surface2e: #f4f5f5;
+  --loc-vd-surface2f: #f4f5f5;
+  --loc-vd-surface2g: #f4f5f5;
+  --loc-vd-text: #1d2124;
+  --loc-vd-text2: #565e63;
+  --loc-vd-text2a: #565e63;
+  --loc-vd-text2b: #565e63;
+  --loc-vd-text2c: #565e63;
+  --loc-vd-text2d: #565e63;
+  --loc-vd-text3: #6e767c;
+  --loc-vd-text3a: #6e767c;
+  --loc-vd-warn: #9a6a00;
+  --loc-vd-warna: #9a6a00;
+  --loc-vd-warnTint: #fbf3e3;
+  --loc-vd-window: #f6f7f7;
+  --loc-vd-windowa: #f6f7f7;
+  --loc-vd-windowb: #f6f7f7;
+  --loc-vd-windowc: #f6f7f7;
+  --loc-vd-windowd: #f6f7f7;
+  --loc-vd-windowe: #f6f7f7;
+  --loc-vd-windowf: #f6f7f7;
+  --loc-vd-windowg: #f6f7f7;
+}
+
+html[data-theme="dark"] {
+  --loc-vd-alphaBrand08: rgba(60, 196, 124, 0.08);
+  --loc-vd-alphaBrand92: rgba(60, 196, 124, 0.92);
+  --loc-vd-alphaGlass06: rgba(255, 255, 255, 0.01);
+  --loc-vd-alphaGlass35: rgba(255, 255, 255, 0.08);
+  --loc-vd-alphaGlass62: rgba(255, 255, 255, 0.14);
+  --loc-vd-alphaGlass78: rgba(255, 255, 255, 0.17);
+  --loc-vd-alphaGlass90: rgba(255, 255, 255, 0.2);
+  --loc-vd-alphaGlass96: rgba(255, 255, 255, 0.21);
+  --loc-vd-border: rgba(255, 255, 255, 0.10);
+  --loc-vd-bordera: rgba(255, 255, 255, 0.10);
+  --loc-vd-brandDeep: #2faf6b;
+  --loc-vd-brandLine: #2c4a39;
+  --loc-vd-brandTint: #1b2a22;
+  --loc-vd-brandTinta: #1b2a22;
+  --loc-vd-brandTintb: #1b2a22;
+  --loc-vd-brandTintc: #1b2a22;
+  --loc-vd-brandTintd: #1b2a22;
+  --loc-vd-brandTinte: #1b2a22;
+  --loc-vd-brandTintf: #1b2a22;
+  --loc-vd-danger: #f0796b;
+  --loc-vd-onBrand: #10241a;
+  --loc-vd-shadow: rgba(0, 0, 0, 0.42);
+  --loc-vd-shadowSoft: rgba(0, 0, 0, 0.28);
+  --loc-vd-surface2: #2a2f2c;
+  --loc-vd-surface2a: #2a2f2c;
+  --loc-vd-surface2b: #2a2f2c;
+  --loc-vd-surface2c: #2a2f2c;
+  --loc-vd-surface2d: #2a2f2c;
+  --loc-vd-surface2e: #2a2f2c;
+  --loc-vd-surface2f: #2a2f2c;
+  --loc-vd-surface2g: #2a2f2c;
+  --loc-vd-text: #ecf1ee;
+  --loc-vd-text2: #9ba8a1;
+  --loc-vd-text2a: #9ba8a1;
+  --loc-vd-text2b: #9ba8a1;
+  --loc-vd-text2c: #9ba8a1;
+  --loc-vd-text2d: #9ba8a1;
+  --loc-vd-text3: #7e8c85;
+  --loc-vd-text3a: #7e8c85;
+  --loc-vd-warn: #e3a33a;
+  --loc-vd-warna: #e3a33a;
+  --loc-vd-warnTint: rgba(227, 163, 58, 0.16);
+  --loc-vd-window: #171a18;
+  --loc-vd-windowa: #171a18;
+  --loc-vd-windowb: #171a18;
+  --loc-vd-windowc: #171a18;
+  --loc-vd-windowd: #171a18;
+  --loc-vd-windowe: #171a18;
+  --loc-vd-windowf: #171a18;
+  --loc-vd-windowg: #171a18;
+}
+
+
+/* ★ 2026-10-23（老板：「页面有点问题，很乱，而且全部积压在左边」）：
+   本页原先自己造了 `.vd-page`，却没有继承 `.module-page`（style.css:1944）的三条排版契约，
+   于是三个症状同时出现，实测读数如下（默认窗口 1180×780，探针 probe-videodesign-layout.mjs）：
+     ① 宽度只吃 max-content —— `.vd-page` 是 `.app-body`（flex row）的 flex item，computed
+        `flex: 0 1 auto` ⇒ 宽度 = 内容最大宽 975px：1440 档右侧死白 253px、1180 档死白 116.31px。
+        这就是「全部积压在左边」。
+     ② 一个可滚祖先都没有 —— scrollHeight 1806 / clientHeight 736，两种滚法 scrollTop 恒 0
+        ⇒ 底部三块（结果 / 作品库 / 账本）超出 1069.91px，永远看不到。
+     ③ `@media (max-width: 1180px)` 正好压在默认窗口上 ⇒ 冷启动首屏就降成两栏，
+        `.vd-params` 换一整行、`.vd-head` 从 108.42 涨到 160.19。断点已一并下移，见文末。
+   下面四条与 `.module-page` 逐字同一套口径，不新增第三套排版约定。 */
+.vd-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* ★ 2026-10-23：底部 32 → 64px，与 `.module-page`（style.css:1949）同一个理由：
+     右下角常驻「💬 客服反馈」胶囊 + 后台任务条，是**浮层**、不占文档流。
+     以前 `.vd-page` 不自己滚（内容溢出被 .app 裁掉），现在它自己是滚动容器，
+     滚到底时最后一屏内容会正好压在胶囊下面 ⇒ 留 64px 出来。
+     这条不是审美，是「内容被挡住」的功能问题。 */
+  padding: 16px 20px 64px;
+  flex: 1;             /* ① 吃掉 .app-body 的剩余宽度（与 .module-page 同值） */
+  min-width: 0;
+  min-height: 0;       /* ② 不设它，滚动容器会被内容撑开 ⇒ overflow 失效 */
+  overflow-y: auto;    /* ② 自己当滚动容器；页面内不再有第二个滚动区 */
+  color: var(--loc-vd-text);
+  font-size: 13px;
+}
+
+/* ② 的配套（同 .module-page > *）：flex column 滚动容器的子项默认 `flex-shrink:1`，
+   会被压扁到容器高度以内 ⇒ `overflow-y:auto` 永远不触发。子项一律不收缩。 */
+.vd-page > * {
+  flex-shrink: 0;
+}
+
+/* ── 页头 ─────────────────────────────────────────────────────────────── */
+.vd-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.vd-head-main {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.vd-title {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--loc-vd-text);
+}
+
+.vd-sub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--loc-vd-text2a);
+}
+
+.vd-mode {
+  flex: 0 0 auto;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--loc-vd-surface2d);
+}
+
+.vd-mode .ant-segmented-item-label {
+  min-height: 28px;
+  line-height: 28px;
+  padding: 0 18px;
+  font-size: 13px;
+}
+
+/* 额度卡：两行数字并排 + 进度条 + 计费说明，尽量矮 */
+.vd-budget {
+  flex: 0 0 320px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--loc-vd-border);
+  border-radius: 14px;
+  background: var(--loc-vd-windowc);
+  min-width: 0;
+}
+
+.vd-budget-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  min-width: 0;
+}
+
+.vd-budget-label { color: var(--loc-vd-text2a); }
+
+.vd-budget-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--loc-vd-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.vd-spent { color: var(--loc-vd-warna); }
+.vd-left { color: var(--loc-vd-brandDeep); }
+
+.vd-bar {
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--loc-vd-surface2);
+  overflow: hidden;
+}
+
+.vd-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--loc-vd-brandDeep);
+  transition: width 0.3s ease;
+}
+
+/* 计费方式的细字：必须小而清楚，不能藏进折叠面板（差别 5～30 倍，属于第一眼要看到的信息） */
+.vd-fine {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--loc-vd-text2c);
+}
+
+.vd-fine strong {
+  font-weight: 600;
+  color: var(--loc-vd-text2);
+}
+
+.vd-link {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--loc-vd-brandDeep);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.vd-link:hover { text-decoration: underline; }
+
+/* ── 常驻目录行 ───────────────────────────────────────────────────────── */
+.vd-dirbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border: 1px solid var(--loc-vd-brandTinta);
+  border-radius: 12px;
+  background: var(--loc-vd-window);
+  font-size: 12px;
+  color: var(--loc-vd-text2);
+}
+
+.vd-dirbar-label { flex: 0 0 auto; color: var(--loc-vd-text2a); }
+
+.vd-dirbar-path {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 2px 8px;
+  border: 1px solid var(--loc-vd-brandTinta);
+  border-radius: 8px;
+  background: var(--c-surface);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: var(--loc-vd-brandDeep);
+  word-break: break-all;
+}
+
+/* ── 通用小块 ─────────────────────────────────────────────────────────── */
+.vd-hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--loc-vd-text2c);
+}
+
+.vd-note {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--loc-vd-text2c);
+}
+
+.vd-warn {
+  font-size: 12px;
+  color: var(--loc-vd-warna);
+  word-break: break-all;
+}
+
+/* 生成中的进度行：阶段文案 + 「已等待 N 秒」。
+   图片侧必须有这一行 —— 后端图片超时 180 秒，只靠按钮转圈等于「等半天没反应」。 */
+.vd-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--loc-vd-text);
+}
+
+.vd-progress-text {
+  font-weight: 600;
+}
+
+.vd-tip { color: var(--loc-vd-brandDeep); }
+
+.vd-panel {
+  padding: 14px 16px;
+  border: 1px solid var(--loc-vd-border);
+  border-radius: 14px;
+  background: var(--c-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vd-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--loc-vd-text);
+}
+
+/* key 已经搬去设置：这里只留一句提示，不再有输入框 */
+.vd-keynote {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border: 1px solid var(--loc-vd-border);
+  border-radius: 12px;
+  background: var(--loc-vd-windowe);
+  font-size: 12px;
+  color: var(--loc-vd-text2);
+}
+
+/* ── 三栏工作区 ───────────────────────────────────────────────────────── */
+/* ★ 2026-10-23（老板：「视频剪辑描述这类占比也太大了 旁边完全可以做成固定尺寸往下滑动吧
+   你就不能抄下即梦的页面？」）：
+   中间的「描述」栏原来是 `1fr` —— 吃满窗口剩余宽度的意思 ⇒ 1440 档实测 **674px**、1280 档 514px，
+   一个输入框横跨六七百像素，而左边素材缩略图只有 236px（太挤）。即梦（Dreamina）的做法是
+   **左栏吃掉剩余宽度、中间描述栏固定宽度**，这里照抄：
+     素材 `1fr` ｜ 描述 **420px（定宽）** ｜ 参数 250px
+   实测（1440×1024 / 1280×800 / 1180×780）：素材 236 → 490 / 330 / 290，
+   描述 674 / 514 / 414 → 420 / 420 / 360。
+   ⚠️ **不许**用 `max-width` 钳 `.vd-page` 或 `.vd-work` 来达到同样效果 —— 本仓有前科
+      （`scripts/smoke/lint-mindmap-fullwidth.mjs` 钉的就是「容器被 max-width 钳住 ⇒ 右边死白一大片」）。
+      这里只改栅格列定义，`1fr` 仍在最左一列负责把剩余宽度吃干净，三栏合计始终等于内容宽。
+   ★ 同一天第二轮：**宽度定死了，"占比太大"还剩竖向一半** ——
+      输入框（`.vd-compose` 首个子项）当时是 `flex: 1 1 auto`，把三栏等高后多出来的高度全吃掉，
+      1440 档实测高 **554px**（1440×1024）/ 573px（1180×780），一屏里半屏是空输入框。
+      现在改成固定 200px（见下方那条），多出来的高度交给「生成按钮贴栏底」，即梦就是这个形态。 */
+.vd-work {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px) minmax(0, 250px);
+  gap: 14px;
+  /* ★ 2026-10-23：`start` → `stretch`（= 栅格默认值）。
+     原来写死 start，三张卡各自按内容定高，实测默认窗口下是 798 / 268 / 441 —— 主创作区
+     反而最矮，一屏里三个高矮不一的框，正是老板说的「很乱」。改成 stretch 后三栏等高成一条
+     完整的带子。多出来的高度**不再**由输入框吸收，而是由生成按钮的 `margin-top: auto` 吸收
+     （见 `.vd-compose > .vd-costrow`）—— 那样"按钮在卡底"是设计，不是空洞。 */
+  align-items: stretch;
+  min-width: 0;
+}
+
+.vd-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--loc-vd-border);
+  border-radius: 14px;
+  background: var(--c-surface);
+  min-width: 0;
+  /* ★ 2026-10-23 第二轮：这里**故意没有** `overflow-y: auto`。
+     中间版本加过一条 `overflow-y: auto; min-height: 0`（想着"内容多了各栏自己滚"），
+     探针实测它是**不触发的死代码**：栅格行高由最高的那一栏决定，没有任何 `max-height`
+     ⇒ 三栏 `scrollHeight == clientHeight`、`canScrollY=false`（1440/1280/1180/1024 四档实测）。
+     留着只会让下一个人以为"滚动已经做了"。真要让它生效必须给 `.vd-work` 一个高度上限
+     （`calc(100vh - X)`），那会和 `.vd-page`（:210，本页**唯一**滚动容器）形成双滚动条 ——
+     正是本文件反复警告的那种事。所以撤掉。
+     ⚠️ 如果将来有人再给本类加 `overflow`，必须同时给 `.vd-compose` 恢复 `overflow: visible`，
+        否则绝对定位的 `@` 提及面板会被裁（原因见 `.vd-compose` 那段注释）。 */
+}
+
+.vd-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.vd-col-head .vd-link { grid-column: auto; }
+
+.vd-col-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--loc-vd-text);
+}
+
+/* `position: relative` 只为 `@` 提及面板兜底定位（面板贴着提示词框下方的浮层）。
+   真正的定位参照是里面的 `.vd-prompt-field`（见那段注释）—— 这里也加上，
+   是为了将来有人把面板挪到 `.vd-compose` 直接子级时不至于飞出去。
+   布局探针 `scripts/verify/probe-videodesign-layout.mjs` 只断言 display / 几何，
+   不断言 position，所以这一条不影响它。
+   ⚠️ 本轮**没有**写 `overflow: visible`：上一版为了抵消 `.vd-col` 的 `overflow-y: auto`
+     曾经加过（一轴非 visible 时另一轴不能保持 visible ⇒ `.vd-mention` 会被裁），
+     而本轮已经把 `.vd-col` 的 `overflow-y` 撤掉了（它是死代码，见上面注释），
+     这里再写就是又一条没有理由的防御性 CSS。需要时按上一句的因果补回来即可。 */
+.vd-compose {
+  background: var(--loc-vd-windowg);
+  position: relative;
+}
+
+/* ★ 2026-10-23 第二轮（老板：「描述这类占比也太大了」，指的就是这个框的高度）：
+   旧做法是 `flex: 1 1 auto` —— 让输入框吃掉三栏等高后**所有**多余高度。
+   `.vd-work` 的 `align-items: stretch` 让三栏高度由最高的那一栏（素材区，实测 779~798px）决定，
+   于是输入框一路长到 **554px（1440×1024）/ 573px（1180×780）**，一屏里半屏多是空框。
+   现在改成**固定 200px**：`rows={5}` 的初始行数语义不要了，高度由 CSS 定死。
+   200px 的依据（本轮实测，`scripts/verify/probe-vd-layout-fix.mjs`）：
+     · 1440 档描述栏宽 420 → 输入框 390×200，五行中文提示词能一次看全（不出现滚动条）；
+     · 1180 档描述栏宽 360 → 输入框 330×200，同上；
+     · 再矮（132px 的老 min-height）会让「视频描述」这种长句刚写到第二行就要滚，
+       老板下一句就会是"框太小了"。200 是"一眼看到 5~6 行"的下限，也是"不占半屏"的上限。
+   `resize: none` 必须保留：允许用户拖高会让它再次溢出栏外，与「固定尺寸」自相矛盾；
+   内容超长时 textarea 自己内部滚动（antd 默认行为），这才是正常形态。 */
+.vd-compose > .vd-field:first-child {
+  flex: 0 0 auto;
+}
+
+.vd-compose > .vd-field:first-child .ant-input-textarea {
+  display: flex;
+  flex: 0 0 auto;
+}
+
+.vd-compose > .vd-field:first-child textarea {
+  flex: 0 0 auto;
+  height: 200px;
+  min-height: 200px;
+  max-height: 200px;
+  resize: none;
+}
+
+/* ★ 2026-10-23 第二轮：把「成本估算 + 生成按钮」那一行按到栏底。
+   `.vd-costrow` 是 `.vd-compose` 的**直接子级**（`VideoDesign.jsx:3132`，与提示词 label 平级），
+   所以 `>` 选择器生效。
+   为什么用 `margin-top: auto` 而不是给输入框撑高：这一栏里从上到下是
+   描述框 → AI 优化行 → 可能出现的 Alert → 图N 快捷键 → 成本 + 生成按钮 → 进度/告警 → 说明。
+   `margin-top: auto` 把**中间那段多余的高度**全吸到按钮上方 ⇒ 按钮永远贴着卡底，
+   像即梦那样「提示词在上、生成按钮在下」，而不是三个控件挤在顶部、底下空一大块。
+   `.vd-note` 的 `margin-top: auto` 同步撤掉（见下一条）：同一个 flex 容器里两个 auto 外边距
+   会**平分**剩余空间，那样按钮会被顶到半腰，两个 auto 等于互相抵消。
+   ⚠️ 这条 `margin-top: auto` 吸走的那块空白（约 364px / 窄档 382px）**不是漏改**，
+      它是「三栏等高」的固有产物。来龙去脉、两条被否掉的路、真正的解法，
+      都写在文件末尾 :1470 之后那段 `★★ 必读` 注释里 —— 动这块之前先读那段。 */
+.vd-compose > .vd-costrow {
+  margin-top: auto;
+}
+
+/* 旧规则是 `margin-top: auto`（把说明沉到卡底）。现在"沉底"的角色交给生成按钮那一行，
+   说明紧跟在按钮下方即可 —— 保留 auto 会让剩余空间被两条 auto 平分（见上一条注释）。 */
+.vd-compose > .vd-note {
+  margin-top: 0;
+}
+
+/* ── 素材区 ───────────────────────────────────────────────────────────── */
+.vd-role {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 10px;
+  border: 1px solid var(--loc-vd-brandTint);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--loc-vd-brandTintf) 0%, var(--c-surface) 100%);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.vd-role:hover {
+  border-color: var(--loc-vd-brandDeep);
+  box-shadow: 0 2px 8px var(--loc-vd-alphaBrand08);
+}
+
+.vd-role:focus-visible {
+  outline: 2px solid var(--loc-vd-brandDeep);
+  outline-offset: 2px;
+}
+
+.vd-role-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--loc-vd-brandDeep);
+}
+
+.vd-role-sub {
+  font-size: 11px;
+  color: var(--loc-vd-text2b);
+}
+
+.vd-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vd-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--loc-vd-bordera);
+  border-radius: 12px;
+  background: var(--loc-vd-windowd);
+}
+
+.vd-slot.is-locked { opacity: 0.55; }
+
+.vd-slot-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.vd-slot-name {
+  font-size: 12px;
+  color: var(--loc-vd-text2);
+}
+
+.vd-slot-cap {
+  font-size: 11px;
+  color: var(--loc-vd-text3a);
+  font-variant-numeric: tabular-nums;
+}
+
+.vd-slot-hint {
+  font-size: 10.5px;
+  color: var(--loc-vd-text3a);
+}
+
+.vd-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vd-thumb {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border: 1px solid var(--loc-vd-border);
+  border-radius: 10px;
+  background: var(--loc-vd-surface2a);
+  overflow: hidden;
+}
+
+.vd-thumb-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vd-thumb-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 11px;
+  color: var(--loc-vd-text2a);
+}
+
+/* 「图1」角标：多角色时靠它对齐提示词里的 图1/图2 */
+.vd-thumb-tag {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: var(--loc-vd-alphaBrand92);
+  color: var(--c-on-brand);
+  font-size: 10px;
+  line-height: 16px;
+}
+
+.vd-thumb-del {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(31, 35, 40, 0.58);
+  color: var(--c-on-media);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.vd-thumb-del:hover { background: rgba(31, 35, 40, 0.82); }
+
+/* 上传槽位是「缩略图瓦片」形态（即梦同款）：整块可点 + 键盘可达 */
+.vd-add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 72px;
+  height: 72px;
+  border: 1px dashed var(--loc-vd-brandLine);
+  border-radius: 10px;
+  background: var(--c-surface);
+  color: var(--loc-vd-text2a);
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.vd-add:hover {
+  border-color: var(--loc-vd-brandDeep);
+  color: var(--loc-vd-brandDeep);
+}
+
+.vd-add:focus-visible {
+  outline: 2px solid var(--loc-vd-brandDeep);
+  outline-offset: 2px;
+}
+
+.vd-add.is-locked {
+  cursor: not-allowed;
+  border-color: var(--loc-vd-border);
+  color: var(--loc-vd-text3a);
+  background: var(--loc-vd-windowa);
+}
+
+.vd-add-plus {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.vd-add-name {
+  max-width: 62px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.vd-exclusive {
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--loc-vd-warnTint);
+  color: var(--loc-vd-warna);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+/* ── 创作区 ───────────────────────────────────────────────────────────── */
+.vd-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--loc-vd-text2);
+  min-width: 0;
+}
+
+.vd-req {
+  font-style: normal;
+  color: var(--loc-vd-danger);
+  font-size: 11px;
+}
+
+.vd-opt {
+  font-style: normal;
+  color: var(--loc-vd-text3);
+  font-size: 11px;
+}
+
+.vd-num { width: 100%; }
+
+.vd-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.vd-chips-label {
+  font-size: 11px;
+  color: var(--loc-vd-text2c);
+}
+
+.vd-chip {
+  padding: 2px 9px;
+  border: 1px solid var(--loc-vd-brandTint);
+  border-radius: 999px;
+  background: var(--loc-vd-surface2f);
+  color: var(--loc-vd-brandDeep);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.vd-chip:hover {
+  border-color: var(--loc-vd-brandDeep);
+  background: var(--loc-vd-brandTintc);
+}
+
+/* ── `@` 提及面板 ──────────────────────────────────────────────────────── */
+/* 老板原话：「我要套用生成出来的图片或者视频 现在没办法套用 没有办法 @图片1 图片2 这样」。
+   面板是贴在提示词框**下方**的浮层，所以要一个定位参照：
+   `.vd-prompt-field` 就是包着 TextArea 的那个 label（纵向 flex，输入框撑满它），
+   给它 relative 之后 `top: 100%` 正好落在输入框底边 —— 不另加一层 wrapper，
+   因为 `.vd-compose > .vd-field:first-child` 那几条"输入框吃掉多余高度"的规则
+   依赖它是**直接子级**，套一层 div 会把版式改坏。 */
+.vd-prompt-field { position: relative; }
+
+.vd-mention-tip b {
+  color: var(--loc-vd-brandDeep);
+  font-weight: 600;
+}
+
+.vd-mention {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 2px);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  max-height: 264px;
+  border: 1px solid var(--loc-vd-brandTint);
+  border-radius: 10px;
+  background: var(--c-surface);
+  box-shadow: 0 10px 26px var(--loc-vd-shadow);
+  overflow: hidden;
+}
+
+.vd-mention-head {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--loc-vd-text2c);
+  background: var(--loc-vd-windowb);
+  border-bottom: 1px solid var(--loc-vd-brandTintd);
+}
+
+.vd-mention-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  max-height: 230px;
+}
+
+.vd-mention-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.vd-mention-item:hover,
+.vd-mention-item.is-active {
+  background: var(--loc-vd-brandTintc);
+}
+
+.vd-mention-no {
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--loc-vd-brandDeep);
+}
+
+.vd-mention-thumb {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  object-fit: cover;
+  border: 1px solid var(--loc-vd-brandTintb);
+  border-radius: 6px;
+  background: var(--loc-vd-surface2g);
+}
+
+.vd-mention-thumb-none {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  color: var(--loc-vd-text2c);
+}
+
+.vd-mention-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 11.5px;
+  color: var(--loc-vd-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vd-mention-from {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  color: var(--loc-vd-text2c);
+}
+
+.vd-costrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ── 参数区 ───────────────────────────────────────────────────────────── */
+.vd-params { background: var(--loc-vd-windowf); }
+
+.vd-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--loc-vd-text2);
+}
+
+.vd-check input { margin-top: 2px; }
+
+.vd-grid4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.vd-row-end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ── 结果 ─────────────────────────────────────────────────────────────── */
+.vd-results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--loc-vd-border);
+  border-radius: 14px;
+  background: var(--c-surface);
+}
+
+.vd-results-empty { padding: 0 4px; }
+
+.vd-result {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--loc-vd-bordera);
+  border-radius: 12px;
+  background: var(--loc-vd-windowc);
+}
+
+.vd-result-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vd-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: var(--loc-vd-text2);
+  word-break: break-all;
+}
+
+.vd-file {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--loc-vd-text2);
+  word-break: break-all;
+}
+
+.vd-file code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--loc-vd-surface2b);
+  font-size: 11px;
+}
+
+/* 冲正（负数金额）：用绿色，和「涨红跌绿」无关 —— 这里表达的是「这笔钱退回来了」 */
+.vd-refund {
+  color: var(--loc-vd-brandDeep);
+  font-weight: 600;
+}
+
+.vd-video {
+  width: 100%;
+  max-width: 560px;
+  border-radius: 12px;
+  background: #0f1113;
+}
+
+.vd-img {
+  max-width: 100%;
+  max-height: 520px;
+  border-radius: 12px;
+  background: var(--loc-vd-surface2c);
+  object-fit: contain;
+}
+
+.vd-acts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── 作品库 ───────────────────────────────────────────────────────────── */
+.vd-library {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--loc-vd-border);
+  border-radius: 14px;
+  background: var(--c-surface);
+}
+
+.vd-assets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 12px;
+}
+
+.vd-asset {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--loc-vd-bordera);
+  border-radius: 14px;
+  background: var(--c-surface);
+  overflow: hidden;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.vd-asset:hover {
+  border-color: var(--loc-vd-brandTint);
+  box-shadow: 0 4px 14px var(--loc-vd-shadowSoft);
+}
+
+.vd-asset-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--loc-vd-surface2c);
+  /* 2026-10-24：媒体区可点开灯箱（老板「无法点击图片和视频无法查看 要去文件夹里打开」）。
+     `zoom-in` 是"能放大看"的通用手型 —— 只给 .vd-asset-media 用，不影响别的可点区域。 */
+  cursor: zoom-in;
+}
+
+.vd-asset-img,
+.vd-asset-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vd-asset-kind {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--loc-vd-alphaGlass90);
+  color: var(--loc-vd-brandDeep);
+  font-size: 10px;
+  line-height: 16px;
+}
+
+.vd-asset-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 0 10px;
+  min-width: 0;
+}
+
+.vd-asset-prompt {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 11.5px;
+  color: var(--loc-vd-text2);
+}
+
+.vd-asset-acts {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 0 8px 8px;
+}
+
+/**
+ * 本机文件已丢失的作品卡（2026-10-21）。
+ * 这一档**必须留着可见**：以前是直接从作品库里过滤掉，用户挪了产物目录之后
+ * 之前生成的东西凭空消失、页面只写「共 N 件」。现在的处理是留下来、变灰、
+ * 并说明为什么不能接着改 —— 所以样式上要"弱化但不能像坏了"（虚线边 + 淡色），
+ * 不要用红色：那不是错误，是"文件被移动或删除了"的客观状态。
+ */
+.vd-asset.is-lost {
+  border-style: dashed;
+  border-color: var(--loc-vd-border);
+  background: var(--loc-vd-windowc);
+}
+
+.vd-asset.is-lost .vd-asset-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--loc-vd-surface2e);
+}
+
+.vd-asset.is-lost .vd-asset-kind {
+  opacity: 0.6;
+}
+
+.vd-asset.is-lost .vd-asset-prompt {
+  color: var(--loc-vd-text2d);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 2026-10-24 · 缩略图 / 灯箱 / 工作栏 / 历史留存
+ * ──────────────────────────────────────────────────────────────────────────
+ * 老板原话：「生完之后看不到缩略图 而且无法点击图片和视频无法查看
+ *   要去文件夹里打开 能不能做成即梦的那种形式 并且要有工作栏
+ *   而且之前生的图可以看到 并不是再次打开后就没有了」
+ *
+ * 这里只加**这四件事**用的类，配色/圆角/阴影沿用本页既有的一套（白底 + 绿主色 #0e7d59）：
+ *   ① `.vd-strip` / `.vd-shot*`     结果区的「本次生成」缩略图带
+ *   ② `.vd-play-badge`             视频缩略图上的播放角标（不加则"静止图 vs 视频"分不出来）
+ *   ③ `.vd-libbar` / `.vd-filter`  作品库工作栏（全部 / 图片 / 视频 + 搜索 + 计数）
+ *   ④ `.vd-lb*`                    全屏灯箱（大图 / 播放器 / 底部工作栏）
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── ① 结果区：本次生成缩略图带 ────────────────────────────────────────── */
+.vd-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--loc-vd-bordera);
+  border-radius: 12px;
+  background: var(--c-surface);
+}
+
+.vd-strip-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vd-strip-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--loc-vd-text);
+}
+
+.vd-strip-items {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.vd-shot {
+  flex: 0 0 auto;
+  width: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: zoom-in;
+  border-radius: 10px;
+}
+
+.vd-shot-media {
+  position: relative;
+  width: 96px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--loc-vd-bordera);
+  border-radius: 10px;
+  background: var(--loc-vd-surface2c);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.vd-shot:hover .vd-shot-media {
+  border-color: var(--loc-vd-brandTint);
+  box-shadow: 0 4px 14px var(--loc-vd-shadowSoft);
+}
+
+.vd-shot-img,
+.vd-shot-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vd-shot-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 10.5px;
+  color: var(--loc-vd-text2);
+}
+
+.vd-shot.is-lost {
+  cursor: pointer;
+}
+
+.vd-shot.is-lost .vd-shot-media {
+  border-style: dashed;
+}
+
+/* ── ② 播放角标（视频缩略图上叠一个 ▶）──────────────────────────────── */
+.vd-play-badge {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(15, 17, 19, 0.62);
+  color: var(--c-on-media);
+  font-size: 9px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* 媒体区可点（点开灯箱）：焦点环，别让它看着"点不动"。
+   ⚠️ 基础规则 `cursor` 已并进上面第 734 行那条 `.vd-asset-media`（本文件不重复定义
+   同一个 class 的基础规则，那正是 `lint-css-collisions` 咬的那种静默覆盖）。 */
+.vd-asset-media:focus-visible,
+.vd-shot:focus-visible {
+  outline: 2px solid var(--loc-vd-brandDeep);
+  outline-offset: 2px;
+}
+
+.vd-asset.is-lost .vd-asset-media {
+  cursor: pointer;
+}
+
+/* 文件已不在时把原路径写出来（用户能自己去磁盘上找回来） */
+.vd-asset-lostpath {
+  padding: 0 8px 8px;
+  font-size: 10px;
+  color: var(--loc-vd-text2d);
+  word-break: break-all;
+}
+
+/* ── ③ 作品库工作栏 ──────────────────────────────────────────────────── */
+.vd-libbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border: 1px solid var(--loc-vd-bordera);
+  border-radius: 12px;
+  background: var(--loc-vd-windowc);
+}
+
+.vd-libbar .vd-filter {
+  flex: 0 0 auto;
+}
+
+.vd-libbar .vd-search {
+  flex: 1 1 180px;
+  min-width: 140px;
+  max-width: 320px;
+}
+
+.vd-lib-count {
+  white-space: nowrap;
+}
+
+.vd-lib-missing {
+  color: var(--loc-vd-warn);
+}
+
+/* ── ④ 灯箱（全屏看大图 / 播视频）───────────────────────────────────── */
+.vd-lb {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 20px 14px;
+  background: rgba(12, 14, 16, 0.88);
+}
+
+.vd-lb-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.vd-lb-media {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 12px;
+  background: #0f1113;
+  object-fit: contain;
+}
+
+.vd-lb-nav {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* 文件不在的条目：占位 + 原因 + 原路径（**照样能打开灯箱**，只是没有像素） */
+.vd-lb-lost {
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px 24px;
+  border: 1px dashed var(--loc-vd-alphaGlass35);
+  border-radius: 14px;
+  background: var(--loc-vd-alphaGlass06);
+  color: var(--loc-vd-onBrand);
+  text-align: center;
+}
+
+.vd-lb-lost-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.vd-lb-lost-why {
+  font-size: 12.5px;
+  color: var(--loc-vd-alphaGlass78);
+}
+
+.vd-lb-lost-path {
+  font-size: 11px;
+  color: var(--loc-vd-alphaGlass62);
+  word-break: break-all;
+}
+
+/* 底部工作栏：序号 / 类型 / 文件名 / 体积 / 时间 / 描述 + 操作 */
+.vd-lb-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--loc-vd-alphaGlass96);
+}
+
+.vd-lb-pos {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--loc-vd-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.vd-lb-kind {
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--loc-vd-brandTinte);
+  color: var(--loc-vd-brandDeep);
+  font-size: 10px;
+  line-height: 16px;
+}
+
+.vd-lb-name {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: var(--loc-vd-text2);
+  word-break: break-all;
+}
+
+.vd-lb-prompt {
+  flex: 1 1 160px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  color: var(--loc-vd-text2);
+}
+
+.vd-lb-acts {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ★ 2026-10-23：定宽 420 的两级收敛（描述栏定宽后，剩下的宽度**必须**留给素材栏，
+   否则窄窗下素材缩略图会被压得比改动前还窄 —— 那是反向优化）。
+   口径：`可用内容宽 = 视口宽 − 252`（252 = 侧栏 212 + `.vd-page` 左右 padding 40，
+        四档实测恒定：1180 → 928、1100 → 848、1024 → 772，与探针读数逐位吻合）。
+   ① ≤1220（描述 360 / 参数 250）：
+      1220 档素材 = 968 − 28 − 360 − 250 = 330；老板冷启动的 1180 = **290**（改动前 236，净赚 54）。
+      为什么不是 1186：那一段素材只剩 236，跟改动前打平，"把宽度还给素材栏"等于没兑现。
+   ② ≤1140（描述 310 / 参数 250）：
+      1140 = 300、**1100 = 260**（硬要求 ≥190，实测 260）、1041 = 201（本档最窄处，仍 ≥190）。
+      再往下就交给 ≤1040 的两栏规则，那里描述栏变成 1.4fr，不再与素材栏抢固定像素。
+   仍只有 `1fr` 一列吃剩余宽度 ⇒ 三栏合计恒等于内容宽：不会出现右侧死白，也不会横向溢出
+   （1041×768 ~ 1920 全段探针实测 `scrollWidth == clientWidth`）。 */
+@media (max-width: 1220px) {
+  .vd-work {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 360px) minmax(0, 250px);
+  }
+}
+
+@media (max-width: 1140px) {
+  .vd-work {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 310px) minmax(0, 250px);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ★★ 必读：中间「描述」栏里那块约 364px 的空白，**不是漏改** ★★
+
+   【现象（探针实测，`scripts/verify/probe-vd-layout-fix.mjs`）】
+     1440×1024 / 1280×800 / 1920×1080 档：中间栏子块间距
+       `.vd-field`(268.53) —10— `.vd-airow`(24) —**364.14**— `.vd-costrow`(40) —10— `.vd-note`(36.78)
+     1180×780 / 1100×800 / 1041×768 档：同一处是 **382.53**（三栏被拉得更高）。
+     即：AI 优化行和「成本 + 生成按钮」那一行之间，站在那儿一大块空白。
+
+   【它不是本轮引入的，只是被"挪出了框"】
+     本轮之前，输入框是 `flex: 1 1 auto`（吃掉三栏等高后所有多余高度），
+     上面那块 364px 是**在 textarea 内部**的 —— 1440 档输入框实测高 554.14px、1180 档 572.53px，
+     一屏里半屏是空框。改成固定 200px 后，同一块空间**挪到了框外**，总量一个像素没少。
+     ⇒ 观感上的"大头空白"**没有消失**，只是从"框里"变成"框外"。
+        这一轮修掉的是"输入框本身大得离谱"（老板原话「描述这类占比也太大了」指的就是那个框），
+        **不是**"这块空白怎样才能没有"。别把这两件事混为一谈。
+
+   【它为什么会存在：是「三栏等高」的固有产物】
+     `.vd-work` 是 `align-items: stretch`，三栏高度 = 最高的那一栏（素材区，实测 779.45 / 797.84）。
+     中间栏的内容（描述框 268.53 + AI 行 24 + 按钮行 40 + 说明 36.78 + 几个 10px gap ≈ 424）
+     远没有素材区高 ⇒ 差额必须落在**某一个** flex 子项上。
+     现在的落点是 `.vd-costrow` 的 `margin-top: auto`（见 :559 那段注释）——
+     也就是"生成按钮贴卡底"这个形态本身**就是**这块空白的形状。
+     想让空白消失，等于要求三栏里至少有一栏不必等高。
+
+   【两条被明确否掉的路（都不许走，别再试）】
+     ① 给 `.vd-work` 加高度上限（如 `max-height: calc(100vh - 220px)`）让中间栏内部滚：
+        `.vd-page`（:210-226）**本身就是本页唯一的滚动容器**（`overflow-y: auto`）。
+        再套一层 ⇒ 双滚动条，滚轮到底该滚谁变成一个玄学；
+        而且本文件从 2026-10-23 起反复警告的就是这件事（见 `.vd-page` 与 `.vd-col` 的注释）。
+     ② 把 `align-items` 改回 `start`（三栏各自按内容定高）：
+        那正是 2026-10-23 那一轮修掉的问题 —— 实测 798 / 268 / 441 三个高矮不一的框，
+        老板原话「很乱，而且全部积压在左边」。改回去等于把修好的 bug 放回来。
+
+   【真正的解法（结构性改动，本轮不做，不是不能做）】
+     把「生成结果 / 预览」区挪进中间栏 —— 即梦（Dreamina）就是这个形态：
+     中间是主视觉（结果、进度、预览），描述框和参数都收在两侧。
+     那样中间栏才**有内容**去填满高度，364px 空白自然消失，而不是靠"拉高某个框"去遮。
+     ⚠️ 但它要动 `VideoDesign.jsx:3283` 的 `.vd-results`（现在挂在 `.vd-work` 之外、
+        是 `.vd-page` 的直接子级），而 `data-vd-results` 是**门禁锚点**，
+        `scripts/smoke/cases/videodesign-media-refs.jsx`、`videodesign-gallery.jsx`、
+        `entry-videodesign-persist.jsx` 有一串用例依赖它，`unit-videodesign-persist` 也在门禁链里。
+        ⇒ 必须单独一轮做，连同那批用例一起改，不能塞进样式改动里顺手挪。
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 窄窗口：先并两栏，再并一栏（绝不横向溢出）───────────────────────────── */
+/* ★ 2026-10-23：断点从 1180 下移到 1040。
+   1180 正好等于 `src/main/main.js` 的窗口默认宽度（centerIntoWorkArea({width:1180,height:780})）
+   ⇒ 老板一冷启动就是「两栏 + 参数占整行」，首屏最该展示的三栏反而看不到。
+   移到 1040 后：默认窗口与 1280 档都是三栏（内容宽 1140 ⇒ 1fr ≈ 626，仍有余量），
+   1024 档才降两栏 —— 降级规则本身一个字没改。 */
+@media (max-width: 1040px) {
+  .vd-work {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  }
+
+  .vd-params { grid-column: 1 / -1; }
+
+  .vd-budget { flex-basis: 100%; }
+}
+
+@media (max-width: 860px) {
+  .vd-work { grid-template-columns: minmax(0, 1fr); }
+
+  .vd-params { grid-column: auto; }
+
+  /* 底部沿用 64px（浮层胶囊的高度预算），窄窗口下更不能省 —— 否则最后一屏被挡得更狠 */
+  .vd-page { padding: 12px 12px 64px; }
+
+  .vd-dirbar-path { flex-basis: 100%; }
+
+  /* 灯箱在窄窗口下：左右键缩小、底部工作栏允许换行，别让操作按钮被挤出屏幕 */
+  .vd-lb { padding: 12px 10px 10px; }
+
+  .vd-lb-nav { width: 28px; height: 28px; font-size: 14px; }
+
+  .vd-lb-bar { padding: 8px; gap: 6px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   0.21.25 · 生成百分比 + AI 优化提示词（老板「生成的时候没有百分比，没有AI优化提示词。」）
+
+   【为什么百分比条复用 `.vd-bar` 而不新造一套】
+     125-139 行那条 `.vd-bar > i` 已经带 `transition: width 0.3s ease`、圆角、绿主色，
+     而且额度条（1866 行）用的就是它。再造一条 `.vd-progress-bar` 只会让"绿色进度条"
+     出现两种高度/两种圆角 —— 这种不一致没人会报 bug，只会看着别扭。
+
+   【这一节只加**复合选择器**，不加任何新的基础 class 规则】
+     `lint-css-collisions.mjs` 判的是"同一个 class 的基础规则重复定义且属性重叠"。
+     `.vd-progress .vd-bar` 是后代选择器，不计入基础规则；`.vd-bar` / `.vd-airow` 都
+     只在这里出现一次。这样既拿到需要的排版，又不用往 BASELINE 记账表里加条目。
+
+   【0.21.25 二次修：条 + 看得见的数字】
+     老板原话「图像视频生成没有生成的百分比进度条」—— 条其实画了，但百分比**只写进了
+     `aria-valuenow` / `data-vd-progress-pct`，页面上没有任何数字**，而 `.vd-bar` 基础规则
+     只有 4px 高（`:308`），深绿压在浅灰底上几乎看不出在动。
+     现在 `.vd-pct` 包住「条 + `.vd-pct-num` 文字」，`.vd-pct-num` 用主题 token 上色。
+     ⚠️ `.vd-pct` / `.vd-pct-num` 在这里**各只定义一次**（基础规则），不重复定义、不加第二处。
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* 进度条在 `.vd-progress`（flex 行）里要能自己撑开：不写 flex-basis 的话
+   `.vd-bar` 的 width 是 auto，在 flex 行里会被压成 0 宽 —— 条"存在但看不见"。
+   注：包了 `.vd-pct` 之后真正撑开的是 `.vd-pct`（见下方），这条保留给
+   「`.vd-bar` 直接放在 flex 行里」的场合（读数/诊断用，不影响现有结构）。 */
+.vd-progress .vd-bar {
+  flex: 1 1 140px;
+  min-width: 90px;
+}
+
+/* 「条 + 百分比数字」这一行的容器：撑开交给它，条在里面自己 grow。
+   与 `.vd-progress .vd-bar`（2 个 class）同等特异度、且定义在后 ⇒ 覆盖成立。 */
+.vd-pct {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 160px;
+  min-width: 120px;
+}
+
+/* 条不再自己撑开——撑开的是 `.vd-pct`；这里只要 grow 满剩余宽度。
+   高度：基础规则是 4px（额度条也用同一套，不能动基础规则），进度条这里提到 6px。 */
+.vd-pct > .vd-bar {
+  flex: 1 1 auto;
+  min-width: 60px;
+  height: 6px;
+}
+
+/* 可见的百分比数字。tabular-nums：等宽数字，百分比跳动时不会左右抖。 */
+.vd-pct-num {
+  flex: 0 0 auto;
+  min-width: 34px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--loc-vd-brandDeep);
+}
+
+/* 结果卡里的进度条：卡片是纵向 flex，这一行要占满整行。
+   结构从 `.vd-result > .vd-bar` 改成了 `.vd-result > .vd-pct` —— 直接子元素选择器
+   必须跟着结构改，否则结果卡里的条会塌成内容宽、数字被挤到外面。 */
+.vd-result > .vd-pct {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+/* ── AI 优化提示词的那一行：按钮 + 说明 + （改写后）撤销 ──────────────────── */
+.vd-airow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   深色舞台 · 字色基线（2026-11-10）—— 同上，见 videostudio.css 那段长注释。
+   `.vd-video` 是成片预览、`.vd-lb` 是全屏灯箱：底色 #0f1113 / rgba(12,14,16,.88)，
+   与主题无关，所以字色也不能跟主题翻转。
+   ──────────────────────────────────────────────────────────────────────────── */
+.vd-video,
+.vd-lb,
+.vd-lb-media {
+  color: var(--c-on-media);
+}

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>豆芽CLAW</title>
+    <!-- ============================================================================
+         启动白闪的第二层防线（2026-11-08 · 主题二期）
+         ----------------------------------------------------------------------------
+         深色主题下"冷启动先闪一片白"是两个独立原因叠出来的：
+           ① 窗口底色写死成浅灰 —— 已在 src/main/main.js 里按主题二选一修掉；
+           ② CSS 应用之前，body 没有任何背景，浏览器默认白 —— 就是下面这两段。
+         ⚠️ 这里**刻意不写任何一套主题的具体色值**（写了就等于在第二个地方维护配色，
+            改主题时必然两边不一致）。做法是让页面在 CSS 就位之前**透明**，
+            露出 Electron 的 `BrowserWindow.backgroundColor` —— 那个值已经按主题算好了。
+            CSS 一到位，`.app` 的 `background: var(--bg-window)` 立刻盖住它。
+         ⚠️ 下面这段内联脚本只做一件事：把 localStorage 里的主题**尽早**写到 <html> 上。
+            `store/themeStore.js` 在模块加载时也会做同样的事，但它要等整个 bundle 执行到
+            那一行；这段跑在 bundle 之前，能把"深色主题下先按浅色渲染一帧"的窗口再压小。
+            两处写法必须一致：**两套主题都落同名属性**，没有"移除属性"那一路
+            （白色若不带属性，`html[data-theme="light"]` 那 29 个旧 token 覆盖就不会命中）。
+            绿色主题已下线：存量值 `green`——以及空值 / 任何非法值——都按新默认「白色」处理。
+         ============================================================================ -->
+    <style>
+      html, body { background: transparent; margin: 0; }
+    </style>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('douya-theme');
+          t = typeof t === 'string' ? t.trim().toLowerCase() : '';
+          // 只剩两套：dark 保留，其余（含存量 'green' / 空 / 非法）一律白色（新默认）。
+          var theme = t === 'dark' ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.style.colorScheme = theme === 'dark' ? 'dark' : 'light';
+        } catch (e) {
+          // localStorage 被禁 / 隐私模式：尽力把默认白色落一次属性；
+          // 连 setAttribute 都失败也不影响渲染（`theme-tokens.css` 的 `:root` 是白色的兜底）。
+          try {
+            document.documentElement.setAttribute('data-theme', 'light');
+            document.documentElement.style.colorScheme = 'light';
+          } catch (e2) { /* 什么都不做 */ }
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./index.jsx"></script>
+  </body>
+</html>

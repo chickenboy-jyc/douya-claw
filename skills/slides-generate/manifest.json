@@ -1,0 +1,12 @@
+{
+  "name": "生成演示文稿（网页版）",
+  "description": "★做演示文稿/汇报/方案/路演/介绍时**默认用这个**（替代旧版 ppt-generate）。根据标题和每页内容，生成一份**单文件 HTML 网页演示**：双击即可用浏览器打开，按 ← → 或点页面翻页，按 F 全屏，可直接投屏讲解，也能一键发布成链接分享给同事（发布用 deploy-static）。产出的网页生成后**可以被浏览器截图自检**（用 browser-verify），所以排版不会像 pptx 那样溢出还看不见。slides 参数是 JSON 数组，**每项都要带 layout 选版面**（见下）。⚠️ 只有当用户**明确要求 .pptx 文件**、或对方必须用 Office 二次编辑时，才改用 ppt-generate。\n\n★★★ 版面必须按内容选，不许一律用 bullets（这是「做出来每次都一样」的根因）:\n| layout | 什么时候用它 | 必填字段 |\n|---|---|---|\n| bullets | 一组同类要点，彼此并列、无层级 | bullets |\n| cards | 2~4 块**各自独立**的模块（功能块 / 三套方案 / 四类人群） | items:[{title,text}] |\n| stats | 有**具体数字**要强调（增长率、渗透率、成本对比） | stats:[{title:'82%',text:'复购率'}] |\n| compare | 两组事物**逐项对照**（改造前/后、我们/竞品、现状/目标） | compare:[{title:'维度',text:'左值',right:'右值'}]，可选 leftLabel/rightLabel |\n| steps | 有**先后顺序**（实施步骤 / 流程 / 时间线） | items:[{title:'第一步',text:'做什么'}] |\n| quote | 一句**主张或用户原话**要占满一页 | quote，可选 by |\n| image | 有**真实图片**要展示（截图 / 数据图 / 产品图） | image，可选 caption |\n| section | **章节过渡页**（换话题前的一句过场） | bullets:[一句] |\n\n铁律：\n1. **一份文稿里不许全部用同一种版面**。除了封面，至少要有 2~3 种不同版面；内容并列用 cards、有数字用 stats、有对比用 compare、有先后用 steps。\n2. 同一份文稿里**连续两页不要用同一种版面**。\n3. 选版面看的是**这一页内容的结构**，不是好不好看：有数字就必须 stats，有对照就必须 compare。\n4. 只给了 layout 却没给对应字段时，会自动回落成 bullets（内容不丢），但这是降级——先把字段给全。\n5. image 只接受本地路径或 data URI；**外链 http 图片会被拒绝**（单文件演示离线打不开就是破图）。",
+  "runtime": "js",
+  "params": [
+    { "name": "title", "label": "演示文稿标题", "required": true },
+    { "name": "subtitle", "label": "副标题（可选，显示在封面）" },
+    { "name": "slides", "label": "每页内容(JSON 数组，每项必须带 layout 选版面)", "type": "textarea", "required": true, "hint": "每一项是一页，必须显式给 layout：bullets / cards / stats / compare / steps / quote / image / section。示例：{\"layout\":\"stats\",\"title\":\"关键数字\",\"stats\":[{\"title\":\"82%\",\"text\":\"老客复购率\"}]}。★ 不许整份文稿都用 bullets；连续两页不要同版面；有数字用 stats、有对照用 compare、有先后用 steps、并列模块用 cards。一页讲一件事，标题直接给结论。" },
+    { "name": "filename", "label": "输出文件名(可选，如 汇报.html)", "hint": "默认按标题自动命名；文件名请勿含空格" },
+    { "name": "theme", "label": "配色(可选：green=绿色默认 / dark=深色)" }
+  ]
+}

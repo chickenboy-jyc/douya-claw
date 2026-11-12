@@ -1,0 +1,521 @@
+/* ============================================================================
+   theme-tokens.css —— 全站主题 token 层（四期工程 · 第 1 期地基）
+   ============================================================================
+
+   【这个文件是什么】
+   **唯一**的语义颜色 token 表。只有变量定义，没有一条组件样式规则 —— 所以它
+   可以被任何页面安全引用，也不会和既有 CSS 抢选择器。
+
+   【两套主题的定位（绿色主题已下线，2026-11-08 后）】
+     用户原话：「主题色是绿色 就白色和深色就行了」⇒ `green` 整体删除，
+     只剩 **白色（默认）** 与 **深色** 两套。三套口径的历史注释已随之下线，
+     别再按"三套"去补值 —— 现在**任何** token 只允许有 light / dark 两种取值。
+
+     · `:root`（不写 data-theme 时的默认） = **白色主题**：去绿，中性白 / 浅灰。
+       主色 `--c-brand` 是**中性深灰**（#3A4247），绿色只保留在 `--c-brand-tint`
+       这一层"极淡的点缀"上。**不许出现蓝色**（老板明令）。
+       ⚠️ 这里的值是**字面量**，不写 `var(--旧名, #literal)`：白色默认态必须与
+          `[data-theme="light"]` 块**逐字相等**（门禁 `unit-theme-tokens.mjs` 的 B4
+          直接比这两块）。引用旧 token 会把绿-era 的浅色值（`--r15-green` 等）
+          拖进来 ⇒ 默认态和白色主题立刻不一致。
+       ⚠️ `:root` 这一份是**首帧兜底**：JS（`themeStore`）还没跑、`data-theme` 还没
+          落到 `<html>` 上的那一瞬间，CSS 一加载就必须已经是白色，否则冷启动会闪
+          一帧别的颜色。
+
+     · `[data-theme="light"]` = **白色主题的显式副本**（与 `:root` 同值）。
+       为什么白色要两份：`:root` 管"属性还没落上去"的首帧，这一份管"属性已落上去"
+       的常态（0,1,0，写在 `:root` 之后 ⇒ 同权重时它赢）。两份必须同值 —— B4 守着。
+       为什么白色**必须**带属性（而不是像旧版本那样"默认态移除属性"）：旧 token 的
+       覆盖块 `html[data-theme="light"]`（0,1,1）只有属性在场才命中，而它必须靠
+       特异性压过 `style.css` / `round14.css` / `round15.css` 那三张后加载的 `:root`
+       表。详见 `store/themeStore.js` 文件头。
+
+     · `[data-theme="dark"]`  = **深色主题**：深底浅字。
+       背景不用纯黑：`#1C1F1D` 带一点点绿，呼应品牌（纯黑在 OLED 上过硬、也显脏）。
+       对比度硬要求（本文件就是按这个调出来的，别随手改）：
+         · 正文 `--c-text`      on `--c-bg-app` ≥ **7:1**   （实测 14.5:1）
+         · 次要字 `--c-text-2`  on `--c-bg-app` ≥ **4.5:1** （实测 6.8:1）
+         · 弱化字 `--c-text-3`  on `--c-bg-app` ≥ **4.5:1** （实测 4.7:1）
+       边框用低透明度白（`rgba(255,255,255,.10/.20)`），而不是某个固定的灰 ——
+       深底上灰边框会"发闷"，半透明白才会随底层亮度自然成立。
+       `--c-shadow-color` 在深色下改成 **rgba(0,0,0,0.40)**（比浅色重得多）：
+       深色底上阴影必须更重才看得见，沿用浅色那套 0.06 等于没有阴影。
+
+   【选择器优先级说明（改这个文件前必读）】
+     `:root` 与 `[data-theme="light"]` 的优先级**相同**（都是 0,1,0），
+     所以**后写的赢**。因此顺序必须是 `:root` → `light` → `dark`，不能调换。
+     两套主题都会由 `store/themeStore.js` 显式落成 `data-theme="light"` /
+     `data-theme="dark"`（没有"无属性"的第三种状态），所以 `[data-theme="…"]`
+     两块**都会**被命中；`:root` 只负责首帧兜底。
+
+   【`--r15-*` / `--brand-*` / `--bg-*` 等旧 token 怎么处理】
+     ⚠️ **旧 token 仍是旧名的唯一真源**（分散在 `style.css:5`、`styles/round14.css:22`、
+        `styles/round15.css:17` 三张 `:root` 表里，共 29 个颜色 token，只有浅色那一套）。
+
+        白 / 深两套主题必须在**本文件**里给这 29 个旧 token 补值，否则切到白/深色时
+        侧栏、聊天区、卡片仍是旧表里的浅色，整页错配。
+        ★ 写法上有一个必须绕开的坑：不能用 `[data-theme="dark"]`（0,1,0）——
+          它与 `round14.css` / `round15.css` 的 `:root`（0,1,0）**同权重**，而那两个文件
+          在 `index.jsx` 里**后加载**，同权重下后写者胜 ⇒ 本文件的覆盖会被它们压掉，
+          表现为"改了没生效"。而且 `styles/*.css` 是各组件自己 import 的，Vite 注入顺序
+          跟着组件图走，**不可依赖**。
+        ★ 所以第 ④ 节统一用 `html[data-theme="…"]`（0,1,1）：靠**特异性**赢，与加载
+          顺序无关。这是唯一稳的写法 —— **也正是白色必须带 `data-theme` 属性的原因**。
+
+        页面改造时把**硬编码色值**换成本文件的 `var(--c-*)`；引用旧 token 的地方
+        先留着不动，等页面全部过完再把旧名一次性摘掉。
+        旧名 → 新名的对照表见本文件末尾。
+
+   【铁律：新增 token 必须两套都给值】
+     缺一套 = 那套主题下该属性拿到空值 = **白屏 / 黑字黑底**。
+     这不是风格问题，逐套补齐，没有例外。
+
+   【本轮范围】（2026-11-08 更新，含绿主题下线）
+     第 1 期只建地基；第 2 期落地白 / 深两套：
+       · 本文件第 ④ 节给 29 个旧 token 补了白 / 深两套值 —— 全站 1729 处 `var(--旧名)`
+         因此**一次性跟着翻转，一个选择器都不用改**；
+       · 设置弹窗第 8 张卡「外观」现在**两选一（白 / 深）**，即时生效；
+       · 首屏不再闪白/闪绿（主进程按主题设 `BrowserWindow.backgroundColor` + `body` 透明兜底）。
+     页面自己的 CSS 里仍**没有**改用 `var(--c-*)`（那是各模块改造的事），所以
+     视觉变化的来源只有"token 的取值"这一处，出问题时排查面很小。
+   ========================================================================== */
+
+/* ────────────────────────────────────────────────────────────────────────────
+   ① 默认 = 白色主题（= `[data-theme="light"]` 的同值首帧兜底，B4 守着两者相等）
+   ──────────────────────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: light;
+
+  --c-bg-window: #f6f7f7;
+  --c-bg-app: #ffffff;
+  --c-surface: #ffffff;
+  --c-surface-2: #f4f5f5;
+  --c-surface-hover: #edefee;
+  --c-glass: rgba(255, 255, 255, 0.88);
+  --c-glass-2: rgba(255, 255, 255, 0.96);
+
+  --c-text: #1d2124;                                 /* 白底 16.2:1 */
+  --c-text-2: #565e63;                               /* 白底 6.6:1 */
+  --c-text-3: #6e767c;                               /* 白底 4.6:1（≥4.5，别再调浅） */
+  --c-on-brand: #ffffff;
+
+  --c-border: #e3e6e6;
+  --c-border-strong: #c9cfcf;
+  --c-shadow-color: rgba(0, 0, 0, 0.07);
+  --c-shadow-color-strong: rgba(0, 0, 0, 0.14);
+  --c-mask: rgba(0, 0, 0, 0.35);
+
+  /* 主色 = 中性深灰（不是绿、更不是蓝） */
+  --c-brand: #3a4247;
+  --c-brand-deep: #23282d;
+  --c-brand-dark: #14181a;
+  --c-brand-ink: #0e1113;
+  /* 绿色只留这一层"极淡的点缀" */
+  --c-brand-tint: #f1f4f2;
+  --c-brand-tint-strong: #e4e9e6;
+  --c-brand-wash: #f8faf9;
+  --c-brand-line: #d5dbd8;
+
+  --c-success: #1f8a54;
+  --c-success-tint: #edf6f1;
+  --c-warn: #9a6a00;
+  --c-warn-tint: #fbf3e3;
+  --c-danger: #c0392b;
+  --c-danger-tint: #fbedeb;
+
+  --c-focus-ring: rgba(58, 66, 71, 0.45);
+
+  /* 「压在媒体 / 遮罩上的字」：缩略图删除键、播放角标、图片上加的角标。
+     它永远压在深色遮罩或图片上，**两种主题下都必须是白字** ——
+     不能走会翻转的 token（`--c-on-brand` 在深色下翻成深墨 #10241a，
+     压在 rgba(31,35,40,.58) 上只有 1.05:1，那个 ✕ 完全看不见）。 */
+  --c-on-media: #ffffff;
+  /* 「绿字」专用。`--green`(#30d158) 是**填充色**——它是"亮绿实心块"的底色，
+     拿去当文字色压在白底 / 淡绿底上只有 1.84~2.02:1（`.support-req` / `.tg-ok` /
+     `.choice-chip:hover` 全中）。文字一律用 `--green-ink`：白底 4.9:1。 */
+  --green-ink: #1d7a36;
+  /* 「黄字」专用。`#ffd60a` 是填充色，当字色压淡绿底只有 1.33:1；
+     `--c-warn`(#9a6a00) 也只到 4.45 —— 差 0.05 就不合格。
+     取仓库里已经人工调过的那一档 #7a5b00（5.93:1 on 淡绿底 / 6.32:1 on 白底）。 */
+  --warn-ink: #7a5b00;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   ② 白色主题（显式副本）：与 ① 的 `:root` **逐字同值**，两块不许漂（B4 判据）
+   ──────────────────────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --c-bg-window: #f6f7f7;
+  --c-bg-app: #ffffff;
+  --c-surface: #ffffff;
+  --c-surface-2: #f4f5f5;
+  --c-surface-hover: #edefee;
+  --c-glass: rgba(255, 255, 255, 0.88);
+  --c-glass-2: rgba(255, 255, 255, 0.96);
+
+  --c-text: #1d2124;                                 /* 白底 16.2:1 */
+  --c-text-2: #565e63;                               /* 白底 6.6:1 */
+  --c-text-3: #6e767c;                               /* 白底 4.6:1（≥4.5，别再调浅） */
+  --c-on-brand: #ffffff;
+
+  --c-border: #e3e6e6;
+  --c-border-strong: #c9cfcf;
+  --c-shadow-color: rgba(0, 0, 0, 0.07);
+  --c-shadow-color-strong: rgba(0, 0, 0, 0.14);
+  --c-mask: rgba(0, 0, 0, 0.35);
+
+  /* 主色 = 中性深灰（不是绿、更不是蓝） */
+  --c-brand: #3a4247;
+  --c-brand-deep: #23282d;
+  --c-brand-dark: #14181a;
+  --c-brand-ink: #0e1113;
+  /* 绿色只留这一层"极淡的点缀" */
+  --c-brand-tint: #f1f4f2;
+  --c-brand-tint-strong: #e4e9e6;
+  --c-brand-wash: #f8faf9;
+  --c-brand-line: #d5dbd8;
+
+  --c-success: #1f8a54;
+  --c-success-tint: #edf6f1;
+  --c-warn: #9a6a00;
+  --c-warn-tint: #fbf3e3;
+  --c-danger: #c0392b;
+  --c-danger-tint: #fbedeb;
+
+  --c-focus-ring: rgba(58, 66, 71, 0.45);
+
+  /* 「压在媒体 / 遮罩上的字」：缩略图删除键、播放角标、图片上加的角标。
+     它永远压在深色遮罩或图片上，**两种主题下都必须是白字** ——
+     不能走会翻转的 token（`--c-on-brand` 在深色下翻成深墨 #10241a，
+     压在 rgba(31,35,40,.58) 上只有 1.05:1，那个 ✕ 完全看不见）。 */
+  --c-on-media: #ffffff;
+  /* 「绿字」专用。`--green`(#30d158) 是**填充色**——它是"亮绿实心块"的底色，
+     拿去当文字色压在白底 / 淡绿底上只有 1.84~2.02:1（`.support-req` / `.tg-ok` /
+     `.choice-chip:hover` 全中）。文字一律用 `--green-ink`：白底 4.9:1。 */
+  --green-ink: #1d7a36;
+  /* 「黄字」专用。`#ffd60a` 是填充色，当字色压淡绿底只有 1.33:1；
+     `--c-warn`(#9a6a00) 也只到 4.45 —— 差 0.05 就不合格。
+     取仓库里已经人工调过的那一档 #7a5b00（5.93:1 on 淡绿底 / 6.32:1 on 白底）。 */
+  --warn-ink: #7a5b00;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   ③ 深色主题：深底浅字。底色带一点绿（#1C1F1D），不用纯黑
+   ──────────────────────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --c-bg-window: #171a18;                            /* 比应用底再深一档，窗口有层次 */
+  --c-bg-app: #1c1f1d;                               /* 带一点绿的深色，呼应品牌 */
+  --c-surface: #232725;                              /* 卡片面：比底亮，浮起来 */
+  --c-surface-2: #2a2f2c;
+  --c-surface-hover: #323835;
+  --c-glass: rgba(28, 31, 29, 0.82);                 /* 浅玻璃 → 深玻璃（成对反向） */
+  --c-glass-2: rgba(35, 39, 37, 0.92);
+
+  --c-text: #ecf1ee;                                 /* 应用底 14.5:1 */
+  --c-text-2: #9ba8a1;                               /* 应用底 6.8:1 */
+  --c-text-3: #7e8c85;                               /* 应用底 4.7:1 */
+  --c-on-brand: #10241a;                             /* 亮绿底上用深字（7.3:1） */
+
+  --c-border: rgba(255, 255, 255, 0.1);              /* 边框 = 低透明度白 */
+  --c-border-strong: rgba(255, 255, 255, 0.2);
+  --c-shadow-color: rgba(0, 0, 0, 0.4);              /* 深底阴影必须更重 */
+  --c-shadow-color-strong: rgba(0, 0, 0, 0.6);
+  --c-mask: rgba(0, 0, 0, 0.55);
+
+  --c-brand: #3cc47c;                                /* 深底上要提亮，否则绿得发闷 */
+  --c-brand-deep: #2faf6b;
+  --c-brand-dark: #25985a;
+  --c-brand-ink: #8fe7b8;
+  --c-brand-tint: #1b2a22;
+  --c-brand-tint-strong: #203328;
+  --c-brand-wash: #182420;
+  --c-brand-line: #2c4a39;
+
+  --c-success: #4ecb86;
+  --c-success-tint: rgba(78, 203, 134, 0.16);
+  --c-warn: #e3a33a;
+  --c-warn-tint: rgba(227, 163, 58, 0.16);
+  --c-danger: #f0796b;
+  --c-danger-tint: rgba(240, 121, 107, 0.16);
+
+  --c-focus-ring: rgba(60, 196, 124, 0.5);
+
+  /* 遮罩上的字：深色下也是白字（遮罩本来就是深色，与主题无关）。 */
+  --c-on-media: #ffffff;
+  /* 绿字：深底上要提亮，取与 `--c-brand` 同档的 #3cc47c。 */
+  --green-ink: #3cc47c;
+  /* 黄字：深底上必须提亮，与 `--c-warn` 深色值同档。 */
+  --warn-ink: #e3a33a;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   ④ 旧 token 的白 / 深两套值（第 2 期 · 2026-11-08）
+
+   为什么要有这一节：全站 CSS 里 `var(--旧名)` 共 **1729 处**（`style.css` 独占 1157），
+   颜色字面量还有 2829 处。也就是说 38% 的颜色点已经在走变量了 —— 只要这 29 个旧名
+   在白/深两套下换值，这 1729 处**直接跟着翻转，一个选择器都不用改**。这是全站最划算的一刀。
+
+   ★ 选择器为什么是 `html[data-theme="…"]` 而不是 `[data-theme="…"]`：见文件头
+     「`--r15-*` / `--brand-*` / `--bg-*` 等旧 token 怎么处理」里的说明 —— `:root`
+     与 `[data-theme="…"]` 同权重（0,1,0），而 `round14.css` / `round15.css` 在本文件
+     之后加载 ⇒ 同权重会输。`html[data-theme="…"]` 是 0,1,1，靠特异性赢，与顺序无关。
+
+   ★ 白色（默认）与深色各一块，没有第三块：绿色主题已下线（用户要求只留白 / 深），
+     它的那套色值已从本文件**整体删除**，不是注释掉。`:root`（第 ① 节）现在装的是
+     白色主题的 `--c-*`，所以这里的 `html[data-theme="light"]` 与第 ② 节的
+     `[data-theme="light"]` 是同义的两层（一层管旧 token、一层管新 token），
+     都靠 `data-theme="light"` 命中 —— 而白色**一定**带这个属性（见 themeStore）。
+
+   ★ 取值一律对照第 ①②③ 节的 `--c-*` 同义项，保证"旧名"和"新名"在同一套主题下是同一个色：
+       --bg-window→--c-bg-window   --bg-sidebar→--c-glass      --bg-panel→--c-glass-2
+       --bg-elevated→--c-surface-2 --bg-bubble-user→--c-brand  --bg-bubble-assistant→--c-surface-2
+       --border→--c-border         --border-strong→--c-border-strong
+       --text→--c-text             --text-dim→--c-text-2       --text-faint/--r15-muted→--c-text-3
+       --accent/--green/--r15-green→--c-brand  --r15-green-deep→--c-brand-deep
+       --r15-green-dark→--c-brand-dark         --r15-green-tint/--brand-tint→--c-brand-tint
+       --brand-tint-2→--c-brand-tint-strong    --brand-wash→--c-brand-wash
+       --brand-line→--c-brand-line             --brand-fill→--c-brand-deep
+       --brand-ink→--c-brand-ink               --yellow→--c-warn   --red→--c-danger
+     ⚠️ 不许出现蓝色 / 紫色（老板明令 + `scripts/smoke/unit-ui-palette.mjs` 棘轮 21）。
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* 白色主题：去绿，中性白 / 浅灰。品牌绿族整体换成中性深灰（绿色只留在极淡的底纹里）。 */
+html[data-theme="light"] {
+  /* —— style.css:5-24（15 个） —— */
+  --bg-window: #f6f7f7;
+  --bg-sidebar: rgba(255, 255, 255, 0.88);
+  --bg-panel: rgba(255, 255, 255, 0.96);
+  --bg-elevated: #f4f5f5;
+  /* 自己发的消息气泡：白色主题下取中性深灰 #3a4247，配白字 10.24:1，与深色主题语义一致。
+     历史：这里一度是浅灰 #d7dcd9 —— 因为当时 `style.css:301` 的 `.msg.user .msg-bubble`
+     把文字色**写死**成 `#062b10`（近黑墨绿），深底 + 深字 = 1.51:1，用户自己说的话直接看不见。
+     那个硬编码按主题拆成了白 / 深两支（**绿色那一支随绿主题下线一起作废**，
+     `style.css` 里的基础规则现在只在"没有 data-theme"时命中 —— 而那种状态已经不存在了，
+     留着是为了不动别人的文件；下次清理 style.css 时可以一起删）：
+       · 白  #ffffff  on #3a4247 = 10.24:1   ← 本行
+       · 深  #062b10 on #3cc47c = 6.89:1
+     （历史值：绿 #062b10 on #30d158 = 7.63:1 —— 已下线，不要为它补值。）
+     ⚠️ 改本行必须同步改 style.css 里 `html[data-theme="light"] .msg.user .msg-bubble` 的 color，
+        否则白底白字 = 1.39:1，门禁 F（`unit-theme-cover-style-css.mjs`）会红。 */
+  --bg-bubble-user: #3a4247;
+  --bg-bubble-assistant: #f4f5f5;
+  --border: #e3e6e6;
+  --border-strong: #c9cfcf;
+  --text: #1d2124;
+  --text-dim: #565e63;
+  --text-faint: #6e767c;
+  --accent: #3a4247;
+  --green: #3a4247;
+  --yellow: #9a6a00;
+  --red: #c0392b;
+
+  /* —— styles/round14.css:22-29（6 个） —— */
+  --brand-tint: #f1f4f2;
+  --brand-tint-2: #e4e9e6;
+  --brand-wash: #f8faf9;
+  --brand-line: #d5dbd8;
+  --brand-fill: #23282d;
+  --brand-ink: #0e1113;
+
+  /* —— styles/round15.css:17-31（8 个） —— */
+  --r15-green: #3a4247;
+  --r15-green-deep: #23282d;
+  --r15-green-dark: #14181a;
+  --r15-green-tint: #f1f4f2;
+  --r15-line: #e3e6e6;
+  --r15-text: #1d2124;
+  --r15-text-2: #565e63;
+  --r15-muted: #6e767c;
+}
+
+/* 深色主题：深底浅字。底色带一点绿（同 --c-bg-app #1c1f1d），不用纯黑。 */
+html[data-theme="dark"] {
+  /* —— style.css:5-24（15 个） —— */
+  --bg-window: #171a18;
+  --bg-sidebar: rgba(28, 31, 29, 0.82);
+  --bg-panel: rgba(35, 39, 37, 0.92);
+  --bg-elevated: #2a2f2c;
+  /* 深色下可以放心用亮绿：同一处文字色 `#062b10` 压在 #3cc47c 上是 6.89:1（合格）。
+     浅色那格为什么反而是浅灰，见上面 light 块的注释（写死的深色文字倒逼的）。 */
+  --bg-bubble-user: #3cc47c;
+  --bg-bubble-assistant: #2a2f2c;
+  --border: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.20);
+  --text: #ecf1ee;
+  --text-dim: #9ba8a1;
+  --text-faint: #7e8c85;
+  --accent: #3cc47c;
+  --green: #3cc47c;
+  --yellow: #e3a33a;
+  --red: #f0796b;
+
+  /* —— styles/round14.css:22-29（6 个） —— */
+  --brand-tint: #1b2a22;
+  --brand-tint-2: #203328;
+  --brand-wash: #182420;
+  --brand-line: #2c4a39;
+  --brand-fill: #2faf6b;
+  --brand-ink: #8fe7b8;
+
+  /* —— styles/round15.css:17-31（8 个） —— */
+  --r15-green: #3cc47c;
+  --r15-green-deep: #2faf6b;
+  /* ⚠️ 2026-11-08 修：原值 #25985a 压 `--c-surface` #232725 只有 **4.12:1** ——
+     13 处 `var(--r15-green-dark)` 全是 `color:`（无一处当 background / border，已核对），
+     深色下「深绿字压深卡片面」就是老板说的「深色的地方字也是深色看不见」。
+     提到 #35b271 后：on #232725 = 5.59:1、on `--r15-green-tint` #1b2a22 = 5.54:1（都 ≥4.5）。
+     ⚠️ 绿主题的值在 `round15.css:24`（#177A46），本文件不许重写 —— 这里只动深色这一格。 */
+  --r15-green-dark: #35b271;
+  --r15-green-tint: #1b2a22;
+  --r15-line: rgba(255, 255, 255, 0.10);
+  --r15-text: #ecf1ee;
+  --r15-text-2: #9ba8a1;
+  --r15-muted: #7e8c85;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   ⑤ 代码块高亮：只给「白色主题」补一套浅色覆盖（2026-11-08）
+
+   【问题】`index.jsx` 里 `import 'highlight.js/styles/github-dark.css'` 是**无条件**的，
+   于是浅色 / 白色主题下代码块一直是深底（`#0d1117`）—— 跟整页白底放一起像是从别的
+   产品里抠过来的一块。这是一处**反向 bug**（不是"深色主题没做"，是"浅色主题被做成了深色"）。
+
+   【为什么不按主题动态换 github.css / github-dark.css】
+     那需要在运行时插拔 `<link>`（`?url` + createElement），换来的收益只是"用上游的浅色
+     配色"。而 github.css 里 `#6f42c1`（紫）/`#005cc5`（蓝）都是**老板明令禁用的色系**，
+     换上去反而要在别处再覆盖一遍。这里选更小的一刀：**保住 github-dark 的静态引入**
+     （深色主题本来就要它；白色主题由下面这层覆盖成浅底），只在白色主题上覆盖一层。
+
+   【覆盖值全部是 `--c-*` token，没有一个新色值】
+     语义映射：关键字 = 正文最深（加粗）／字符串 = 成功绿／数字与运算符 = 警示琥珀／
+     注释 = 弱化字（斜体）／增删行 = 成功/危险底色。于是它天然跟着两套主题走。
+
+   【特异性】`html[data-theme="light"] .hljs-x` = (0,2,1)，上游 `.hljs-x` = (0,1,0)
+     ⇒ 必赢，与加载顺序无关（与第 ④ 节同一个理由）。
+   ──────────────────────────────────────────────────────────────────────────── */
+html[data-theme="light"] .hljs {
+  color: var(--c-text);
+  background: var(--c-surface-2);
+}
+html[data-theme="light"] .hljs-doctag,
+html[data-theme="light"] .hljs-keyword,
+html[data-theme="light"] .hljs-meta .hljs-keyword,
+html[data-theme="light"] .hljs-template-tag,
+html[data-theme="light"] .hljs-template-variable,
+html[data-theme="light"] .hljs-type,
+html[data-theme="light"] .hljs-variable.language_ {
+  color: var(--c-brand-deep);
+  font-weight: 600;
+}
+html[data-theme="light"] .hljs-title,
+html[data-theme="light"] .hljs-title.class_,
+html[data-theme="light"] .hljs-title.function_ {
+  color: var(--c-brand-ink);
+  font-weight: 600;
+}
+html[data-theme="light"] .hljs-attr,
+html[data-theme="light"] .hljs-attribute,
+html[data-theme="light"] .hljs-literal,
+html[data-theme="light"] .hljs-meta,
+html[data-theme="light"] .hljs-number,
+html[data-theme="light"] .hljs-operator,
+html[data-theme="light"] .hljs-variable,
+html[data-theme="light"] .hljs-selector-attr,
+html[data-theme="light"] .hljs-selector-class,
+html[data-theme="light"] .hljs-selector-id {
+  color: var(--c-warn);
+}
+html[data-theme="light"] .hljs-regexp,
+html[data-theme="light"] .hljs-string,
+html[data-theme="light"] .hljs-meta .hljs-string {
+  color: var(--c-success);
+}
+html[data-theme="light"] .hljs-built_in,
+html[data-theme="light"] .hljs-symbol {
+  color: var(--c-text-2);
+}
+html[data-theme="light"] .hljs-comment,
+html[data-theme="light"] .hljs-code,
+html[data-theme="light"] .hljs-formula {
+  color: var(--c-text-3);
+  font-style: italic;
+}
+html[data-theme="light"] .hljs-name,
+html[data-theme="light"] .hljs-quote,
+html[data-theme="light"] .hljs-selector-tag,
+html[data-theme="light"] .hljs-selector-pseudo {
+  color: var(--c-brand-deep);
+}
+html[data-theme="light"] .hljs-subst,
+html[data-theme="light"] .hljs-emphasis,
+html[data-theme="light"] .hljs-strong {
+  color: var(--c-text);
+}
+html[data-theme="light"] .hljs-emphasis { font-style: italic; }
+html[data-theme="light"] .hljs-strong { font-weight: 700; }
+html[data-theme="light"] .hljs-section {
+  color: var(--c-text);
+  font-weight: 700;
+}
+html[data-theme="light"] .hljs-bullet { color: var(--c-warn); }
+html[data-theme="light"] .hljs-addition {
+  color: var(--c-success);
+  background: var(--c-success-tint);
+}
+html[data-theme="light"] .hljs-deletion {
+  color: var(--c-danger);
+  background: var(--c-danger-tint);
+}
+
+/* ============================================================================
+   旧 token → 新语义 token 对照表（页面改造时的**唯一依据**，本轮不执行）
+
+   底 / 面
+     --bg-window          → --c-bg-window
+     --bg-sidebar         → --c-glass
+     --bg-panel           → --c-glass-2
+     --bg-elevated        → --c-surface-2
+     --bg-bubble-user     → --c-brand
+     --bg-bubble-assistant→ --c-surface-2
+
+   字
+     --text               → --c-text
+     --text-dim           → --c-text-2
+     --text-faint         → --c-text-3
+     --r15-text           → --c-text
+     --r15-text-2         → --c-text-2
+     --r15-muted          → --c-text-3
+
+   线 / 影
+     --border             → --c-border
+     --border-strong      → --c-border-strong
+     --r15-line           → --c-border
+
+   品牌
+     --accent / --green   → --c-brand
+     --r15-green          → --c-brand
+     --r15-green-deep     → --c-brand-deep
+     --r15-green-dark     → --c-brand-dark
+     --r15-green-tint     → --c-brand-tint
+     --brand-tint         → --c-brand-tint
+     --brand-tint-2       → --c-brand-tint-strong
+     --brand-wash         → --c-brand-wash
+     --brand-line         → --c-brand-line
+     --brand-fill         → --c-brand-deep
+     --brand-ink          → --c-brand-ink
+
+   功能色
+     --yellow             → --c-warn
+     --red                → --c-danger
+
+   ⚠️ 硬编码色的去向（数量来自 `scripts/theme/inventory-colors.mjs` 的实测）：
+     · `#ffffff`（340 处）不要一律当 `--c-bg-app`：**当 background 用**才是面，
+       当 `color` 用是 `--c-on-brand`（压在实心绿块上的字）。工具已按属性分出两类。
+     · `rgba(0,0,0,x)`（294 处）→ `--c-shadow-color` / 或按 x 大小挑 strong 版；
+       深色主题下它会自动变成 0.40 —— 页面侧**不要再写死 rgba 黑**。
+     · `rgba(255,255,255,x)`（55 处）→ `--c-glass` / `--c-glass-2`（毛玻璃底），
+       深色下自动反向成深玻璃。这两类必须成对反向，所以不能用同一个 token 兼顾。
+   ========================================================================== */

@@ -1,0 +1,17 @@
+{
+  "name": "浏览器验证",
+  "description": "用真实浏览器打开一个网址，像用户一样点一遍、填一遍，收集控制台报错和失败的网络请求，最后给出 PASS/FAIL 结论并截图。部署网站或写完网页之后用它做验收：只看到 HTTP 200 不等于用户能用（可能白屏、按钮点了没反应、控制台一堆报错）。最简用法只给 url；要更严格可再给 expect_text（页面上应出现的文字）或 actions（一串点击/填表动作）。结论里会明确区分「确实检查了 N 项」与「根本没检查成」，浏览器起不来会如实报错，绝不把没验证说成通过。",
+  "runtime": "js",
+  "allowNetwork": true,
+  "timeoutMs": 120000,
+  "params": [
+    { "name": "url", "label": "要验证的网址(http/https，必填)", "hint": "例如 http://127.0.0.1:8080 或 https://example.com", "required": true },
+    { "name": "expect_text", "label": "页面上应出现的文字(可选，用于断言；忽略大小写)" },
+    { "name": "expect_selector", "label": "页面上应出现的元素选择器(可选，如 #app)" },
+    { "name": "actions", "label": "要执行的交互(可选，JSON 数组，如 [{\"type\":\"click\",\"selector\":\"#go\"},{\"type\":\"fill\",\"selector\":\"#q\",\"value\":\"x\"},{\"type\":\"waitFor\",\"selector\":\".ok\"}])" },
+    { "name": "screenshot", "label": "是否截图(true/false，默认 true)" },
+    { "name": "timeout_ms", "label": "页面加载超时毫秒(默认 30000)" },
+    { "name": "settle_ms", "label": "加载后额外等待毫秒(默认 800，用于等前端渲染)" },
+    { "name": "cdp_url", "label": "已有浏览器调试地址(可选，如 http://127.0.0.1:9222，用于复用已开的 Chromium，避免另起一个)" }
+  ]
+}

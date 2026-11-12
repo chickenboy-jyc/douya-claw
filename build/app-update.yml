@@ -1,0 +1,14 @@
+# 自动更新运行时配置 —— 打包后落在 <安装目录>/resources/app-update.yml
+#
+# electron-updater 在**已打包**状态下读这个文件（ElectronAppAdapter.appUpdateConfigPath
+# = path.join(process.resourcesPath, 'app-update.yml')）。它缺失时：
+#   checkForUpdates() 仍然正常（client 已由 setFeedURL 建立，不读本文件）
+#   downloadUpdate()  立刻抛 ENOENT（getOrCreateDownloadHelper 里 `await this.configOnDisk.value`）
+#   ⇒ 用户症状是「能发现新版本，点『立即更新』就失败」，老版本永远升不上来。
+#
+# ⚠️ provider / url 必须与 electron-builder.yml 的 `publish` 段一致（改一处要改两处）。
+# ⚠️ updaterCacheDirName 缺省时 electron-updater 会退化用 app.name 并打 error 日志；
+#    这里与 electron-builder 本来会生成的值保持一致（package.json 的 name = douya-claw）。
+provider: generic
+url: https://update.example.com/
+updaterCacheDirName: douya-claw-updater

@@ -1,0 +1,445 @@
+/**
+ * 补回 style.css 丢失的样式（第十四/十五轮那批）。
+ *
+ * 【为什么会有这个文件】
+ * 2026-10-14 打包 0.21.0 时我为了做「这条红是不是我引入的」的对照实验，
+ * 跑了 `git stash push` → 跑测试 → `git stash pop`。**pop 冲突失败了**，
+ * 而 style.css 恰好被 stash 的旧版本覆盖回去 —— 于是第 13~15 轮加在这一个文件末尾的
+ * 样式整段丢失（品牌绿 token / 区块标题绿标 / 助手欢迎区 / 顶部横幅）。
+ * 但**组件和各页引用都还在**（PageBanner.jsx 在、三个模块各 import 2 处），
+ * 于是页面上出现一堆没有样式的裸元素 —— 布局直接塌掉（内容页页签挤成一行、
+ * 横幅变成一段无排版的文字）。
+ *
+ * 【教训：git stash 不是这个项目的安全回滚手段】
+ * 这个仓库的 CSS 改动大量堆在文件末尾（append 式改法），一旦被旧版本整体覆盖，
+ * 后面的 append 全部归零；而组件/模块文件是分散改的，还留着 ⇒ 半残状态最难查。
+ * 本项目真正的回滚依据是 `_uiclean_backup_20261014/`，不是 git stash。
+ *
+ * 本文件只补样式，**不改任何组件/逻辑**。
+ */
+/* ────────────────────────────────────────────────────────────────────────────
+   文件作用域主题变量（主题可切换 · 三期工程）
+   ────────────────────────────────────────────────────────────────────────────
+   【为什么是局部变量，不是直接换全局 --c-*】
+     本文件这套色是自定义绿灰，与 theme-tokens.css 里 --c-* 的**绿主题值不相等**。
+     直接把字面量换掉，绿色主题就会肉眼可见地变色（背景、正文、品牌绿全都会漂）。
+     所以这里一条变量对一条原字面量：
+
+       · 绿主题（:root，不带 data-theme）  = **原字面量，一字不改** ⇒ 逐像素不变
+       · 白主题（html[data-theme="light"]）= 去绿中性，主色中性深灰（老板明令不许蓝）
+       · 深主题（html[data-theme="dark"]） = 带绿的深底浅字
+
+   【铁律：三套必须齐全】
+     少一套 ⇒ 那个主题下这些属性拿到空值 ⇒ 白屏 / 黑字黑底。新增变量必须同时补三套。
+     门禁 scripts/smoke/unit-theme-cover-group-a.mjs 的 C/D 两条断言守着这件事。
+
+   【命名】
+     --loc-r14-<角色><序号>。前缀是文件独占的，**不许跨文件复用**。
+     刻意不用 --c- 开头：那是全局 token 的命名空间，混进去会被核心层门禁误判。
+
+   【数据可视化系列色】
+     标签/系列色表达的是**数据身份**，不是界面语义 —— 它们也建了变量，但深色值
+     只调亮度、不改成同一个色，系列之间保持可区分。
+   ──────────────────────────────────────────────────────────────────────────── */
+:root {
+  --loc-r14-alphaBrand06: rgba(14, 125, 89, 0.06);
+  --loc-r14-alphaBrand15: rgba(47, 175, 107, 0.15);
+  --loc-r14-alphaBrand28: rgba(47, 175, 107, 0.28);
+  --loc-r14-alphaBrand38: rgba(14, 125, 89, 0.38);
+  --loc-r14-alphaGlass00: rgba(214, 244, 236, 0);
+  --loc-r14-alphaGlass55: rgba(214, 244, 236, 0.55);
+  --loc-r14-alphaGlass70: rgba(255, 255, 255, 0.7);
+  --loc-r14-alphaGlass85: rgba(255, 255, 255, 0.85);
+  --loc-r14-border: #e5e7eb;
+  --loc-r14-brandDark: #2c4a41;
+  --loc-r14-brandDeep: #17b183;
+  --loc-r14-brandDeepa: #1e7a4c;
+  --loc-r14-brandDeepb: #3d6b5c;
+  --loc-r14-brandDeepc: #5a6b67;
+  --loc-r14-brandInk: #10312a;
+  --loc-r14-brandTint: #d6f4ec;
+  --loc-r14-brandTinta: #dcf2e7;
+  --loc-r14-brandTintb: #e4f6f2;
+  --loc-r14-brandTintc: #ebf9f8;
+  --loc-r14-brandTintd: #f4fbf7;
+  --loc-r14-brandTintStrong: #cde9d8;
+  --loc-r14-hover: rgba(0, 0, 0, 0.04);
+  --loc-r14-hovera: rgba(0, 0, 0, 0.06);
+  --loc-r14-hoverb: rgba(0, 0, 0, 0.07);
+  --loc-r14-hoverc: rgba(15, 68, 78, 0.06);
+  --loc-r14-hoverd: rgba(15, 68, 78, 0.14);
+  --loc-r14-text: #1f2328;
+  --loc-r14-text2: #4b5058;
+  --loc-r14-text2a: #8a8f99;
+  --loc-r14-window: #f7fcf9;
+}
+
+html[data-theme="light"] {
+  --loc-r14-alphaBrand06: rgba(58, 66, 71, 0.06);
+  --loc-r14-alphaBrand15: rgba(58, 66, 71, 0.15);
+  --loc-r14-alphaBrand28: rgba(58, 66, 71, 0.28);
+  --loc-r14-alphaBrand38: rgba(58, 66, 71, 0.38);
+  --loc-r14-alphaGlass00: rgba(255, 255, 255, 0);
+  --loc-r14-alphaGlass55: rgba(255, 255, 255, 0.55);
+  --loc-r14-alphaGlass70: rgba(255, 255, 255, 0.7);
+  --loc-r14-alphaGlass85: rgba(255, 255, 255, 0.85);
+  --loc-r14-border: #e3e6e6;
+  --loc-r14-brandDark: #14181a;
+  --loc-r14-brandDeep: #23282d;
+  --loc-r14-brandDeepa: #23282d;
+  --loc-r14-brandDeepb: #23282d;
+  --loc-r14-brandDeepc: #23282d;
+  --loc-r14-brandInk: #0e1113;
+  --loc-r14-brandTint: #f1f4f2;
+  --loc-r14-brandTinta: #f1f4f2;
+  --loc-r14-brandTintb: #f1f4f2;
+  --loc-r14-brandTintc: #f1f4f2;
+  --loc-r14-brandTintd: #f1f4f2;
+  --loc-r14-brandTintStrong: #e4e9e6;
+  --loc-r14-hover: #edefee;
+  --loc-r14-hovera: #edefee;
+  --loc-r14-hoverb: #edefee;
+  --loc-r14-hoverc: #edefee;
+  --loc-r14-hoverd: #edefee;
+  --loc-r14-text: #1d2124;
+  --loc-r14-text2: #565e63;
+  --loc-r14-text2a: #565e63;
+  --loc-r14-window: #f6f7f7;
+}
+
+html[data-theme="dark"] {
+  --loc-r14-alphaBrand06: rgba(60, 196, 124, 0.06);
+  --loc-r14-alphaBrand15: rgba(60, 196, 124, 0.15);
+  --loc-r14-alphaBrand28: rgba(60, 196, 124, 0.28);
+  --loc-r14-alphaBrand38: rgba(60, 196, 124, 0.38);
+  --loc-r14-alphaGlass00: rgba(255, 255, 255, 0);
+  --loc-r14-alphaGlass55: rgba(255, 255, 255, 0.12);
+  --loc-r14-alphaGlass70: rgba(255, 255, 255, 0.15);
+  --loc-r14-alphaGlass85: rgba(255, 255, 255, 0.19);
+  --loc-r14-border: rgba(255, 255, 255, 0.10);
+  --loc-r14-brandDark: #25985a;
+  --loc-r14-brandDeep: #2faf6b;
+  --loc-r14-brandDeepa: #2faf6b;
+  --loc-r14-brandDeepb: #2faf6b;
+  --loc-r14-brandDeepc: #2faf6b;
+  --loc-r14-brandInk: #8fe7b8;
+  --loc-r14-brandTint: #1b2a22;
+  --loc-r14-brandTinta: #1b2a22;
+  --loc-r14-brandTintb: #1b2a22;
+  --loc-r14-brandTintc: #1b2a22;
+  --loc-r14-brandTintd: #1b2a22;
+  --loc-r14-brandTintStrong: #203328;
+  --loc-r14-hover: #323835;
+  --loc-r14-hovera: #323835;
+  --loc-r14-hoverb: #323835;
+  --loc-r14-hoverc: #323835;
+  --loc-r14-hoverd: #323835;
+  --loc-r14-text: #ecf1ee;
+  --loc-r14-text2: #9ba8a1;
+  --loc-r14-text2a: #9ba8a1;
+  --loc-r14-window: #171a18;
+}
+
+
+/* ── 1) 品牌色面 token（第十三轮）：把品牌绿从「一个变量」铺成「一组可用的面」 ── */
+:root {
+  --brand-tint: #E4F6EE;
+  --brand-tint-2: #D2EFE1;
+  --brand-wash: #F0FAF5;
+  --brand-line: #B9E3CE;
+  --brand-fill: #0E7D59;
+  --brand-ink: #0A5F44;
+}
+
+/* ── 2) 区块标题品牌绿方标（第十三轮，基准图每页标题左侧都有） ── */
+.ca-sec-t, .ab-sec-t, .co-sec-t, .dash-sec-title {
+  display: inline-flex;
+  align-items: center;
+}
+.ca-sec-t::before, .ab-sec-t::before, .co-sec-t::before, .dash-sec-title::before {
+  content: '';
+  display: inline-block;
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  margin-right: 10px;
+  border-radius: 3px;
+  background: linear-gradient(140deg, var(--loc-r14-brandDeep) 0%, var(--brand-fill) 100%);
+  box-shadow: 0 1px 3px var(--loc-r14-alphaBrand38);
+}
+
+/* ── 3) 用户气泡：冷白 → 品牌浅绿（基准图 04-assistant.jpg 明确是绿底） ── */
+.msg.user .msg-bubble {
+  background: var(--loc-r14-brandTinta);
+  color: var(--loc-r14-brandInk);
+  font-weight: 500;
+  align-self: flex-start;
+  border: 1px solid var(--brand-line);
+  box-shadow: 0 1px 2px var(--loc-r14-alphaBrand06);
+}
+
+/* ── 4) 助手欢迎区：能力胶囊（品牌区已由顶部横幅承担） ── */
+.welcome-caps-row { display: flex; justify-content: center; margin: -8px 0 22px; }
+.welcome-caps {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin: 4px 0 18px;
+}
+.welcome-caps-row .welcome-caps { margin: 0; }
+.welcome-cap {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--brand-tint);
+  border: 1px solid var(--brand-line);
+  color: var(--brand-ink);
+  font-size: 14.5px; font-weight: 600;
+}
+.welcome-cap .line-ic {
+  width: 24px; height: 24px; border-radius: 8px;
+  background: var(--c-surface) !important; color: var(--brand-fill);
+}
+.welcome-cap .line-ic svg { width: 14px; height: 14px; }
+
+/* 结论卡小标题：品牌绿 + 左侧绿竖条 */
+.welcome-demo-lead { font-size: 16px; line-height: 1.7; margin-bottom: 8px; color: var(--loc-r14-brandDark); }
+.welcome-demo-sec { margin-top: 16px; }
+.welcome-demo-sec-t {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 16.5px; font-weight: 700; margin-bottom: 8px;
+  color: var(--brand-ink);
+}
+.welcome-demo-sec-t::before {
+  content: '';
+  width: 4px; height: 17px; border-radius: 3px;
+  background: var(--brand-fill);
+  flex-shrink: 0;
+}
+.welcome-demo-list li::marker { color: var(--brand-fill); }
+
+/* ═══════════════════════════════════════════════════════════
+   5) 顶部横幅 PageBanner（第十四轮）
+   ───────────────────────────────────────────────────────────
+   规格量自老板的效果图 docs/ref/06-hero-banner.jpg：
+   ≈920×90、圆角 ≈14px、无描边无阴影、
+   底色纵向渐变 #EBF9F8 → #D6F4EC、
+   左侧 72px 插画 + 更浅的圆形光晕、
+   主标题 26px/800/深墨绿、副标题 15px 灰绿、
+   右侧斜体绿标语 + SVG 下划线。
+   ═══════════════════════════════════════════════════════════ */
+.page-banner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+  min-height: 90px;
+  padding: 16px 24px;
+  margin-bottom: 20px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--loc-r14-brandTintc) 0%, var(--loc-r14-brandTintb) 52%, var(--loc-r14-brandTint) 100%);
+  border: 1px solid var(--loc-r14-alphaGlass70);
+}
+.page-banner.compact { min-height: 78px; }
+
+.page-banner-ic {
+  position: relative;
+  flex-shrink: 0;
+  width: 72px; height: 72px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--brand-fill);
+}
+.page-banner-ic-halo {
+  position: absolute; inset: -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%,
+    var(--loc-r14-alphaGlass85) 0%, var(--loc-r14-alphaGlass55) 62%, var(--loc-r14-alphaGlass00) 74%);
+}
+.page-banner-ic .line-ic {
+  position: relative;
+  background: transparent !important;
+  color: var(--brand-fill);
+}
+.page-banner-ic .line-ic svg { width: 38px; height: 38px; stroke-width: 1.9; }
+
+.page-banner-txt { min-width: 0; flex: 1; }
+.page-banner-title {
+  margin: 0;
+  font-size: 26px; font-weight: 800; line-height: 1.24;
+  color: var(--loc-r14-brandInk);
+  letter-spacing: 0.2px;
+}
+.page-banner-sub {
+  margin-top: 5px;
+  font-size: 15px; line-height: 1.55;
+  color: var(--loc-r14-brandDeepb);
+}
+
+.page-banner-slogan {
+  flex-shrink: 0;
+  align-self: center;
+  margin-left: 18px;
+  padding-right: 10px;
+  color: var(--brand-fill);
+  transform: rotate(-3deg);
+  text-align: right;
+}
+.page-banner-slogan-t {
+  display: block;
+  font-size: 17px; font-weight: 700; letter-spacing: 0.6px;
+  font-style: italic;
+  white-space: nowrap;
+}
+.page-banner-slogan-line {
+  display: block;
+  width: 100%; height: 9px;
+  margin-top: 1px;
+  opacity: 0.72;
+}
+
+/* 竞品页右上角「重新分析」按钮的插槽 */
+.page-banner-right {
+  flex-shrink: 0;
+  align-self: center;
+  display: flex; align-items: center; gap: 10px;
+}
+
+@media (max-width: 1240px) {
+  .page-banner-slogan { display: none; }
+}
+@media (max-width: 900px) {
+  .page-banner { padding: 14px 16px; }
+  .page-banner-title { font-size: 21px; }
+  .page-banner-ic { width: 54px; height: 54px; }
+  .page-banner-ic .line-ic svg { width: 28px; height: 28px; }
+}
+/* ── 6) 竞品卡指标（第十三轮，基准图 05-intel.jpg：灰小标签 + 绿色大数字 + 上扬趋势线） ──
+   这组规则原本写在 ia-diagnosis.css 里，同样被那次 stash 回退整段带走，
+   而 MarketMomentum.jsx 仍在渲染 ca-card-kpi-l / -v / ca-card-trend-badge ⇒ 结构在、样式无。 */
+.ca-card-kpis {
+  display: flex; align-items: flex-end; gap: 22px;
+  flex-wrap: wrap; margin-top: 12px;
+}
+.ca-card-kpi { display: flex; flex-direction: column; gap: 2px; }
+.ca-card-kpi-l { font-size: 13px; color: var(--text-faint); line-height: 1.3; }
+.ca-card-kpi-v {
+  font-size: 23px; font-weight: 800; line-height: 1.15;
+  color: var(--brand-fill); letter-spacing: -0.3px;
+}
+.ca-card-trend-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--brand-tint);
+  border: 1px solid var(--brand-line);
+  color: var(--brand-ink);
+  font-size: 13px; font-weight: 700;
+}
+.ca-card-trend-badge::after {
+  content: '';
+  width: 34px; height: 14px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 14' fill='none' stroke='%230E7D59' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 12l5-4 4 2 6-6 4 3 5-4 8-2'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+/* 「待核验」长句免责 → 浅色小标签（第十五轮：缺数据不印占位，这句也收成徽章） */
+.md-verify-flag {
+  display: inline-flex; align-items: center;
+  margin-top: 9px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--loc-r14-hoverc);
+  border: 1px solid var(--loc-r14-hoverd);
+  color: var(--loc-r14-brandDeepc);
+  font-size: 12.5px; font-weight: 600;
+}
+
+/* ============================================================================
+ * 2026-10-18 第十六轮：首页与豆芽助手合并（豆包式对话框）+ 聊天区分区 + 双 AI 自检卡
+ * ==========================================================================*/
+/* 分区条（对话 / 工作）：放在 ContextBar 下方，主对话区上方 */
+.chat-scope-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 16px 0;
+}
+.chat-scope-tab {
+  padding: 6px 16px; border-radius: 999px;
+  font-size: 13px; font-weight: 600; color: var(--ink-2, var(--loc-r14-text2));
+  background: var(--loc-r14-hover); cursor: pointer;
+  transition: background .15s, color .15s, box-shadow .15s;
+  border: 1px solid transparent;
+}
+.chat-scope-tab:hover { background: var(--loc-r14-hoverb); }
+.chat-scope-tab.on {
+  background: var(--green, var(--c-brand)); color: var(--c-on-brand);
+  box-shadow: 0 2px 8px var(--loc-r14-alphaBrand28);
+}
+.chat-scope-hint {
+  margin-left: 6px; font-size: 11.5px; color: var(--ink-3, var(--loc-r14-text2a));
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* 断线续跑条（第十八轮）：任务在后台跑时给一条「接回来」入口 */
+.chat-resume-bar {
+  display: flex; align-items: center; gap: 8px;
+  margin: 8px 16px 0; padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--loc-r14-brandTintd); border: 1px solid var(--loc-r14-brandTintStrong);
+  font-size: 12.5px; color: var(--ink-2, var(--loc-r14-text2));
+}
+.chat-resume-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green, var(--c-brand)); flex: none;
+  box-shadow: 0 0 0 3px var(--loc-r14-alphaBrand15);
+  animation: resume-pulse 1.6s ease-in-out infinite;
+}
+@keyframes resume-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+.chat-resume-txt {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-weight: 600; color: var(--ink, var(--loc-r14-text));
+}
+.chat-resume-hint {
+  flex: none; font-size: 11px; color: var(--ink-3, var(--loc-r14-text2a));
+}
+.chat-resume-btn {
+  flex: none; margin-left: auto; padding: 4px 12px;
+  border: none; border-radius: 999px; cursor: pointer;
+  background: var(--green, var(--c-brand)); color: var(--c-on-brand);
+  font-size: 12px; font-weight: 700;
+}
+.chat-resume-btn:hover { background: var(--green-dark, var(--loc-r14-brandDeepa)); }
+.chat-resume-x {
+  flex: none; width: 20px; height: 20px; line-height: 1;
+  border: none; border-radius: 50%; cursor: pointer;
+  background: transparent; color: var(--ink-3, var(--loc-r14-text2a)); font-size: 15px;
+}
+.chat-resume-x:hover { background: var(--loc-r14-hovera); }
+
+/* 空态欢迎区：原首页模块快捷入口 */
+.welcome-quick-row {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+  margin: 0 0 22px;
+}
+.welcome-quick {
+  padding: 6px 14px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 600; color: var(--ink-2, var(--loc-r14-text2));
+  background: var(--c-surface); border: 1px solid var(--line, var(--loc-r14-border));
+  cursor: pointer; transition: border-color .15s, color .15s, background .15s;
+}
+.welcome-quick:hover {
+  border-color: var(--green, var(--c-brand)); color: var(--green-dark, var(--loc-r14-brandDeepa));
+  background: var(--loc-r14-window);
+}
+
+/* 双 AI 自检卡（role=review） */
+.msg.review .review-card {
+  max-width: 720px; border-radius: 14px; padding: 12px 16px;
+  background: linear-gradient(180deg, var(--loc-r14-brandTintd) 0%, var(--c-surface) 100%);
+  border: 1px solid var(--loc-r14-brandTintStrong);
+}
+.review-card .review-hd {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 13px; font-weight: 700; color: var(--green-dark, var(--loc-r14-brandDeepa));
+}
+.review-card .review-sub { margin-top: 6px; font-size: 13px; line-height: 1.7; color: var(--ink-2, var(--loc-r14-text2)); }
+.review-card .review-list { margin: 6px 0 0; padding-left: 18px; }
+.review-card .review-list li { font-size: 12.5px; line-height: 1.7; color: var(--ink-2, var(--loc-r14-text2)); }

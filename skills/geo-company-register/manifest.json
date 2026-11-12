@@ -1,0 +1,17 @@
+{
+  "name": "注册/编辑公司",
+  "description": "在自建后端（api.example.com）管理公司档案：注册新公司（action=create）、列出当前用户所有公司（action=list）、查看详情（action=get）、编辑（action=update）、删除（action=delete）。做 GEO 内容营销第一步必须先注册公司拿到 company_id。",
+  "type": "js",
+  "timeoutMs": 20000,
+  "params": [
+    { "key": "action", "label": "操作：create=注册(默认) / list=列表 / get=详情 / update=编辑 / delete=删除", "default": "create" },
+    { "key": "company_id", "label": "公司ID（get/update/delete 必填，从注册或列表结果里拿）", "default": "" },
+    { "key": "canonical_entity", "label": "公司标准名（注册必填）", "default": "" },
+    { "key": "entity_type", "label": "行业类型", "default": "" },
+    { "key": "industry", "label": "行业标签", "default": "" },
+    { "key": "core_associations", "label": "核心关键词(JSON数组)", "default": "[]" },
+    { "key": "target_audience", "label": "目标人群(JSON数组)", "default": "[]" },
+    { "key": "forbidden_claims", "label": "禁止声明(JSON数组)", "default": "[]" },
+    { "key": "brand_desc", "label": "品牌简介", "default": "" }
+  ]
+}

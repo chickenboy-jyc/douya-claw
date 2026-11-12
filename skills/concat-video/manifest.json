@@ -1,0 +1,15 @@
+{
+  "name": "视频精剪（Concat）",
+  "description": "用真正的视频编辑器 Concat 做「多轨精剪」：多段画面叠在不同泳道上、画中画（缩放/位移/旋转）、淡入淡出、转场、关键帧动画、标题文字、字幕，最后导出 mp4，并能随时抽一帧出来看画面对不对。适用场景：一段片子要有标题+字幕+两个画面叠加、要有转场/画中画/动画。只要裁剪/变速/拼接单轨，用「处理音视频」更省事（本技能不重复做拼接）。用法：action=probe 查是否安装；action=render 给一份剪辑单（JSON）一口气出片；action=inspect 读已建工程的时间线；action=frame 在某个时间点抽一帧 PNG。本机没装 Concat 时会返回下载与安装引导，不会崩。",
+  "runtime": "js",
+  "entry": "run.js",
+  "allowNetwork": false,
+  "timeoutMs": 600000,
+  "params": [
+    { "name": "action", "label": "操作(probe/render/inspect/frame)", "required": true, "hint": "probe=查装没装；render=按剪辑单出片；inspect=读工程时间线；frame=抽一帧" },
+    { "name": "plan", "label": "剪辑单(JSON，render 用)", "hint": "如 {\"name\":\"我的片子\",\"video\":{\"width\":1280,\"height\":720,\"fps\":30},\"tracks\":[{\"type\":\"video\",\"clips\":[{\"media\":\"a.mp4\",\"start\":0,\"duration\":3},{\"media\":\"b.mp4\",\"start\":3,\"duration\":3}]}],\"titles\":[{\"text\":\"标题\",\"start\":0,\"duration\":3}],\"captions\":[{\"text\":\"字幕\",\"start\":0.5,\"end\":2.5}],\"export\":{\"output\":\"out.mp4\"}}" },
+    { "name": "project", "label": "工程目录(inspect/frame 用；render 可选，给已建工程会复用)", "hint": "相对路径按工作区解析，如 concat-video/我的片子" },
+    { "name": "time", "label": "时间点(秒，frame 用；默认 0)", "hint": "在这个时间点取一帧，如 1.5" },
+    { "name": "output", "label": "输出文件(可选：frame 的 PNG 路径；render 时作为 export.output 的兜底)" }
+  ]
+}

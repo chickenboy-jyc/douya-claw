@@ -1,0 +1,25 @@
+{
+  "name": "部署Node服务",
+  "description": "把本地 Node 项目部署到 Linux 服务器并常驻运行：备份旧版本 → 打包上传 → 远端解压 → 后台安装依赖(npm install --omit=dev) → pm2 托管(start/restart + save) → HTTP 健康检查 → 自动配置 nginx 反向代理使应用可从外部访问。本技能专用于需要常驻运行、监听端口的 Node 服务；若只是上传普通网页/静态页面，请改用『部署静态网站』技能（不需要起进程、不需要端口）。监听端口由技能自动决定：未指定 app_port 时会自动探测远端并挑一个空闲端口、经 PORT 环境变量注入应用，无需用户提供端口。action 支持 deploy（部署）/rollback（回滚并重启）/status（查看现状）。凭证每次临时传入，支持密码或私钥 key_path。会自动拒绝系统目录（如 /etc、/usr）与空目录等危险目标，避免误伤服务器或清空线上。反向代理默认开启，需远端已安装 nginx；缺失时会在结果中明确提示并保留已部署的应用，不会中断部署。当远端缺少 node/npm/pm2/nginx 时默认直接报错并给出提示；只有显式设置 auto_install=true（默认 false）才会用 apt-get/npm 自动安装这些缺失依赖——该动作会修改服务器环境，属需用户显式授权的越界操作，故默认关闭。要把这个 Node 服务挂到某个已被占用的域名的子路径下（如 https://your-domain.com/my-node-app/）时，请填 url_path：技能只向承载该域名的既有站点插入一段带标记的 location（反向代理 proxy_pass），不改动原有配置，插入前备份、nginx -t 失败自动回滚；留空则维持原行为（新建独立站点）。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "timeoutMs": 900000,
+  "params": [
+    { "name": "action", "label": "操作(deploy/rollback/status)", "required": true },
+    { "name": "host", "label": "服务器地址(IP 或域名)", "required": true },
+    { "name": "username", "label": "用户名", "required": true },
+    { "name": "password", "label": "密码(与 key_path 二选一)" },
+    { "name": "port", "label": "端口(默认 22)" },
+    { "name": "key_path", "label": "私钥文件路径(有则优先于密码)" },
+    { "name": "local_dir", "label": "本地 Node 项目目录(相对工作区或绝对路径，deploy 用)" },
+    { "name": "remote_dir", "label": "远端目标目录(如 /www/app)", "required": true },
+    { "name": "app_name", "label": "pm2 进程名(默认 douya-app)" },
+    { "name": "start_command", "label": "启动命令(如 npm start)" },
+    { "name": "app_port", "label": "应用监听端口(留空=自动挑一个空闲端口并注入 PORT 环境变量)" },
+    { "name": "domain", "label": "域名(nginx server_name，可选，默认用 host)" },
+    { "name": "url_path", "label": "子路径(把 Node 服务挂到已有域名的路径下，如 /my-node-app/；留空=新建独立站点)" },
+    { "name": "nginx_use", "label": "是否配置 nginx 反向代理(true/false，默认 true)" },
+    { "name": "auto_install", "label": "是否自动安装缺失依赖(node/npm/pm2/nginx，默认 false；true 会修改服务器环境)" }
+  ]
+}

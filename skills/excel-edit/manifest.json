@@ -1,0 +1,13 @@
+{
+  "name": "编辑Excel",
+  "description": "打开现有 .xlsx 文件原地修改，保留原有格式/公式/合并单元格/多工作表。先读取看结构，再用本技能改指定单元格、加行加列、改样式、删行等，改完保存回原文件（或另存为新文件）。path 是原文件路径，operations 是操作数组，每项形如 {\"op\":\"set|add_row|add_col|delete_row|delete_col|rename_sheet|add_sheet|set_width|set_style\", ...}。适用于用户要修改已有表格、又不想破坏原结构的场景。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "timeoutMs": 120000,
+  "params": [
+    { "name": "path", "label": "原 xlsx 文件路径", "required": true },
+    { "name": "operations", "label": "操作数组(JSON)", "required": true },
+    { "name": "output", "label": "输出文件名(可选，默认覆盖原文件)" }
+  ]
+}

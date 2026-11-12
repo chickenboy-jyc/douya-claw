@@ -1,0 +1,151 @@
+/* ============================================================================
+   一键建档面板（0.21.27 · 老板 2026-11-10「企业建档做成一键」）
+   ----------------------------------------------------------------------------
+   老板原话：「企业建档这一步有点麻烦 能不能做成一键的 输入一下公司名称 子品牌
+             建档一键全部搞定」
+   面板位置：建档向导第 1 步的 4 张身份卡**上面** —— 先给最省事的路径，愿意多填的人往下走。
+
+   ── 为什么单独一个文件（而不是加进 setup-wizard.css）────────────────────────
+   实测（本文写下的当天）：往 setup-wizard.css 里加这 14 条带色的规则，
+   `unit-theme-cover-group-b.mjs` 的断言 E2 立刻判红 ——
+     `✗ setup-wizard.css 长度不同：改前 34 处 / 改后展开 48 处（多换或少换）`
+   那条判据的口径是「改后按绿主题展开的颜色序列，必须与改前冻结序列**逐位置相等**」，
+   它**不接受任何新增色位**（连 `--repin-seq` 也拒绝：长度不同一律不重钉）。
+   那不是它的缺陷，是它的靶子：它守的是「20 个文件批量换色时没换错、没漏没多」。
+   所以新界面不该塞进那 20 个受管文件里 —— 那等于让一条冻结序列去追一次功能开发。
+
+   ── 这个文件自己的红线（由 unit-oneclick-setup.mjs 逐条断言，不靠自觉）──────
+     · **一个颜色字面量都不许出现**（`#rrggbb` / `rgb()` / `hsl()` / 英文色名）：
+       颜色只能走 `var(--loc-wiz-*)`（setup-wizard.css 里定义，三套主题齐全）
+       或全局语义 token（`--text` / `--text-dim` / `--text-faint` / `--border-strong` / `--c-surface`）。
+       少了这条，深色主题下「白底白字」会原样复现 —— 那正是老板骂过的那一版。
+     · 选择器统一 `csq-` 前缀（Company Setup Quick），不与 `csw-` 冲突（lint-css-collisions 会抓）。
+
+   ⚠️ 几何（position:fixed / inset:0）仍写在组件的内联样式上，理由同 setup-wizard.css。
+   ============================================================================ */
+
+.csq-quick {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 4px 0 22px;
+  padding: 16px 16px 14px;
+  border-radius: 18px;
+  border: 1.5px solid var(--loc-wiz-line-4);
+  background: var(--loc-wiz-bg-10);
+}
+
+.csq-hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.csq-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.csq-tag {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--loc-wiz-ink-1);
+  background: var(--loc-wiz-bg-7);
+}
+
+.csq-sub {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+
+.csq-types {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.csq-types-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.csq-chip {
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--c-surface);
+  color: var(--text-dim);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.csq-chip:hover {
+  border-color: var(--loc-wiz-line-2);
+}
+
+.csq-chip.on {
+  border-color: var(--loc-wiz-line-1);
+  background: var(--loc-wiz-bg-6);
+  color: var(--loc-wiz-ink-1);
+  font-weight: 700;
+}
+
+.csq-why {
+  flex-basis: 100%;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-faint);
+}
+
+.csq-act {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.csq-phase {
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.csq-msg {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border-left: 3px solid var(--loc-wiz-line-3);
+  background: var(--loc-wiz-bg-9);
+  color: var(--loc-wiz-ink-2);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.csq-or {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+/* 第 3 步的成绩单（一键路径才有） */
+.csq-report {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 14px 0 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--loc-wiz-bg-7);
+  border: 1px solid var(--loc-wiz-line-4);
+}
+
+.csq-report-line {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}

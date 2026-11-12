@@ -1,0 +1,13 @@
+{
+  "name": "生成PPT文件（.pptx）",
+  "description": "生成 **.pptx 文件**（PowerPoint 格式，可下载、可用 Office 打开）。⚠️ 做演示文稿 / 汇报 / 方案 / 路演时**默认不要用这个**，请优先用「生成演示文稿（网页版）」（slides-generate）：那一个能截图自检、可发布成链接、版面更好。**仅在**用户明确要「.pptx 文件 / 能下载的 PPT 文件」，或对方必须用 PowerPoint 二次编辑时，才用本技能。slides 参数是 JSON 数组，每项形如 {\"title\":\"本页标题\",\"bullets\":[\"要点1\",\"要点2\"]}，会自动生成封面页。★ 页数算术（必须照做）：本技能**无条件**在 slides 之前加 1 页封面，所以 **总页数 = slides 条数 + 1**。用户要 N 页 ⇒ slides 必须**正好 N-1** 条；传 {name:\"expected_pages\", value:N} 时本技能会强制校验，条数不对就**直接失败、不产出文件**。页脚数字用的是物理页口径（封面算第 1 页），与 expected_pages 同一个口径。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "params": [
+    { "name": "title", "label": "PPT 总标题", "required": true },
+    { "name": "slides", "label": "幻灯片内容(JSON 数组 [{title,bullets}]，注意：会自动加 1 页封面，所以条数 = 总页数 - 1)", "type": "textarea", "required": true },
+    { "name": "expected_pages", "label": "期望总页数(可选，含封面；给了就必须 slides 条数 + 1 恰好等于它，否则直接失败不产出文件)" },
+    { "name": "filename", "label": "输出文件名(可选，如 汇报.pptx)" }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Python 文本统计",
+  "description": "统计一段文本的字数、词数、行数（纯标准库，无需联网，演示本地 Python 技能运行时）",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": false,
+  "params": [
+    { "name": "text", "label": "文本", "type": "textarea", "required": true }
+  ]
+}

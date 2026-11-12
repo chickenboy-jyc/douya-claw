@@ -1,0 +1,138 @@
+/* ============================================================================
+ * ia-miaomiao.css —— 「上游货源档期」（第 9 个一级导航模块；iframe 内嵌活动档期页）
+ *
+ * 约定（同 ia-asset.css）：style.css 冻结，新增样式一律写本文件，由组件顶部
+ * `import '../styles/ia-miaomiao.css';` 引入。
+ * 这里只新增 mm-sched-* 类名，避开 style.css 已有类名（module-page / merged-tabs 等），
+ * 不覆盖任何既有规则。
+ * 配色跟随绿色主题：用 :root 的 --green / --accent / --text* / --border 变量，
+ * 不使用黑色 / 蓝色主色。
+ * ==========================================================================*/
+
+/* 复用 .module-page 的 flex:1 / 内边距，这里只补一个纵向间距 */
+.mm-sched-page {
+  gap: 10px;
+}
+
+.mm-sched-head {
+  padding: 2px 2px 0;
+  flex-shrink: 0;
+}
+
+.mm-sched-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 6px;
+  letter-spacing: 0.2px;
+}
+
+.mm-sched-sub {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--text-faint);
+  margin: 0;
+  max-width: 760px;
+}
+
+/* 内嵌区域：占满剩余高度，圆角 + 细边，和既有卡片视觉一致 */
+.mm-sched-frame-box {
+  flex: 1;
+  min-height: 320px;
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-panel);
+  overflow: hidden;
+}
+
+.mm-sched-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* 加载 / 失败遮罩：铺满内嵌区域，居中显示状态 */
+.mm-sched-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  background: var(--bg-panel);
+}
+
+.mm-sched-state-text {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text-dim);
+  margin: 0;
+  max-width: 420px;
+}
+
+.mm-sched-emoji {
+  font-size: 30px;
+}
+
+/* 加载转圈：绿色主题 */
+.mm-sched-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--loc-miao-line-1);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: mm-sched-spin 0.8s linear infinite;
+}
+
+@keyframes mm-sched-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mm-sched-retry {
+  margin-top: 2px;
+  padding: 7px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-on-brand);
+  background: var(--green);
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.mm-sched-retry:hover {
+  filter: brightness(0.95);
+}
+
+.mm-sched-retry:active {
+  filter: brightness(0.9);
+}
+
+/* ============================================================================
+   秒秒 · 主题变量（文件作用域，前缀 --loc-miao-）
+   ============================================================================
+   【为什么是局部变量而不是直接用 --c-*】
+     本文件用的是自己的一套绿灰色阶，与全局语义 token 的绿值**不等值**
+     （例如 #1f7a4d 与 --c-brand-dark:#177A46 相差 ΔE≈4.5，直接换会让绿主题可见变色）。
+     所以这里为每个去重色值建一条局部变量：
+       · 绿主题（无 data-theme 属性）= **原字面量逐字不变** ⇒ 绿主题像素不变；
+       · light / dark 各给一套值（白色主题去绿、深色主题反向）。
+   【铁律】三套必须齐全，缺一套 = 那套主题下拿到空值 = 白屏。门禁 unit-theme-cover-group-b 守这条。
+   ========================================================================== */
+:root {
+  --loc-miao-line-1: rgba(48, 209, 88, 0.28);
+}
+html[data-theme="light"] {
+  --loc-miao-line-1: rgba(182, 182, 182, 0.28);
+}
+html[data-theme="dark"] {
+  --loc-miao-line-1: rgba(110, 223, 138, 0.42);
+}

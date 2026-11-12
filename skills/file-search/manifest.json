@@ -1,0 +1,12 @@
+{
+  "name": "搜索文件",
+  "description": "在工作区里搜索文件：按文件名匹配（如 *.txt 或关键词），或按文件内容关键词搜索。返回匹配的文件路径列表。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "timeoutMs": 90000,
+  "params": [
+    { "name": "pattern", "label": "文件名匹配(如 *.txt / 关键词)" },
+    { "name": "content", "label": "内容关键词(可选，搜文件内容)" }
+  ]
+}

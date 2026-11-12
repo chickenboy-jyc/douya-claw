@@ -1,0 +1,343 @@
+/**
+ * ocp.css —— 门诊运营教学（0.21.14 老板需求 2）的样式。
+ *
+ * 独立成文件 + import（共享知识 S2）：style.css 有 6697 行、16 个模块共用，
+ * 往里加一条就要担心撞名（见 scripts/smoke/lint-css-collisions.mjs）。
+ * 类名一律 `.ocp-` 前缀，只影响本页。
+ */
+
+.ocp-wrap {
+  width: 100%;
+}
+
+/* ---------- 顶部说明 ---------- */
+.ocp-head {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--loc-ocp-ink-1);
+  background: var(--loc-ocp-bg-1);
+  border: 1px solid var(--loc-ocp-line-1);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+/* ---------- 5 维诊所画像 ---------- */
+.ocp-profile {
+  background: var(--c-surface);
+  border: 1px solid var(--loc-ocp-line-2);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.ocp-profile-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.ocp-profile-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--loc-ocp-ink-2);
+}
+
+.ocp-profile-sub {
+  font-size: 12.5px;
+  color: var(--loc-ocp-ink-3);
+  margin-top: 2px;
+}
+
+.ocp-basis {
+  flex-shrink: 0;
+  font-size: 12px;
+  border-radius: 999px;
+  padding: 2px 10px;
+  border: 1px solid var(--loc-ocp-line-3);
+  color: var(--loc-ocp-ink-1);
+  background: var(--c-surface-2);
+}
+
+.ocp-basis[data-ocp-basis="complete"] {
+  color: var(--loc-ocp-ink-4);
+  border-color: var(--loc-ocp-line-4);
+  background: var(--loc-ocp-bg-2);
+}
+
+.ocp-basis[data-ocp-basis="incomplete"] {
+  color: var(--loc-ocp-ink-5);
+  border-color: var(--loc-ocp-line-5);
+  background: var(--loc-ocp-bg-3);
+}
+
+.ocp-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px 14px;
+}
+
+.ocp-field-label {
+  display: block;
+  font-size: 12.5px;
+  color: var(--loc-ocp-ink-1);
+  margin-bottom: 4px;
+}
+
+/* ---------- 主题卡 ---------- */
+.ocp-topics {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.ocp-card {
+  background: var(--c-surface);
+  border: 1px solid var(--loc-ocp-line-2);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.ocp-card-hd {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ocp-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--loc-ocp-ink-2);
+  line-height: 1.4;
+}
+
+.ocp-card-desc {
+  font-size: 12.5px;
+  color: var(--loc-ocp-ink-3);
+  margin-top: 3px;
+}
+
+.ocp-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ocp-stamp {
+  font-size: 11.5px;
+  color: var(--loc-ocp-ink-6);
+}
+
+/* ---------- 空态 / 错误态 ---------- */
+.ocp-empty {
+  margin-top: 12px;
+  padding: 14px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--loc-ocp-ink-6);
+  background: var(--c-surface-2);
+  border: 1px dashed var(--loc-ocp-line-6);
+  border-radius: 10px;
+}
+
+.ocp-error {
+  margin-top: 12px;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--loc-ocp-ink-7);
+  background: var(--loc-ocp-bg-4);
+  border: 1px solid var(--loc-ocp-line-7);
+  border-radius: 10px;
+}
+
+/* ---------- 方案四段 ---------- */
+.ocp-body {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ocp-sec {
+  border-left: 3px solid var(--loc-ocp-line-8);
+  padding: 2px 0 2px 12px;
+}
+
+.ocp-sec-t {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--loc-ocp-ink-4);
+  margin-bottom: 6px;
+}
+
+.ocp-sec-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--loc-ocp-ink-8);
+}
+
+.ocp-sec-list li {
+  margin-bottom: 4px;
+}
+
+/* ---------- 验收清单（可勾选） ---------- */
+.ocp-check-sec {
+  border-left-color: #1677ff;
+}
+
+.ocp-check-sec .ocp-sec-t {
+  color: #0958d9;
+}
+
+.ocp-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ocp-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--loc-ocp-ink-8);
+  cursor: pointer;
+}
+
+.ocp-check input[type="checkbox"] {
+  margin-top: 3px;
+  flex-shrink: 0;
+  accent-color: var(--loc-ocp-line-8);
+}
+
+.ocp-check-on span {
+  color: var(--loc-ocp-ink-6);
+  text-decoration: line-through;
+}
+
+.ocp-check-progress {
+  font-size: 12px;
+  color: var(--loc-ocp-ink-3);
+  margin-top: 8px;
+}
+
+/* ---------- 旧实操内容（收进折叠，不删） ---------- */
+.ocp-legacy {
+  border: 1px solid var(--loc-ocp-line-9);
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: var(--loc-ocp-bg-5);
+}
+
+.ocp-legacy > summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--loc-ocp-ink-1);
+  list-style: none;
+}
+
+.ocp-legacy > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ocp-legacy > summary::before {
+  content: '▸ ';
+  color: var(--loc-ocp-ink-6);
+}
+
+.ocp-legacy[open] > summary::before {
+  content: '▾ ';
+}
+
+.ocp-legacy-body {
+  margin-top: 12px;
+}
+
+/* ============================================================================
+   OCP · 主题变量（文件作用域，前缀 --loc-ocp-）
+   ============================================================================
+   【为什么是局部变量而不是直接用 --c-*】
+     本文件用的是自己的一套绿灰色阶，与全局语义 token 的绿值**不等值**
+     （例如 #1f7a4d 与 --c-brand-dark:#177A46 相差 ΔE≈4.5，直接换会让绿主题可见变色）。
+     所以这里为每个去重色值建一条局部变量：
+       · 绿主题（无 data-theme 属性）= **原字面量逐字不变** ⇒ 绿主题像素不变；
+       · light / dark 各给一套值（白色主题去绿、深色主题反向）。
+   【铁律】三套必须齐全，缺一套 = 那套主题下拿到空值 = 白屏。门禁 unit-theme-cover-group-b 守这条。
+   ========================================================================== */
+:root {
+  --loc-ocp-ink-1: #6b7280;
+  --loc-ocp-bg-1: #f7fbf8;
+  --loc-ocp-line-1: #e4efe7;
+  --loc-ocp-line-2: #e8e8e8;
+  --loc-ocp-ink-2: #1f2937;
+  --loc-ocp-ink-3: #8e8e93;
+  --loc-ocp-line-3: #d9d9d9;
+  --loc-ocp-ink-4: #1d7a36;
+  --loc-ocp-line-4: #b7e2c4;
+  --loc-ocp-bg-2: rgba(48, 209, 88, 0.1);
+  --loc-ocp-ink-5: #8a5200;
+  --loc-ocp-line-5: #f0d3a8;
+  --loc-ocp-bg-3: rgba(255, 159, 10, 0.12);
+  --loc-ocp-ink-6: #9ca3af;
+  --loc-ocp-line-6: #e5e7eb;
+  --loc-ocp-ink-7: #b42318;
+  --loc-ocp-bg-4: #fef3f2;
+  --loc-ocp-line-7: #fecdca;
+  --loc-ocp-line-8: #30d158;
+  --loc-ocp-ink-8: #374151;
+  --loc-ocp-line-9: #eceff1;
+  --loc-ocp-bg-5: #fcfcfc;
+}
+html[data-theme="light"] {
+  --loc-ocp-ink-1: #727272;
+  --loc-ocp-bg-1: #f7fbf8;
+  --loc-ocp-line-1: #e4efe7;
+  --loc-ocp-line-2: #e8e8e8;
+  --loc-ocp-ink-2: #282828;
+  --loc-ocp-ink-3: #8e8e93;
+  --loc-ocp-line-3: #d9d9d9;
+  --loc-ocp-ink-4: #6a6a6a;
+  --loc-ocp-line-4: #d8d8d8;
+  --loc-ocp-bg-2: rgba(182, 182, 182, 0.1);
+  --loc-ocp-ink-5: #8a5200;
+  --loc-ocp-line-5: #f0d3a8;
+  --loc-ocp-bg-3: rgba(255, 159, 10, 0.12);
+  --loc-ocp-ink-6: #a2a2a2;
+  --loc-ocp-line-6: #e5e7eb;
+  --loc-ocp-ink-7: #b42318;
+  --loc-ocp-bg-4: #fef3f2;
+  --loc-ocp-line-7: #fecdca;
+  --loc-ocp-line-8: #b6b6b6;
+  --loc-ocp-ink-8: #404040;
+  --loc-ocp-line-9: #eceff1;
+  --loc-ocp-bg-5: #fcfcfc;
+}
+html[data-theme="dark"] {
+  --loc-ocp-ink-1: #b4b6b5;
+  --loc-ocp-bg-1: #1d1f1e;
+  --loc-ocp-line-1: #213828;
+  --loc-ocp-line-2: #2c2e2d;
+  --loc-ocp-ink-2: #d0d2d1;
+  --loc-ocp-ink-3: #aaacab;
+  --loc-ocp-line-3: #323433;
+  --loc-ocp-ink-4: #9fe8b3;
+  --loc-ocp-line-4: #21512f;
+  --loc-ocp-bg-2: rgba(110, 223, 138, 0.15);
+  --loc-ocp-ink-5: #efce9e;
+  --loc-ocp-line-5: #624111;
+  --loc-ocp-bg-3: rgba(228, 179, 103, 0.18);
+  --loc-ocp-ink-6: #a3a5a4;
+  --loc-ocp-line-6: #2c2e2d;
+  --loc-ocp-ink-7: #eb8b84;
+  --loc-ocp-bg-4: #370d09;
+  --loc-ocp-line-7: #51110d;
+  --loc-ocp-line-8: #81e399;
+  --loc-ocp-ink-8: #c5c7c6;
+  --loc-ocp-line-9: #272928;
+  --loc-ocp-bg-5: #1a1c1b;
+}

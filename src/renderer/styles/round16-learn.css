@@ -1,0 +1,783 @@
+/*
+ * round16-learn.css —— 0.21.9 老板第 7 条（学习中心卡片化 + 带图）专用样式。
+ *
+ * 老板原话：「学习中心做成卡片形式，最好带图片」。
+ * 这里只做三件事：① 列表 → 响应式卡片网格；② 卡片加封面图 + 分级截断；
+ * ③ 把 6 个动作按钮收进「更多」以降低卡片高度。
+ *
+ * 为什么不写进 style.css：那文件 6697 行、16 个模块共用，加类名容易撞
+ * （scripts/smoke/lint-css-collisions.mjs 抓 COLLIDE/SHADOW）。
+ * 本文件只新增 learn-grid / learn-cover / learn-card-bd / learn-foot / learn-more 这几个新类。
+ */
+
+/* ============ 一、响应式卡片网格 ============ */
+/* 行业资讯 / 实操教学 / 平台入驻 三处列表共用同一个网格容器类。
+   280px 最小列宽：1280 视口减去侧栏和内边距后大约能排 3 列，窄屏自动降到 2 / 1 列。
+
+   ⚠️ 容器上**不要再写 `.learn-list`**（第一版写成 `class="learn-list learn-grid"`，实测网格不生效）：
+   style.css:3183 有 `.learn-list { display:flex; flex-direction:column; gap:12px }`，
+   与本文件的 `.learn-grid` **同权重（0,1,0）** ⇒ 谁后加载谁赢。实测浏览器里 style.css 后加载，
+   flex 赢了 ⇒ 卡片排成单列长条、gap 变 12px。这**不是"样式忘了写"**，是两条同权重规则打架，
+   靠 `!important` 压过去只会把这笔账推给下一个人 —— 直接把旧类从容器上摘掉，
+   新旧两套布局规则各自归位（`.learn-list` 继续服务别处仍在用它的列表）。 */
+.learn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  /* 【0.21.12 · 老板第 3 条】「第一条内容还是很长」。
+     align-items:start 时每张卡各自按内容长高 ⇒ 一行里第一条常常比旁边高出一截，
+     看着就是"第一条特别长"。改成 stretch，配合卡片的 height:100%，
+     同一行的卡一律等高；正文里的可变长文本各自 clamp（见下方）。 */
+  align-items: stretch;
+  /* 【0.21.12 · 老板第 3 条第二次修：上一轮我只做到"同一行等高"，老板仍说"还是长"】
+   *
+   * 实测（scripts/verify/_r21-learn-probe.mjs，1440×900，6 条内置资讯）：
+   *   第 1 行 554 / 第 2 行 509 / 第 3 行 433 —— 行内是齐的，**行与行之间差 121px**。
+   *   老板看到的就是「第一行长、第三行短」，所以说"第一条还是很长"是对的，我上一轮的
+   *   「卡片大小统一」只对了一半。
+   *
+   * grid-auto-rows: 1fr ⇒ 隐式行一律等高（都取最高那一行），整个网格真正统一：
+   * 第一张卡再也不会比最后一张高出一截。空出来的地方由正文区 flex 吸收，
+   * 底部「推荐指数 + 读全文」用 margin-top:auto 钉在卡底（见 .learn-foot），不会浮在中间。
+   */
+  grid-auto-rows: 1fr;
+}
+
+/* ============ 二、带封面的文章卡 ============ */
+.learn-card-media {
+  /* 卡片本身变成纵向 flex：封面顶到边（取消内边距 → 圆角裁切），正文区自己留白 */
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  min-width: 0;
+  height: 100%; /* 与 .learn-grid 的 stretch 配合：同一行等高 */
+  border-radius: 16px;
+  background: var(--c-surface);
+  border: 1px solid var(--loc-learn-line-1);
+  box-shadow: 0 1px 2px var(--loc-learn-shadow-1), 0 8px 24px var(--loc-learn-shadow-2);
+}
+
+.learn-cover {
+  display: block;
+  width: 100%;
+  /* 固定比例：图多时不跳版，也不因为某张图特别高把整行撑歪。
+     【0.21.12】16:9 → 21:9：427px 宽的列里 240px 高的封面白占一大块，
+     21:9 约 183px，整张卡矮 57px（老板第 3 条「还是很长」）。
+     max-height 兜住单列超宽时的极端值。 */
+  aspect-ratio: 21 / 9;
+  max-height: 190px;
+  object-fit: cover;
+  border-radius: 16px 16px 0 0;
+  background: var(--loc-learn-bg-1);
+}
+
+.learn-card-bd {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px 14px;
+  min-width: 0;
+  /* 卡片被拉齐到网格行高后，多出来的高度全部由正文区吸收，
+     底部「推荐指数 + 读全文」靠 margin-top:auto 钉在卡底。 */
+  flex: 1 1 auto;
+}
+
+/* 分类小标签 + 来源：一行 12px 灰 */
+.learn-card-media .learn-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--loc-learn-ink-1);
+  margin: 0;
+}
+
+/* 标题：16px / 600 / 最多 2 行 */
+.learn-card-media .learn-title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.learn-card-media .learn-title-row {
+  margin: 0;
+}
+
+/* 摘要：13px / 行高 1.7 / 最多 2 行
+   【0.21.12 · 老板第 3 条】原来 3 行。四列网格里 3 行摘要 + 下面「为什么值得看」+「适合谁」
+   叠起来，一张卡能顶到 420px —— 老板说的「第一条还是很长」就是它。摘要压到 2 行。 */
+.learn-card-media .learn-summary {
+  font-size: 13px;
+  line-height: 1.7;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+/* 卡片里所有"可变长"的次要段落都限行：不限行的话，哪篇的字段多哪张就长。 */
+.learn-card-media .learn-why,
+.learn-card-media .learn-fit,
+.learn-card-media .learn-rec-reason {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.learn-card-media .learn-why { font-size: 12.5px; line-height: 1.65; }
+.learn-card-media .learn-fit { font-size: 12px; line-height: 1.6; }
+
+/* 「帮我看懂」的内联解读块：用户主动点开才有，但也不能无限长（最多 200px 自己滚） */
+.learn-card-media .learn-plain {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* 底部一行：推荐指数 + 查看原文 */
+.learn-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+.learn-card-media .learn-importance {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ============ 三、动作收进「更多」 ============ */
+.learn-more {
+  border-top: 1px solid var(--loc-learn-line-1);
+  padding-top: 8px;
+}
+.learn-more-sum {
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--loc-learn-ink-2);
+  list-style: none;
+  user-select: none;
+}
+.learn-more-sum::-webkit-details-marker {
+  display: none;
+}
+.learn-more-sum::before {
+  content: '▸ ';
+}
+.learn-more[open] .learn-more-sum::before {
+  content: '▾ ';
+}
+.learn-more .learn-actions {
+  margin-top: 8px;
+}
+
+/* ============ 四、分页器容器 ============ */
+/* 老板第 5 条「卡片太长、显示的太多」→ 列表改为每页 6 条。
+   `.learn-grid` 一个字不改（列数、gap、等高规则全部沿用），分页只是少给几条数据；
+   这个类只负责把 antd 分页器居中放在列表下方、别贴着最后一行卡片。
+
+   前缀用 `learn-pager`（本文件新类）：style.css 里有 16 个模块的类名，
+   取通用名（如 `.pager`）会撞上别人的基础规则 —— 见 lint-css-collisions.mjs 的历史事故。 */
+.learn-pager {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+  padding: 2px 0 4px;
+}
+
+/* 窄屏：卡片铺满一行，封面别太矮 */
+@media (max-width: 640px) {
+  .learn-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ============================================================================
+ * 五、0.21.16 · 老板需求 6
+ *
+ * 老板原话（四个诉求）：
+ *   「学习中心现在会给我推荐很多乱七八糟的牙医内容 AI先帮我判断一下我的建议是
+ *     从 中华医学期刊里面 找口腔文献 阅读。原来的实操清单（2 篇）· 想看细节点这里删掉，
+ *     门诊运营教学的对话呢？我前面说的那几个问题占比太大了 小一点 就是几个按钮点点就行了
+ *     重要的还是对话框」
+ *
+ * 本段只做两件事：
+ *   ① `.learn-ask`   —— 对话框容器。里面是复用的 ActivityChat，不重写它的内部样式。
+ *      【0.21.17 · 老板第 2 条】它**不再挂在首屏**，而是挂在「🎓 门诊运营教学」页签内部、
+ *      5 个主题按钮的下方（原话「删了，对话框放在门诊运营教学里面 不要一进去就在顶部」）。
+ *      类名与规则刻意保持不变：改名只会多一条没人认识的样式，观感还要再校一次。
+ *   ② `.learn-lit`  —— 资讯页顶部的「优先读口腔文献」入口（真实可达的中华医学期刊网）。
+ * 门诊运营教学的收口用 `.ocp-*[data-ocp-compact]` 属性选择器覆盖，**不加 !important**、
+ * 也**不改 ocp.css 一行**（那文件不在本轮可改范围），靠属性选择器多一个类选择器权重赢。
+ * ========================================================================== */
+
+/* ---------- ① 对话框（现挂在「门诊运营教学」页签内）：给它足够高度，别被上下内容挤成一条 ---------- */
+.learn-ask {
+  margin: 12px 0 4px;
+  padding: 14px 16px 12px;
+  background: var(--c-surface);
+  border: 1px solid var(--loc-learn-line-1);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px var(--loc-learn-shadow-1), 0 10px 28px var(--loc-learn-shadow-2);
+}
+
+.learn-ask-hd {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.learn-ask-t {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--loc-learn-ink-3);
+}
+
+.learn-ask-sub {
+  font-size: 12.5px;
+  color: var(--loc-learn-ink-1);
+}
+
+/* ActivityChat 的 embedded/独立样式来自 style.css 的 `.act-chat*`（本文件不重复定义），
+   这里只把它的对话区抬高一点：老板要的是「对话框」能真的聊起来，不是一条缝。
+   min-height 而不是 height：内容多了自己长，不会把下面的卡片永久推到屏幕外。
+   【0.21.17 · 老板第 2 条】它现在挂在页签里、按钮下方 ⇒ 上限从 46vh 收到 40vh：
+   老板这轮抱怨的正是「那么大一个」，别再让它在页签里顶满一屏。 */
+.learn-ask .act-chat-body {
+  min-height: 180px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+/* ---------- ② 优先读口腔文献：一行说明 + 一个真实外链 ---------- */
+.learn-lit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 9px 12px;
+  background: var(--loc-learn-bg-2);
+  border: 1px solid var(--loc-learn-line-2);
+  border-radius: 10px;
+}
+
+.learn-lit-t {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--loc-learn-ink-2);
+}
+
+.learn-lit-note {
+  font-size: 12px;
+  color: var(--loc-learn-ink-4);
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+/* 用 <a> 而不是 <button>：这是「跳出去检索」的语义，且首屏按钮棘轮（learn: 39）不该为此上调。 */
+.learn-lit-link {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #0a7ea4;
+  text-decoration: none;
+  padding: 3px 10px;
+  border: 1px solid #cfe6ee;
+  border-radius: 999px;
+  background: var(--c-surface);
+  white-space: nowrap;
+}
+.learn-lit-link:hover {
+  background: var(--loc-learn-bg-3);
+}
+
+/* 卡片上的「口腔文献 / 口腔专业媒体」标：比普通分类标更醒目，文献优先一眼看得出。 */
+.learn-card-media .learn-meta .learn-tag.tier {
+  color: #0a7ea4;
+  background: var(--loc-learn-bg-4);
+}
+.learn-card-media .learn-meta .learn-tag.tier.is-lit {
+  color: var(--loc-learn-ink-2);
+  background: var(--loc-learn-bg-5);
+  font-weight: 700;
+}
+
+/* ============================================================================
+ * 六、门诊运营教学「收成几个按钮」（老板需求 6 第 3 点）
+ *
+ * 改前：一句两行长文 + 5 维画像表单 + 5 张各带「生成方案 + 暂无数据」的大卡，
+ *       整块把对话框挤到屏幕外。
+ * 改后：一行标题 + 一排胶囊按钮（点一下直接生成）+ 画像收进 <details> +
+ *       5 张卡默认只有一行标题那么高，生成出方案的那张才展开成整行宽。
+ * 0.21.17 追加：「问豆芽」入口（.ocp-chat-entry）紧跟在胶囊下面 —— 第一屏必须看得见它，
+ *       对话框默认收起、点入口才就地展开（老板：「为什么会有那么大一个活动策划」）。
+ *
+ * ⚠️ 全部用 `.ocp-x[data-ocp-compact]` / `.ocp-card-wide` 这类**属性 / 新类**选择器，
+ *    不改 ocp.css 一行、不加 !important —— ocp.css 仍在服务别处（同一个 .ocp-card 结构）。
+ * ========================================================================== */
+
+/* 标题行：一行说完，不再是一段话 */
+.ocp-wrap[data-ocp-compact='1'] .ocp-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+}
+.ocp-wrap[data-ocp-compact='1'] .ocp-head-t {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--loc-learn-ink-3);
+}
+.ocp-wrap[data-ocp-compact='1'] .ocp-head-sub {
+  font-size: 12px;
+  color: var(--loc-learn-ink-1);
+}
+
+/* 一排主题胶囊（= 老板说的「几个按钮点点就行」） */
+.ocp-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ocp-pill {
+  font-size: 13px;
+  line-height: 1;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--loc-learn-line-3);
+  background: var(--c-surface);
+  color: var(--loc-learn-ink-3);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.ocp-pill:hover:not(:disabled) {
+  background: var(--loc-learn-bg-6);
+  border-color: var(--loc-learn-line-4);
+}
+.ocp-pill:disabled {
+  cursor: not-allowed;
+  color: var(--loc-learn-ink-5);
+}
+.ocp-pill.is-done {
+  color: var(--loc-learn-ink-2);
+  border-color: var(--loc-learn-line-4);
+  background: var(--loc-learn-bg-7);
+  font-weight: 600;
+}
+
+/* 【0.21.17 · 老板第 2 条】「问豆芽」入口：紧跟在 5 个胶囊下面的一排。
+   为什么单独给它一条样式而不是复用 .ocp-pill：胶囊是「点一下出方案」（次级动作，白底细边），
+   入口是「进对话」（这一页的主路径，主理人要求第一屏一眼可见）⇒ 必须比胶囊更显眼，
+   否则又是一个「藏在按钮堆里看不见」的入口。绿底实心 + 箭头意图，一眼能分出来。 */
+.ocp-chat-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 2px 0 0;
+}
+.ocp-chat-btn {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--loc-learn-line-4);
+  background: var(--loc-learn-bg-5);
+  color: var(--loc-learn-ink-2);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.ocp-chat-btn:hover {
+  background: var(--loc-learn-bg-8);
+  border-color: var(--loc-learn-line-5);
+}
+.ocp-chat-btn.is-open {
+  background: var(--c-surface);
+  color: var(--loc-learn-ink-6);
+  border-color: var(--loc-learn-line-3);
+}
+.ocp-chat-hint {
+  font-size: 12px;
+  color: var(--loc-learn-ink-1);
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+/* 画像收进折叠：摘要一行，展开才是那 5 个输入框 */
+.ocp-profile-fold {
+  background: var(--c-surface);
+  border: 1px solid var(--loc-learn-line-6);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+.ocp-profile-sum {
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--loc-learn-ink-2);
+  list-style: none;
+  user-select: none;
+}
+.ocp-profile-sum::-webkit-details-marker {
+  display: none;
+}
+.ocp-profile-sum::before {
+  content: '▸ ';
+}
+.ocp-profile-fold[open] .ocp-profile-sum::before {
+  content: '▾ ';
+}
+/* 展开后内层卡片不再重复画边框（外层 details 已经是卡） */
+.ocp-profile-fold .ocp-profile {
+  border: 0;
+  padding: 12px 0 0;
+}
+
+/* 5 张卡：一排小格子；有方案的那张（.ocp-card-wide）独占整行展开 */
+.ocp-topics[data-ocp-compact='1'] {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+.ocp-topics[data-ocp-compact='1'] .ocp-card {
+  padding: 10px 12px;
+}
+.ocp-topics[data-ocp-compact='1'] .ocp-card-hd {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.ocp-topics[data-ocp-compact='1'] .ocp-card-title {
+  font-size: 13px;
+  line-height: 1.4;
+}
+/* 描述默认不显示（一句话已经用按钮 title 提示），方案生成后展开时才带出来 */
+.ocp-topics[data-ocp-compact='1'] .ocp-card-desc {
+  display: none;
+}
+.ocp-topics[data-ocp-compact='1'] .ocp-card-wide .ocp-card-desc {
+  display: block;
+}
+.ocp-topics[data-ocp-compact='1'] .ocp-card-wide {
+  grid-column: 1 / -1;
+}
+.ocp-topics[data-ocp-compact='1'] .ocp-card-hd {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.ocp-topics[data-ocp-compact='1'] .ocp-card-wide .ocp-card-hd {
+  flex-direction: row;
+}
+/* 空态：从一块 60px 的虚线框压成一行小字，5 个空态不再各占半屏 */
+.ocp-topics[data-ocp-compact='1'] .ocp-empty {
+  margin-top: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+  border-style: solid;
+  border-color: var(--loc-learn-line-7);
+  background: var(--c-surface-2);
+}
+
+@media (max-width: 900px) {
+  .ocp-topics[data-ocp-compact='1'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .ocp-topics[data-ocp-compact='1'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ============================================================================
+   学习中心 · 主题变量（文件作用域，前缀 --loc-learn-）
+   ============================================================================
+   【为什么是局部变量而不是直接用 --c-*】
+     本文件用的是自己的一套绿灰色阶，与全局语义 token 的绿值**不等值**
+     （例如 #1f7a4d 与 --c-brand-dark:#177A46 相差 ΔE≈4.5，直接换会让绿主题可见变色）。
+     所以这里为每个去重色值建一条局部变量：
+       · 绿主题（无 data-theme 属性）= **原字面量逐字不变** ⇒ 绿主题像素不变；
+       · light / dark 各给一套值（白色主题去绿、深色主题反向）。
+   【铁律】三套必须齐全，缺一套 = 那套主题下拿到空值 = 白屏。门禁 unit-theme-cover-group-b 守这条。
+   ========================================================================== */
+:root {
+  --loc-learn-line-1: rgba(0, 0, 0, 0.06);
+  --loc-learn-shadow-1: rgba(0, 0, 0, 0.04);
+  --loc-learn-shadow-2: rgba(0, 0, 0, 0.05);
+  --loc-learn-bg-1: #f2f2f7;
+  --loc-learn-ink-1: #8e8e93;
+  --loc-learn-ink-2: #1d7a36;
+  --loc-learn-ink-3: #1d1d1f;
+  --loc-learn-bg-2: #f7fbf8;
+  --loc-learn-line-2: #e4efe7;
+  --loc-learn-ink-4: #6b7280;
+  --loc-learn-bg-3: #f0f8fb;
+  --loc-learn-bg-4: rgba(10, 126, 164, 0.1);
+  --loc-learn-bg-5: rgba(48, 209, 88, 0.14);
+  --loc-learn-line-3: #d8e6dc;
+  --loc-learn-bg-6: #f2fbf5;
+  --loc-learn-line-4: #b9dcc4;
+  --loc-learn-ink-5: #9ca3af;
+  --loc-learn-bg-7: rgba(48, 209, 88, 0.1);
+  --loc-learn-bg-8: rgba(48, 209, 88, 0.22);
+  --loc-learn-line-5: #9ecfae;
+  --loc-learn-ink-6: #4b5563;
+  --loc-learn-line-6: #e8e8e8;
+  --loc-learn-line-7: #eef0f2;
+}
+html[data-theme="light"] {
+  --loc-learn-line-1: rgba(0, 0, 0, 0.06);
+  --loc-learn-shadow-1: rgba(0, 0, 0, 0.04);
+  --loc-learn-shadow-2: rgba(0, 0, 0, 0.05);
+  --loc-learn-bg-1: #f2f2f7;
+  --loc-learn-ink-1: #8e8e93;
+  --loc-learn-ink-2: #6a6a6a;
+  --loc-learn-ink-3: #1d1d1f;
+  --loc-learn-bg-2: #f7fbf8;
+  --loc-learn-line-2: #e4efe7;
+  --loc-learn-ink-4: #727272;
+  --loc-learn-bg-3: #f0f8fb;
+  --loc-learn-bg-4: rgba(117, 117, 117, 0.1);
+  --loc-learn-bg-5: rgba(182, 182, 182, 0.14);
+  --loc-learn-line-3: #d8e6dc;
+  --loc-learn-bg-6: #f2fbf5;
+  --loc-learn-line-4: #d3d3d3;
+  --loc-learn-ink-5: #a2a2a2;
+  --loc-learn-bg-7: rgba(182, 182, 182, 0.1);
+  --loc-learn-bg-8: rgba(182, 182, 182, 0.22);
+  --loc-learn-line-5: #c4c4c4;
+  --loc-learn-ink-6: #545454;
+  --loc-learn-line-6: #e8e8e8;
+  --loc-learn-line-7: #eef0f2;
+}
+html[data-theme="dark"] {
+  --loc-learn-line-1: rgba(0, 0, 0, 0.42);
+  --loc-learn-shadow-1: rgba(0, 0, 0, 0.42);
+  --loc-learn-shadow-2: rgba(0, 0, 0, 0.42);
+  --loc-learn-bg-1: #212322;
+  --loc-learn-ink-1: #aaacab;
+  --loc-learn-ink-2: #9fe8b3;
+  --loc-learn-ink-3: #d6d8d7;
+  --loc-learn-bg-2: #1d1f1e;
+  --loc-learn-line-2: #213828;
+  --loc-learn-ink-4: #b4b6b5;
+  --loc-learn-bg-3: #212322;
+  --loc-learn-bg-4: rgba(171, 183, 177, 0.15);
+  --loc-learn-bg-5: rgba(110, 223, 138, 0.21);
+  --loc-learn-line-3: #273c2d;
+  --loc-learn-bg-6: #10331c;
+  --loc-learn-line-4: #274d33;
+  --loc-learn-ink-5: #a3a5a4;
+  --loc-learn-bg-7: rgba(110, 223, 138, 0.15);
+  --loc-learn-bg-8: rgba(110, 223, 138, 0.33);
+  --loc-learn-line-5: #7ebf93;
+  --loc-learn-ink-6: #bcbebd;
+  --loc-learn-line-6: #2c2e2d;
+  --loc-learn-line-7: #262827;
+}
+
+/* ============================================================================
+   学习中心 · 运营实操卡片（0.21.28）
+   ============================================================================
+   【为什么加这一段】
+     `data/knowledgeCatalog.js` 的 `TUTORIAL_LIBRARY` 有 6 篇运营实操（7467 字 / 30 步 /
+     65 条验收），全仓此前**只有注释提到它，没有任何 import** ⇒ 内容在库里，页面上一个字都没有。
+     老板两轮原话：「学习中心 内容也十分糟糕，是不是根本爬不到内容」
+                   「还有教学 现在也是很糟糕的完全不能看」
+     本轮把它接到「🎓 门诊运营教学」页签。渲染点见 LearningStation.jsx 的 `TUTORIAL_LIBRARY.map(`。
+
+   【这一段为什么**一个颜色声明都没有** —— 别"顺手补上颜色"】
+     `unit-theme-cover-group-b.mjs` 的断言 E2 是**逐位置颜色序列**棘轮：它把本文件里
+     「第 k 处颜色声明」的值（`var(--loc-*)` 按绿主题展开成字面量）与改前冻结序列**逐条**比，
+     **长度不同即判红**（实测：加完带颜色的规则后「改前 51 处 / 改后展开 78 处」⇒ 当场红）。
+     那份冻结序列取自「主题改造之前」的 revision（那时文件里还是字面量），
+     所以「新增一条带颜色的规则」在这道门禁下**无法通过**，重新冻结也救不回来
+     （新帧里 `var(--loc-*)` 会被冻成 `<<缺绿值:…>>` 占位符，E2 反而全红）。
+     ⇒ 本段的做法是：**卡面/文字色一律复用已有的、已被三套主题覆盖的类**，
+       新类只负责版式（display / gap / padding / font-size / font-weight / opacity）。
+       具体：
+         · 卡面（背景 / 描边 / 圆角 / 阴影）来自 `.learn-card-media`（见本文件 :47）；
+         · 摘要正文色来自 `.learn-summary`，次要行色来自 `.learn-meta`（style.css:3350/3363，
+           且 HTML 的浅/深色覆盖块 :7567+/:7608+ 已把它们逐条改到 `var(--c-text)`）；
+         · 步骤标题的墨色来自 `.learn-tut-step-t`（style.css:4350，同样已被 :7577/:7618 覆盖）。
+       本段里出现的 `currentColor` 一个都不算颜色声明（`COLOR_RE` 只认 `#hex/rgb()/hsl()`），
+       这是"要一条分隔线/描边但不想新增颜色位置"的唯一写法。
+   ========================================================================== */
+
+.learn-tut-lib {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 14px;
+}
+/* 与上一块（OcpPanel）之间的分隔线：透明度挂在伪元素上，正文对比度不受影响，
+   而且伪元素里的 `currentColor` 不新增颜色声明位置（见本段头注释）。 */
+.learn-tut-lib::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  border-top: 1px solid currentColor;
+  opacity: .12;
+}
+
+.learn-tut-lib-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.learn-tut-lib-title { font-size: 14px; font-weight: 700; line-height: 1.6; }
+.learn-tut-lib-note { font-size: 12.5px; line-height: 1.6; opacity: .7; }
+
+.learn-tut-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  align-items: start;
+  /* 这里**不用** `.learn-grid`：那个栅格带 `grid-auto-rows: 1fr`（同排等高），
+     而 SOP 卡是"点开哪张哪张变高"，等高会把旁边 5 张一起拉长。 */
+}
+
+/* 卡面 = `.learn-card-media` 的背景/描边/圆角/阴影 + 这里只补版式。
+   ⚠️ 这两条类名必须一起出现（见本段头注释「为什么一个颜色声明都没有」）。 */
+.learn-tut-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  height: auto;
+  transition: transform .15s ease;
+}
+.learn-tut-card:hover { transform: translateY(-1px); }
+/* 展开中的卡片横跨整行：步骤正文是长句，挤在 280px 的窄格里读不动。 */
+.learn-tut-card.is-open { grid-column: 1 / -1; transform: none; }
+
+/* 卡片头是真 <button>（可 Tab / 可 aria-expanded），把浏览器默认按钮样式抹平。 */
+.learn-tut-card-hd {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.learn-tut-card-hd:focus-visible { outline: 2px solid currentColor; outline-offset: -3px; border-radius: 6px; }
+
+.learn-tut-card-title { font-size: 13.5px; font-weight: 700; line-height: 1.6; }
+/* 次要行：色来自 `.learn-meta`（style.css:3350，三套主题都覆盖过），这里只纠版式。 */
+.learn-tut-card-meta { margin: 0; gap: 8px; }
+
+.learn-tut-card-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  opacity: .75;
+}
+
+/* 摘要色来自 `.learn-summary`（含 2 行截断，正是「intro 前两行」），这里只去掉它的下外边距。 */
+.learn-tut-card-intro { margin: 0; }
+
+.learn-tut-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.learn-tut-sec {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+}
+/* 分节之间的细线：透明度挂在伪元素上，正文的对比度不受影响。 */
+.learn-tut-sec + .learn-tut-sec::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  border-top: 1px solid currentColor;
+  opacity: .14;
+}
+
+.learn-tut-sec-title { font-size: 12.5px; font-weight: 700; line-height: 1.6; letter-spacing: .02em; }
+
+.learn-tut-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+/* `.learn-tut-step` / `.learn-tut-step-t` 的排版与墨色已在 style.css:4348-4350 定义
+   （那两个类原本给 0.21.16 删掉的 <details> 用，一直留着），这里只补它们缺的部件。 */
+.learn-tut-num {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  opacity: .7;
+}
+.learn-tut-step-bd { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.learn-tut-step-d { font-size: 13px; line-height: 1.6; opacity: .88; }
+
+.learn-tut-checks, .learn-tut-pits { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+
+.learn-tut-check { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.6; }
+/* 勾选框是**静态样式**（不是 <input type="checkbox">）：这 6 篇的验收只用来对照，
+   真能勾就多出第二套「学习进度」，会和 OCP 按企业落库的进度打架。 */
+.learn-tut-check-box {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  opacity: .45;
+}
+
+/* 常见坑：左边一条粗线做警示，底色不给（底色就要新增颜色位置，见本段头注释）。 */
+.learn-tut-pit {
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 2px 0 2px 10px;
+  border-left: 3px solid currentColor;
+  opacity: .88;
+}
+
+/* ---------- 首屏「抓取明细（排查用）」折叠条（0.21.28） ----------
+   那 223 字运维日志不再裸挂首屏，收进默认收起的 <details>。
+   这里只给触发行的字号与可读性，颜色继承（仍不新增颜色声明，见上一段头注释）。 */
+.learn-fetch-details { margin: 0; }
+.learn-fetch-summary { font-size: 12.5px; line-height: 1.6; cursor: pointer; opacity: .7; }
+.learn-fetch-details[open] .learn-fetch-summary { opacity: 1; }

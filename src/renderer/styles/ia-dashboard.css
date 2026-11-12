@@ -1,0 +1,827 @@
+/* ============================================================
+   ia-dashboard.css —— 2026-10-12 新版 UI 共用仪表盘语言
+   来源：老板提供的 5 张参考图（企业助手仪表盘 / 智能工作台 /
+   竞品分析仪表盘 / 内容创作平台 / 活动与档期管理看板）。
+   五个页面共用这一套：浅色卡片、12-16px 圆角、细边框、柔和投影、
+   品牌绿 #1d1d1f 点缀、主列 + 右侧栏（right rail）双栏结构。
+
+   【2026-10-13 晚 · 第五轮「去边框化」（老板：为什么你做的那么脏乱）】
+   根因：参考图的列表行之间只用**留白**分隔，我们却给每一行套了
+   「1px 边框 + 白底 + 圆角」小卡片，再把整区包进大卡片 —— 一个首页
+   四五十个框，线条纵横，显乱；图标用 emoji（参考图是彩色图标方块），
+   一行塞太多元素。本轮规则（只动首页与右栏，其余四页保持参考图的卡片风）：
+   · .dash-sec 去掉边框/白底/投影，区块之间用 24px+ 留白分隔；
+   · 常用操作卡改扁平浅色砖（无边框，hover 才起淡绿影）；
+   · 图标全部内联 SVG + 绿/青/紫/橙四色圆角方块（qa-ic-*）；
+   · 右栏示例问法改「图标方块 + 标题 + 小字」浅色行，仍是一张卡到底。
+   信息量与数据口径一字未动，只换皮。
+   ============================================================ */
+/* ────────────────────────────────────────────────────────────────────────────
+   文件作用域主题变量（主题可切换 · 三期工程）
+   ────────────────────────────────────────────────────────────────────────────
+   【为什么是局部变量，不是直接换全局 --c-*】
+     本文件这套色是自定义绿灰，与 theme-tokens.css 里 --c-* 的**绿主题值不相等**。
+     直接把字面量换掉，绿色主题就会肉眼可见地变色（背景、正文、品牌绿全都会漂）。
+     所以这里一条变量对一条原字面量：
+
+       · 绿主题（:root，不带 data-theme）  = **原字面量，一字不改** ⇒ 逐像素不变
+       · 白主题（html[data-theme="light"]）= 去绿中性，主色中性深灰（老板明令不许蓝）
+       · 深主题（html[data-theme="dark"]） = 带绿的深底浅字
+
+   【铁律：三套必须齐全】
+     少一套 ⇒ 那个主题下这些属性拿到空值 ⇒ 白屏 / 黑字黑底。新增变量必须同时补三套。
+     门禁 scripts/smoke/unit-theme-cover-group-a.mjs 的 C/D 两条断言守着这件事。
+
+   【命名】
+     --loc-iad-<角色><序号>。前缀是文件独占的，**不许跨文件复用**。
+     刻意不用 --c- 开头：那是全局 token 的命名空间，混进去会被核心层门禁误判。
+
+   【数据可视化系列色】
+     标签/系列色表达的是**数据身份**，不是界面语义 —— 它们也建了变量，但深色值
+     只调亮度、不改成同一个色，系列之间保持可区分。
+   ──────────────────────────────────────────────────────────────────────────── */
+:root {
+  --loc-iad-alphaBrand12: rgba(14, 125, 89, 0.12);
+  --loc-iad-alphaBrand20: rgba(14, 125, 89, 0.2);
+  --loc-iad-alphaBrand24: rgba(36, 138, 61, 0.24);
+  --loc-iad-alphaBrand34: rgba(14, 125, 89, 0.34);
+  --loc-iad-alphaGlass00: rgba(214, 244, 236, 0);
+  --loc-iad-alphaGlass55: rgba(214, 244, 236, 0.55);
+  --loc-iad-alphaGlass70: rgba(255, 255, 255, 0.7);
+  --loc-iad-alphaGlass85: rgba(255, 255, 255, 0.85);
+  --loc-iad-alphaGlass90: rgba(255, 255, 255, 0.9);
+  --loc-iad-alphaWarn10: rgba(255, 149, 0, 0.1);
+  --loc-iad-alphaWarn25: rgba(255, 149, 0, 0.25);
+  --loc-iad-border: #c7c7cc;
+  --loc-iad-bordera: rgba(0, 0, 0, 0.05);
+  --loc-iad-borderb: rgba(0, 0, 0, 0.06);
+  --loc-iad-borderc: rgba(0, 0, 0, 0.07);
+  --loc-iad-borderd: rgba(0, 0, 0, 0.08);
+  --loc-iad-bordere: rgba(0, 0, 0, 0.09);
+  --loc-iad-borderf: rgba(0, 0, 0, 0.1);
+  --loc-iad-borderg: rgba(0, 0, 0, 0.14);
+  --loc-iad-borderh: rgba(0, 0, 0, 0.16);
+  --loc-iad-borderi: rgba(0, 0, 0, 0.18);
+  --loc-iad-borderj: rgba(0, 0, 0, 0.2);
+  --loc-iad-brand: #30d158;
+  --loc-iad-brandDark: #0a6849;
+  --loc-iad-brandDeep: #12a87b;
+  --loc-iad-brandDeepa: #2f9c4c;
+  --loc-iad-brandInk: #10312a;
+  --loc-iad-brandTint: #d6f4ec;
+  --loc-iad-brandTinta: #e4f6f2;
+  --loc-iad-brandTintb: #ebf9f8;
+  --loc-iad-danger: #d93636;
+  --loc-iad-hover: rgba(0, 0, 0, 0.03);
+  --loc-iad-hovera: rgba(0, 0, 0, 0.04);
+  --loc-iad-hoverb: rgba(0, 0, 0, 0.045);
+  --loc-iad-hoverc: rgba(0, 0, 0, 0.05);
+  --loc-iad-hoverd: rgba(0, 0, 0, 0.06);
+  --loc-iad-hovere: rgba(0, 0, 0, 0.07);
+  --loc-iad-shadowSoft: rgba(0, 0, 0, 0.03);
+  --loc-iad-shadowSofta: rgba(0, 0, 0, 0.04);
+  --loc-iad-shadowSoftb: rgba(0, 0, 0, 0.06);
+  --loc-iad-surface2: #f2f2f4;
+  --loc-iad-surface2a: #f4fafa;
+  --loc-iad-text: #1d1d1f;
+  --loc-iad-text2: #4b4b50;
+  --loc-iad-text2a: #6e6e73;
+  --loc-iad-text2b: #8e8e93;
+  --loc-iad-text3: #a1a1a6;
+  --loc-iad-warn: #b25000;
+  --loc-iad-window: #fafdfd;
+}
+
+html[data-theme="light"] {
+  --loc-iad-alphaBrand12: rgba(58, 66, 71, 0.12);
+  --loc-iad-alphaBrand20: rgba(58, 66, 71, 0.2);
+  --loc-iad-alphaBrand24: rgba(58, 66, 71, 0.24);
+  --loc-iad-alphaBrand34: rgba(58, 66, 71, 0.34);
+  --loc-iad-alphaGlass00: rgba(255, 255, 255, 0);
+  --loc-iad-alphaGlass55: rgba(255, 255, 255, 0.55);
+  --loc-iad-alphaGlass70: rgba(255, 255, 255, 0.7);
+  --loc-iad-alphaGlass85: rgba(255, 255, 255, 0.85);
+  --loc-iad-alphaGlass90: rgba(255, 255, 255, 0.9);
+  --loc-iad-alphaWarn10: rgba(154, 106, 0, 0.1);
+  --loc-iad-alphaWarn25: rgba(154, 106, 0, 0.25);
+  --loc-iad-border: #e3e6e6;
+  --loc-iad-bordera: #e3e6e6;
+  --loc-iad-borderb: #e3e6e6;
+  --loc-iad-borderc: #e3e6e6;
+  --loc-iad-borderd: #e3e6e6;
+  --loc-iad-bordere: #e3e6e6;
+  --loc-iad-borderf: #e3e6e6;
+  --loc-iad-borderg: #e3e6e6;
+  --loc-iad-borderh: #e3e6e6;
+  --loc-iad-borderi: #e3e6e6;
+  --loc-iad-borderj: #e3e6e6;
+  --loc-iad-brand: #3a4247;
+  --loc-iad-brandDark: #14181a;
+  --loc-iad-brandDeep: #23282d;
+  --loc-iad-brandDeepa: #23282d;
+  --loc-iad-brandInk: #0e1113;
+  --loc-iad-brandTint: #f1f4f2;
+  --loc-iad-brandTinta: #f1f4f2;
+  --loc-iad-brandTintb: #f1f4f2;
+  --loc-iad-danger: #c0392b;
+  --loc-iad-hover: #edefee;
+  --loc-iad-hovera: #edefee;
+  --loc-iad-hoverb: #edefee;
+  --loc-iad-hoverc: #edefee;
+  --loc-iad-hoverd: #edefee;
+  --loc-iad-hovere: #edefee;
+  --loc-iad-shadowSoft: rgba(0, 0, 0, 0.04);
+  --loc-iad-shadowSofta: rgba(0, 0, 0, 0.04);
+  --loc-iad-shadowSoftb: rgba(0, 0, 0, 0.04);
+  --loc-iad-surface2: #f4f5f5;
+  --loc-iad-surface2a: #f4f5f5;
+  --loc-iad-text: #1d2124;
+  --loc-iad-text2: #565e63;
+  --loc-iad-text2a: #565e63;
+  --loc-iad-text2b: #565e63;
+  --loc-iad-text3: #6e767c;
+  --loc-iad-warn: #9a6a00;
+  --loc-iad-window: #f6f7f7;
+}
+
+html[data-theme="dark"] {
+  --loc-iad-alphaBrand12: rgba(60, 196, 124, 0.12);
+  --loc-iad-alphaBrand20: rgba(60, 196, 124, 0.2);
+  --loc-iad-alphaBrand24: rgba(60, 196, 124, 0.24);
+  --loc-iad-alphaBrand34: rgba(60, 196, 124, 0.34);
+  --loc-iad-alphaGlass00: rgba(255, 255, 255, 0);
+  --loc-iad-alphaGlass55: rgba(255, 255, 255, 0.12);
+  --loc-iad-alphaGlass70: rgba(255, 255, 255, 0.15);
+  --loc-iad-alphaGlass85: rgba(255, 255, 255, 0.19);
+  --loc-iad-alphaGlass90: rgba(255, 255, 255, 0.2);
+  --loc-iad-alphaWarn10: rgba(227, 163, 58, 0.1);
+  --loc-iad-alphaWarn25: rgba(227, 163, 58, 0.25);
+  --loc-iad-border: rgba(255, 255, 255, 0.10);
+  --loc-iad-bordera: rgba(255, 255, 255, 0.10);
+  --loc-iad-borderb: rgba(255, 255, 255, 0.10);
+  --loc-iad-borderc: rgba(255, 255, 255, 0.10);
+  --loc-iad-borderd: rgba(255, 255, 255, 0.10);
+  --loc-iad-bordere: rgba(255, 255, 255, 0.10);
+  --loc-iad-borderf: rgba(255, 255, 255, 0.10);
+  --loc-iad-borderg: rgba(255, 255, 255, 0.10);
+  --loc-iad-borderh: rgba(255, 255, 255, 0.10);
+  --loc-iad-borderi: rgba(255, 255, 255, 0.10);
+  --loc-iad-borderj: rgba(255, 255, 255, 0.10);
+  --loc-iad-brand: #3cc47c;
+  --loc-iad-brandDark: #25985a;
+  --loc-iad-brandDeep: #2faf6b;
+  --loc-iad-brandDeepa: #2faf6b;
+  --loc-iad-brandInk: #8fe7b8;
+  --loc-iad-brandTint: #1b2a22;
+  --loc-iad-brandTinta: #1b2a22;
+  --loc-iad-brandTintb: #1b2a22;
+  --loc-iad-danger: #f0796b;
+  --loc-iad-hover: #323835;
+  --loc-iad-hovera: #323835;
+  --loc-iad-hoverb: #323835;
+  --loc-iad-hoverc: #323835;
+  --loc-iad-hoverd: #323835;
+  --loc-iad-hovere: #323835;
+  --loc-iad-shadowSoft: rgba(0, 0, 0, 0.28);
+  --loc-iad-shadowSofta: rgba(0, 0, 0, 0.28);
+  --loc-iad-shadowSoftb: rgba(0, 0, 0, 0.28);
+  --loc-iad-surface2: #2a2f2c;
+  --loc-iad-surface2a: #2a2f2c;
+  --loc-iad-text: #ecf1ee;
+  --loc-iad-text2: #9ba8a1;
+  --loc-iad-text2a: #9ba8a1;
+  --loc-iad-text2b: #9ba8a1;
+  --loc-iad-text3: #7e8c85;
+  --loc-iad-warn: #e3a33a;
+  --loc-iad-window: #171a18;
+}
+
+
+/* 【2026-10-14 第七轮】首页改单列：删掉右栏 330px。
+   老板原话：「首页布局就是很不干净……也有可能是左中右结构的问题」——
+   侧栏(212) + 主列 + 右栏(330) 三栏并排，眼睛要同时追三条纵向流，
+   这就是「乱」的结构性来源。现在只剩「侧栏 + 一条主列」，版心限宽 960px 居中，
+   跟苹果官网一样：一眼只有一条主线。 */
+.dash {
+  display: grid;
+  /* 第十一轮（2026-10-14）：恢复双栏 —— 参考图是「左大区 / 中工作区 / 右参考区」三栏。
+     第八轮按「三栏并排=乱」改成单列属于误判，右栏是主工作区的一部分（随时能问的助手）。 */
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 28px;
+  align-items: start;
+  padding: 8px 2px 36px;
+}
+.dash-main { max-width: var(--r15-page-w, 1560px); /* 第十五轮：解除 880 锁宽（--grid-page 从未定义，全部走 fallback），改用 round15 宽容器 */ margin: 0 auto; width: 100%; }
+
+/* ═══ 第十三轮（2026-10-14）区块标题品牌绿前缀 ═══
+   基准图五页的区块标题（「热门模板 / 主要竞品动态 / 创作助手 / 近期活动安排」…）
+   左侧都带一个**绿色小标记**（方块或圆点）。这是每页重复出现 4~6 次的品牌色锚点，
+   成本极低但把「黑白感」压下去一大截。 */
+
+
+/* 首页的 .home-console 旧规则把直接子元素限宽 880px（单栏时代的遗产）——
+   双栏仪表盘需要更宽的版心，这里按参考图口径放到 1280px。 */
+.home-console > .dash { max-width: 1280px; }
+.dash-main { min-width: 0; display: flex; flex-direction: column; gap: 40px; }
+.dash-rail { display: flex; flex-direction: column; gap: 18px; position: sticky; top: 8px; }
+
+/* ---- 区块（section）----
+   第五轮去边框化：首页区块不再是白卡片，区块之间只靠留白分隔（参考图同款）。
+   仅首页使用（dash-sec/dash-hero/qa-* 经 grep 确认只出现在 HomeConsole.jsx）。 */
+.dash-sec {
+  /* 第九轮（2026-10-14）：transparent → 白卡。
+     第五轮「去边框化」时首页区块被改成透明（只靠留白分隔），但后来
+     .qa-card 常用操作、区块内容又陆续加回白卡 ⇒ 首页出现
+     「三块有白底、两块没白底」的混搭，这就是老板说的「板块大小不一致 / 不对齐」。
+     现在全部统一成白卡 + 18px 内边距，与内容页/活动页 .co-card/.ab-card 同款。 */
+  background: var(--c-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px var(--loc-iad-shadowSoft);
+  padding: 20px 22px;
+}
+.dash-sec-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.dash-sec-title {
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--loc-iad-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+.dash-sec-more {
+  font-size: 14.5px;
+  color: var(--loc-iad-text2a);
+  cursor: pointer;
+  user-select: none;
+  border: none;
+  background: none;
+  padding: 2px 4px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.dash-sec-more:hover { color: var(--green-ink, var(--loc-iad-brand)); background: var(--loc-iad-hoverb); }
+
+/* ---- 通用小件 ---- */
+.dash-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  line-height: 1;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--loc-iad-hoverc);
+  color: var(--loc-iad-text);
+  border: 1px solid var(--loc-iad-bordere);
+  white-space: nowrap;
+}
+.dash-pill.gray { background: var(--loc-iad-surface2); color: var(--loc-iad-text2a); border-color: var(--loc-iad-borderd); }
+.dash-pill.orange { background: var(--loc-iad-alphaWarn10); color: var(--loc-iad-warn); border-color: var(--loc-iad-alphaWarn25); }
+.dash-kpi { font-size: 16.5px; font-weight: 700; color: var(--loc-iad-text); }
+/* 涨跌箭头：跟随参考图口径（涨绿跌红）。这是业务看板不是股票行情工具，
+   若老板要 A 股口径（涨红跌绿）只需把下面两条 color 对调。 */
+.dash-up { color: var(--loc-iad-text); font-size: 14.5px; font-weight: 700; }
+.dash-down { color: var(--loc-iad-danger); font-size: 14.5px; font-weight: 700; }
+.dash-empty {
+  font-size: 15.5px;
+  color: var(--loc-iad-text2b);
+  border-radius: 10px;
+  padding: 14px 2px;
+  line-height: 1.7;
+}
+
+/* ============================================================
+   ① 首页 · 企业助手仪表盘（第五轮：去边框化 + 图标方块化）
+   ============================================================ */
+/* hero：参考图是一个浅色圆角容器，里面只有「大标题 + 一行副标题 + 输入条」 */
+.dash-hero {
+  /* 第十四轮（2026-10-14）：首页 hero 升级成与其它三页同款的**顶部横幅**外观
+     （基准图 docs/ref/06-hero-banner.jpg）。首页 hero 本身就带标题+输入框，
+     所以不套 PageBanner 组件，直接把容器改成 banner 的底色/圆角/插画位，
+     标题左边补一个绿色日历插画 + 浅色光晕，与其它页面视觉一致。 */
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--loc-iad-brandTintb) 0%, var(--loc-iad-brandTinta) 52%, var(--loc-iad-brandTint) 100%);
+  border: 1px solid var(--loc-iad-alphaGlass70);
+  box-shadow: none;
+  border: 1px solid var(--loc-iad-borderd);
+  border-radius: 16px;
+  /* 第九轮：30px 30px 26px → 22px（与 .dash-sec 首页其它区块同内边距）。
+     hero 是首页第一块大卡，内边距比下面几块大一圈 ⇒ 卡片大小参差，看着不整齐。 */
+  padding: 24px 22px;
+  box-shadow: 0 1px 3px var(--loc-iad-shadowSofta);
+}
+/* 第十四轮：首页横幅的插画位 + 标语位（与 PageBanner 同一套语言） */
+.dash-hero-ic {
+  position: relative;
+  flex-shrink: 0;
+  width: 72px; height: 72px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--brand-fill);
+}
+.dash-hero-ic-halo {
+  position: absolute; inset: -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, var(--loc-iad-alphaGlass85) 0%, var(--loc-iad-alphaGlass55) 62%, var(--loc-iad-alphaGlass00) 74%);
+}
+.dash-hero-ic .line-ic { position: relative; background: transparent !important; color: var(--brand-fill); }
+.dash-hero-ic .line-ic svg { width: 38px; height: 38px; stroke-width: 1.9; }
+.dash-hero-main { flex: 1; min-width: 0; }
+
+.dash-hero-slogan {
+  flex-shrink: 0; align-self: center;
+  margin-left: 18px; padding-right: 8px;
+  color: var(--brand-fill);
+  transform: rotate(-3deg);
+  text-align: right;
+}
+.dash-hero-slogan-t {
+  display: block; white-space: nowrap;
+  font-size: 16.5px; font-weight: 700; font-style: italic; letter-spacing: 0.6px;
+}
+.dash-hero-title {
+  font-size: 27px;
+  font-weight: 800;
+  color: var(--loc-iad-brandInk);
+  margin: 0 0 6px;
+  letter-spacing: 0.2px;
+}
+.dash-hero-sub { font-size: 16px; color: var(--loc-iad-text2a); margin: 0 0 16px; line-height: 1.6; }
+/* 输入条：参考图同款浅色圆角槽，输入框透明融底，右侧绿色圆形发送钮 */
+.dash-hero-ask {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  /* 第十三轮：#f3f6f3(灰绿) → 纯白 + 品牌绿描边 + 绿投影。
+     基准图 01-home.jpg 这个输入框是白底 + 绿描边 + 明显投影，
+     里面嵌一个绿色对话图标 + 右侧大绿键 —— 是首页的品牌色核心位。 */
+  background: var(--c-surface);
+  border: 1.5px solid var(--brand-line);
+  border-radius: 16px;
+  padding: 8px 8px 8px 20px;
+  box-shadow: 0 4px 16px var(--loc-iad-alphaBrand12);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.dash-hero-ask:focus-within {
+  border-color: var(--brand-fill);
+  box-shadow: 0 6px 20px var(--loc-iad-alphaBrand20);
+}
+/* 输入框左侧的绿色对话图标（基准图有，我们没有） */
+.dash-hero-ask::before {
+  content: '';
+  flex-shrink: 0;
+  width: 22px; height: 22px;
+  margin-right: 4px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230E7D59' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+.dash-hero-ask .ant-input {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  height: 40px;
+  font-size: 16px;
+}
+.dash-hero-ask .ant-input:focus { box-shadow: none; }
+.home-ask-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  flex-shrink: 0;
+  /* 第十三轮：基准图首页那个绿键是页面**最醒目的品牌色锚点**（实心深绿 + 明显投影）。
+     原来只有纯色块、无投影，在浅底上贴着，色量贡献低 ⇒ 整页显得黑白。 */
+  background: linear-gradient(140deg, var(--loc-iad-brandDeep) 0%, var(--green) 70%);
+  color: var(--c-on-brand);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px var(--loc-iad-alphaBrand34);
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+.home-ask-btn:hover { filter: brightness(1.06); transform: scale(1.04); }
+
+/* 快捷提问胶囊（第七轮：原右栏三条示例问法并到输入框下方） */
+.home-ask-sugs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+.home-ask-sug {
+  font-size: 14px;
+  color: var(--loc-iad-text);
+  background: var(--c-surface);
+  border: 1px solid var(--loc-iad-borderf);
+  border-radius: 999px;
+  /* 第九轮：8/16 → 7/14，与 .co-style/.co-cat/.wb-quick-chip 同一档（小胶囊 7/14） */
+  padding: 7px 14px;
+  cursor: pointer;
+  user-select: none;
+  line-height: 1.3;
+  transition: background 0.15s, border-color 0.15s;
+}
+.home-ask-sug:hover { background: var(--loc-iad-surface2a); border-color: var(--loc-iad-borderj); }
+.home-ask-sug:focus-visible { outline: 2px solid var(--green, var(--loc-iad-brand)); outline-offset: 2px; }
+
+/* 常用操作四卡：扁平浅色砖（无边框），彩色图标方块 + 粗体标题 + 灰色小字 */
+.qa-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+.qa-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  /* 第九轮（2026-10-14）：#f4fafa → #ffffff。
+     原来这个底色**与页面底色完全相同** ⇒ 卡片等于没有底，
+     于是「常用操作」四个图标看着像浮在空中，和下方两个白卡区块完全不是一套东西。 */
+  background: var(--c-surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 22px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+  font-family: inherit;
+}
+.qa-card:hover {
+  background: var(--c-surface);
+  border-color: var(--loc-iad-borderg);
+  box-shadow: 0 4px 14px var(--loc-iad-shadowSoftb);
+  transform: translateY(-1px);
+}
+/* 图标方块：统一走 components/LineIcon.jsx 的 .line-ic（四色：绿/青/紫/橙） */
+.qa-card-label { font-size: 17.5px; font-weight: 700; color: var(--loc-iad-text); }
+.qa-card-desc { font-size: 15px; color: var(--loc-iad-text2b); line-height: 1.55; }
+
+/* 右栏 · 豆芽助手迷你对话卡（参考图右栏就是一张卡到底，保留边框） */
+.mini-chat {
+  background: var(--c-surface);
+  border: 1px solid var(--loc-iad-borderc);
+  border-radius: 16px;
+  padding: 18px 18px 16px;
+  box-shadow: 0 1px 2px var(--loc-iad-shadowSoft);
+}
+.mini-chat-hd { display: flex; align-items: center; gap: 9px; margin-bottom: 11px; }
+.mini-chat-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--loc-iad-hovere);
+  display: flex; align-items: center; justify-content: center; font-size: 21px;
+}
+.mini-chat-name { font-size: 16px; font-weight: 700; color: var(--loc-iad-text); }
+.mini-chat-hello {
+  font-size: 15px; color: var(--loc-iad-text2); line-height: 1.7;
+  background: var(--loc-iad-surface2a); border-radius: 10px; padding: 11px 13px; margin-bottom: 12px;
+}
+.mini-chat-row { display: flex; gap: 8px; align-items: center; }
+.mini-chat-row .ant-input { border-radius: 9px; font-size: 14.5px; }
+.mini-chat-send {
+  width: 36px; height: 36px; border-radius: 9px; border: none; flex-shrink: 0;
+  background: var(--green, var(--loc-iad-brand)); color: var(--c-on-brand); font-size: 16.5px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.mini-chat-send:hover { filter: brightness(1.06); }
+.mini-chat-send:disabled { opacity: 0.45; cursor: default; }
+
+/* 右栏 · 示例问法（参考图同款四条：图标方块 + 标题 + 小字，浅色行无边框） */
+.mini-chat-sugs { display: flex; flex-direction: column; gap: 9px; margin-bottom: 14px; }
+.mini-chat-sug {
+  display: flex; flex-direction: column; gap: 3px; text-align: left;
+  border: 1px solid transparent; border-radius: 11px;
+  background: var(--loc-iad-surface2a); padding: 11px 13px; cursor: pointer; font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+.mini-chat-sug:hover { border-color: var(--loc-iad-borderi); background: var(--c-surface); }
+.mini-chat-sug /* 第十二轮：plain 变体 = 无底色（左侧导航用，基准图侧栏是直接实心图形无色块底） */
+.line-ic.line-ic-plain { background: transparent !important; }
+.line-ic { width: 32px; height: 32px; border-radius: 10px; margin-bottom: 3px; }
+.mini-chat-sug-t { font-size: 15.5px; font-weight: 600; color: var(--loc-iad-text); }
+.mini-chat-sug-d { font-size: 14px; color: var(--loc-iad-text2b); }
+/* 「我还可以帮你」并进对话卡（参考图右栏是一张卡到底） */
+.mini-chat-help { border-top: 1px solid var(--loc-iad-borderb); padding-top: 14px; margin-bottom: 11px; }
+.mini-chat-help .rail-card-hd { margin-bottom: 9px; }
+.mini-chat-more { font-size: 14px; color: var(--loc-iad-text2b); margin-bottom: 8px; }
+
+/* 右栏 · 我可以帮你 / 更多任务 */
+.help-list { display: flex; flex-direction: column; gap: 10px; }
+.help-item { display: flex; gap: 8px; align-items: flex-start; font-size: 15px; color: var(--loc-iad-text2); line-height: 1.6; }
+.help-item-ic { color: var(--green-ink, var(--loc-iad-brand)); font-weight: 700; flex-shrink: 0; }
+.help-item b { color: var(--loc-iad-text); font-weight: 600; }
+.rail-card {
+  background: var(--c-surface);
+  border: 1px solid var(--loc-iad-borderc);
+  border-radius: 16px;
+  padding: 18px 19px;
+  box-shadow: 0 1px 2px var(--loc-iad-shadowSoft);
+}
+.rail-card-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 16px; font-weight: 700; color: var(--loc-iad-text); margin-bottom: 10px;
+}
+.rail-link { font-size: 14px; color: var(--loc-iad-text2a); cursor: pointer; border: none; background: none; padding: 0; font-family: inherit; }
+.rail-link:hover { color: var(--green-ink, var(--loc-iad-brand)); }
+.rail-task {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 0; border-bottom: 1px solid var(--loc-iad-bordera); font-size: 15px; color: var(--loc-iad-text2);
+}
+.rail-task:last-child { border-bottom: none; }
+.rail-task-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--green, var(--loc-iad-brand)); }
+.rail-task-dot.gray { background: var(--loc-iad-border); }
+
+/* ============================================================
+   ② 豆芽助手 · 智能工作台（头部卡 / 模式 / 快捷指令）
+   ============================================================ */
+/* 第八轮（2026-10-14）：页头从「带渐变/边框的大卡片」退成一行朴素标题。
+   它只在空态出现，作用就是告诉用户「这是豆芽助手」，不该再吃掉一屏的注意力。 */
+.wb-hero {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 16px 26px 2px;
+  margin-bottom: 0;
+}
+.wb-hero-top { display: flex; align-items: center; gap: 10px; margin-bottom: 0; }
+/* 头像方块：品牌绿实底 + 白色线性图形（原来是一块空色块，像没加载出来） */
+.wb-hero-avatar {
+  width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+  background: linear-gradient(140deg, var(--loc-iad-brandDeepa) 0%, var(--loc-iad-brandDark) 100%);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px var(--loc-iad-alphaBrand24);
+}
+.wb-hero-avatar .line-ic { color: var(--c-on-brand); }
+.wb-hero-name { font-size: 17px; font-weight: 700; color: var(--text); margin: 0; }
+/* 第八轮：对话模式整块取消（原「智能对话/方案生成/数据分析/知识问答」四个按钮 +
+   「任务协助」NEW 角标），对应的 .wb-modes / .wb-mode / .wb-mode-new 规则一并删除。 */
+/* 快捷指令：第八轮挪到输入框正上方（豆包式），与输入框共用上边框分隔 */
+.wb-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 26px 12px;
+  border-top: 1px solid var(--border);
+}
+.wb-quick-chip {
+  font-size: 14px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--loc-iad-alphaGlass90);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.12s ease;
+}
+.wb-quick-chip:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+/* ============================================================
+   ③ 竞品分析 · 仪表盘
+   ============================================================ */
+.intel-search {
+  display: flex; gap: 10px; align-items: center; margin-bottom: 14px;
+}
+.intel-search .ant-input { border-radius: 10px; }
+.intel-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--loc-iad-borderc); margin-bottom: 16px; }
+.intel-tab {
+  font-size: 15px; padding: 8px 15px; border: none; background: none;
+  color: var(--loc-iad-text2a); cursor: pointer; font-family: inherit;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.intel-tab:hover { color: var(--loc-iad-text); }
+.intel-tab.active { color: var(--loc-iad-text); font-weight: 700; border-bottom-color: var(--green, var(--loc-iad-brand)); }
+.intel-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.icard {
+  background: var(--c-surface); border: 1px solid var(--loc-iad-borderc); border-radius: 14px;
+  padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 10px;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.icard:hover { border-color: var(--loc-iad-borderh); box-shadow: 0 3px 12px var(--loc-iad-shadowSoftb); }
+.icard-hd { display: flex; align-items: center; gap: 10px; }
+.icard-logo {
+  width: 42px; height: 42px; border-radius: 11px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18.5px; font-weight: 700; color: var(--c-on-brand);
+}
+.icard-name { font-size: 17px; font-weight: 700; color: var(--loc-iad-text); }
+.icard-sub { font-size: 14px; color: var(--loc-iad-text2b); margin-top: 1px; }
+.icard-news {
+  font-size: 15px; color: var(--loc-iad-text2); line-height: 1.65;
+  background: var(--loc-iad-window); border-radius: 9px; padding: 9px 11px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.icard-metrics { display: flex; gap: 16px; align-items: baseline; }
+.icard-metric { display: flex; flex-direction: column; gap: 2px; }
+.icard-metric-v { font-size: 18px; font-weight: 800; color: var(--loc-iad-text); }
+.icard-metric-k { font-size: 13.5px; color: var(--loc-iad-text2b); }
+.icard-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.icard-tag {
+  font-size: 13.5px; padding: 2px 8px; border-radius: 6px;
+  background: var(--loc-iad-surface2); color: var(--loc-iad-text2a);
+}
+.icard-foot { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--loc-iad-text2b); }
+.intel-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.intel-table th {
+  text-align: left; font-size: 14px; color: var(--loc-iad-text2b); font-weight: 600;
+  padding: 9px 11px; border-bottom: 1px solid var(--loc-iad-borderd); white-space: nowrap;
+}
+.intel-table td {
+  padding: 12px 11px; border-bottom: 1px solid var(--loc-iad-bordera);
+  color: var(--loc-iad-text2); vertical-align: top; line-height: 1.6;
+}
+.intel-table tr:last-child td { border-bottom: none; }
+.intel-table .it-name { font-weight: 700; color: var(--loc-iad-text); white-space: nowrap; }
+.intel-table .it-self { color: var(--loc-iad-text); font-weight: 700; }
+.intel-trend { display: flex; flex-direction: column; gap: 10px; }
+.intel-trend-row { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; color: var(--loc-iad-text2); line-height: 1.65; }
+.intel-trend-ic {
+  width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
+  background: var(--loc-iad-hovera); color: var(--loc-iad-text);
+  display: flex; align-items: center; justify-content: center; font-size: 15px;
+}
+.intel-insight { font-size: 15.5px; color: var(--loc-iad-text2); line-height: 1.8; }
+.intel-bigbrand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--loc-iad-bordera);
+}
+.intel-bigbrand:last-child { border-bottom: none; }
+.intel-bigbrand-logo {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: var(--c-on-brand);
+}
+.intel-bigbrand-body { flex: 1; min-width: 0; }
+.intel-bigbrand-name { font-size: 15.5px; font-weight: 700; color: var(--loc-iad-text); }
+.intel-bigbrand-note { font-size: 14px; color: var(--loc-iad-text2b); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.intel-reco {
+  border: 1px solid var(--loc-iad-borderf); border-radius: 11px;
+  background: var(--loc-iad-hover); padding: 11px 13px; margin-bottom: 9px;
+}
+.intel-reco:last-child { margin-bottom: 0; }
+.intel-reco-hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 5px; }
+.intel-reco-name { font-size: 15.5px; font-weight: 700; color: var(--loc-iad-text); }
+.intel-reco-why { font-size: 14px; color: var(--loc-iad-text2a); line-height: 1.6; }
+
+/* ============================================================
+   ④ 内容创作 · 平台
+   ============================================================ */
+.cp-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--loc-iad-borderc); margin-bottom: 16px; }
+.cp-tab {
+  font-size: 15px; padding: 8px 15px; border: none; background: none;
+  color: var(--loc-iad-text2a); cursor: pointer; font-family: inherit;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.cp-tab:hover { color: var(--loc-iad-text); }
+.cp-tab.active { color: var(--loc-iad-text); font-weight: 700; border-bottom-color: var(--green, var(--loc-iad-brand)); }
+.cp-start-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cp-start-title { font-size: 17.5px; font-weight: 700; color: var(--loc-iad-text); display: flex; align-items: center; gap: 7px; }
+.cp-start-count { font-size: 14px; color: var(--loc-iad-text2b); }
+.cp-chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 10px 0 12px; }
+.cp-chip {
+  font-size: 14.5px; padding: 6px 13px; border-radius: 999px;
+  border: 1px solid var(--loc-iad-borderf); background: var(--c-surface); color: var(--loc-iad-text2);
+  cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px;
+}
+.cp-chip:hover { border-color: var(--loc-iad-borderj); color: var(--loc-iad-text); }
+.cp-chip.on { background: var(--loc-iad-hoverd); border-color: var(--loc-iad-borderi); color: var(--loc-iad-text); font-weight: 600; }
+.cp-gen-row { display: flex; justify-content: flex-end; gap: 8px; }
+.tpl-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.tpl-card {
+  text-align: left; background: var(--c-surface); border: 1px solid var(--loc-iad-borderc);
+  border-radius: 14px; padding: 18px 18px 16px; cursor: pointer; font-family: inherit;
+  display: flex; flex-direction: column; gap: 8px;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+}
+.tpl-card:hover {
+  border-color: var(--loc-iad-borderi);
+  box-shadow: 0 4px 14px var(--loc-iad-shadowSofta);
+  transform: translateY(-1px);
+}
+.tpl-card-hd { display: flex; align-items: center; gap: 9px; }
+.tpl-card-ic {
+  width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+  background: var(--loc-iad-hoverd);
+  display: flex; align-items: center; justify-content: center; font-size: 18.5px;
+}
+.tpl-card-name { font-size: 16px; font-weight: 700; color: var(--loc-iad-text); }
+.tpl-card-desc {
+  font-size: 14.5px; color: var(--loc-iad-text2b); line-height: 1.6;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.tpl-card-meta { display: flex; justify-content: space-between; align-items: center; font-size: 13.5px; color: var(--loc-iad-text3); }
+.cp-recent-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 2px; border-bottom: 1px solid var(--loc-iad-bordera); font-size: 16px;
+}
+.cp-recent-row:last-child { border-bottom: none; }
+.cp-recent-body { flex: 1; min-width: 0; }
+.cp-recent-t { color: var(--loc-iad-text); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cp-recent-d { color: var(--loc-iad-text2b); font-size: 14px; margin-top: 2px; }
+.rail-tpl {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 0; border-bottom: 1px solid var(--loc-iad-bordera);
+  font-size: 15px; color: var(--loc-iad-text2); cursor: pointer; text-align: left;
+  background: none; border-left: none; border-right: none; border-top: none; width: 100%; font-family: inherit;
+}
+.rail-tpl:last-child { border-bottom: none; }
+.rail-tpl:hover { color: var(--loc-iad-text); }
+.rail-tpl-ic {
+  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+  background: var(--loc-iad-hovera);
+  display: flex; align-items: center; justify-content: center; font-size: 16.5px;
+}
+.rail-tpl-body { flex: 1; min-width: 0; }
+.rail-tpl-name { font-weight: 600; color: var(--loc-iad-text); font-size: 15px; }
+.rail-tpl-desc { font-size: 13.5px; color: var(--loc-iad-text2b); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ============================================================
+   ⑥ 豆芽助手 · 右栏分区（常用能力 / 关键任务）
+   宿主 .right-panel 是 280px 的 flex 列（style.css），这里只加分区内间距与标题，
+   不重定义宿主布局，避免与既有历史成果面板样式互相覆盖。
+   ============================================================ */
+.right-panel-sec {
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid var(--loc-iad-borderb);
+  flex-shrink: 0;
+}
+.right-panel-sec-hd {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--loc-iad-text);
+  margin-bottom: 6px;
+}
+.right-panel-sec .rail-tpl { padding: 6px 0; }
+.right-panel-sec .rail-task { padding: 6px 0; }
+
+/* ============================================================
+   ⑦ 统一线性图标（components/LineIcon.jsx，第五轮「去脏乱」共用件）
+   彩色圆角方块 + 白色线性 SVG，四色固定：绿/青/紫/橙。
+   首页常用操作卡、右栏示例问法、活动页入口卡与右栏都用它，替换此前的 emoji。
+   ============================================================ */
+.line-ic {
+  border-radius: 30%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-on-brand);
+  flex-shrink: 0;
+}
+/* 第十二轮（2026-10-14）图标方块改成「浅色底 + 深色实心图形」，与基准图一致。
+   基准图（docs/ref/01-home.jpg 常用操作四卡）实测就是这个结构：
+   浅绿底 + 深绿图形 / 浅蓝底 + 深蓝图形 / 浅紫底 + 深紫图形。
+   我们此前是「深色实心底 + 白色图形」，视觉重量大 3~5 倍，一屏下来四五个大色块很吵；
+   基准图那种浅底深图形更轻、更通透，且彩色占比主要来自**浅底铺开**而不是深块。
+   图形色均对浅底达 3:1 以上（非文本图形标准）。 */
+.line-ic.li-green  { background: #D9F5E6; color: #0E7D59; }
+.line-ic.li-teal   { background: #D8E9FA; color: #1F6FB2; }
+.line-ic.li-purple { background: #E9DDF7; color: #6B3FA0; }
+.line-ic.li-orange { background: #FCE9D3; color: #C2660F; }
+
+/* 窄屏（右栏折下）—— Electron 窗口拉窄时仍可用 */
+@media (max-width: 1080px) {
+  .dash { grid-template-columns: minmax(0, 1fr); }
+  .dash-rail { position: static; }
+  .qa-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .intel-grid, .tpl-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .intel-grid, .tpl-grid, .ab-entries { grid-template-columns: minmax(0, 1fr); }
+  .qa-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1240px) { .dash-hero-slogan { display: none; } }
+@media (max-width: 900px) {
+  .dash-hero-ic { width: 54px; height: 54px; }
+  .dash-hero-ic .line-ic svg { width: 28px; height: 28px; }
+  .dash-hero-title { font-size: 21px; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   第十四轮：首页「对话置顶」拆成横幅 + 输入卡两件
+   ───────────────────────────────────────────────────────────
+   探针 banner-persist.mjs 实测：把输入框放在横幅容器内时，首页横幅高 251px，
+   其它四页都是 106px —— 首页看着像个「大绿盒子」，与其余页面不一致。
+   现在：.dash-hero 只留插画+标题+标语（≈106px，与四页同高）；
+        .dash-ask-card 是它下面一块独立白卡，装输入框与快捷胶囊。 */
+.dash-ask-card {
+  background: var(--c-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px var(--loc-iad-shadowSoft);
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}

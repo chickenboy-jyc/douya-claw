@@ -1,0 +1,46 @@
+{
+  // 主进程（Electron 31, CommonJS）切片：只编译新写的 .ts。
+  //
+  // · `src/main/**/*.ts` 目前匹配 0 个文件（主进程全是 .js，本轮不迁移）。
+  //   留着它是给后续「主进程侧新写 TS」留的位；`include` 某条 pattern 匹配为空
+  //   并不会让 tsc 报错（只要整个 program 非空，此处由 src/shared 保证）。
+  // · `allowJs` 保持 **false**：一旦打开，`import './foo.js'` 就会把既有的
+  //   主进程 .js 拖进 program（含 590 KB 级别的历史文件），门禁立刻变噪声。
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "lib": ["ES2022"],
+    "types": ["node"],
+
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+
+    // ── 严格性全开（与 renderer 切片逐项一致）────────────────────────────
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "useUnknownInCatchVariables": true,
+
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "include": [
+    "src/shared/**/*.ts",
+    "src/main/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", "release", "posters", "build"]
+}

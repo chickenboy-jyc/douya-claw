@@ -1,0 +1,16 @@
+{
+  "name": "生成图表",
+  "description": "用 matplotlib 生成图表图片（柱状图 bar / 折线图 line / 饼图 pie）。labels 是标签数组 JSON，values 是数值数组 JSON。适合做数据可视化。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "params": [
+    { "name": "chart_type", "label": "图表类型(bar/line/pie)", "required": true },
+    { "name": "labels", "label": "标签数组(JSON)", "required": true },
+    { "name": "values", "label": "数值数组(JSON)", "required": true },
+    { "name": "title", "label": "图表标题" },
+    { "name": "xlabel", "label": "X 轴标签" },
+    { "name": "ylabel", "label": "Y 轴标签" },
+    { "name": "output", "label": "输出文件名(可选，默认 chart.png)" }
+  ]
+}

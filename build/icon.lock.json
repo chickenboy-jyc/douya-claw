@@ -1,0 +1,16 @@
+{
+  "_note": "本文件锁定当前发布的图标。改图标后必须重跑本脚本并带 --update-lock，让「换图标」成为一次显式确认，而不是某次打包顺手带出去的副产品。",
+  "updated_at": "2026-09-20T03:14:20.288Z",
+  "ico": {
+    "file": "build/icon.ico",
+    "md5": "f3406e2320fbcbe8c739b939baf8ccb2",
+    "sha256": "0601842fc12012a58cb8950acfe246f68d528c6c5730fb97dfcac1858b6ae1ef",
+    "bytes": 97967
+  },
+  "png": {
+    "file": "build/icon.png",
+    "md5": "4af135e7f4357a6d9d3809f72c9c08ed",
+    "sha256": "19b4d1f92cd9a96ac749049f3d4b7508ddea80e9c94f077c4ecd6853996b8eb2",
+    "bytes": 161808
+  }
+}

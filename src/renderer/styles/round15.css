@@ -1,0 +1,436 @@
+/* ============================================================================
+   round15.css —— 第 15 轮统一版式（2026-10-15 老板六条需求共用骨架）
+   ============================================================================
+   背景：老板反馈「中间的 UI 太窄、占屏比不够」「不会根据页面放大而一起放大」。
+   根因：--grid-page 变量从未定义，ia-content / ia-activity / ia-dashboard
+   三页全部走 880px fallback ⇒ 宽屏下主列只剩 ~530px，右侧大片留白。
+
+   本文件定义五个重做页面（内容创作 / 媒体投放 / 活动与档期 / 学习中心 /
+   企业大脑）共用的统一版式契约：
+     · .r15-page   宽容器（max 1560px 居中，替换 880 锁宽）
+     · .r15-cols   双栏栅格（主列 1fr + 右栏 300px），≤1100px 自动堆叠
+     · .r15-sec-h  区块标题（绿色前缀方块，与设计系统一致）
+     · .r15-card   统一卡片
+     · .r15-btn-g  统一主按钮（品牌绿）
+   在 index.jsx 中于 round14.css 之后引入。
+   ========================================================================== */
+:root {
+  --r15-page-w: 1560px;
+  --r15-rail-w: 300px;
+  /* 2026-10-16 设计系统 v3 对齐：双栏/主列/右栏间距统一 14px（与设计稿 cmain/cside 一致） */
+  --r15-gap: 14px;
+  --r15-green: #2FAF6B;
+  --r15-green-deep: #1E8E52;
+  --r15-green-dark: #177A46;
+  --r15-green-tint: #E8F7EF;
+  --r15-line: #EDF0F3;
+  --r15-text: #23282D;
+  --r15-text-2: #5A6472;
+  --r15-muted: #98A1AC;
+  --r15-radius: 14px;
+}
+
+/* ---- 宽容器：替代 880px 锁宽，随窗口放大（老板「占屏比不够」的正解） ---- */
+.r15-page {
+  width: 100%;
+  max-width: var(--r15-page-w);
+  margin: 0 auto;
+}
+
+/* ---- 双栏栅格：主列吃满剩余空间，右栏固定 300 ---- */
+.r15-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--r15-rail-w);
+  gap: var(--r15-gap);
+  align-items: start;
+  width: 100%;
+}
+/* 窄窗口（≤1100px）：右栏换行到主区下方，绝不把主区压窄 */
+@media (max-width: 1100px) {
+  .r15-cols { grid-template-columns: minmax(0, 1fr); }
+}
+.r15-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.r15-rail { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+/* ---- 区块标题：绿色小方块前缀（设计系统同款品牌锚点） ---- */
+.r15-sec-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--r15-text);
+  margin-bottom: 12px;
+}
+.r15-sec-h::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--r15-green);
+  flex: 0 0 auto;
+}
+.r15-sec-h .r15-sec-sub {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--r15-muted);
+  margin-left: 2px;
+}
+
+/* ---- 统一卡片 ---- */
+.r15-card {
+  background: #fff;
+  border: 1px solid var(--r15-line);
+  border-radius: var(--r15-radius);
+  box-shadow: 0 1px 3px rgba(30, 60, 45, 0.04);
+  padding: 18px 20px;
+}
+.r15-card-t {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--r15-text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* ---- 统一主按钮 ---- */
+.r15-btn-g {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--r15-green);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  border: 0;
+  border-radius: 9px;
+  padding: 8px 18px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.r15-btn-g:hover { background: var(--r15-green-deep); }
+.r15-btn-g:disabled { opacity: 0.55; cursor: not-allowed; }
+.r15-btn-o {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  color: var(--r15-green-dark);
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid #BFE7D0;
+  border-radius: 9px;
+  padding: 7px 16px;
+  cursor: pointer;
+}
+.r15-btn-o:hover { background: var(--r15-green-tint); }
+
+/* ---- 统一标签 ---- */
+.r15-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  padding: 2px 9px;
+  border-radius: 6px;
+  font-weight: 600;
+  background: var(--r15-green-tint);
+  color: var(--r15-green-dark);
+  white-space: nowrap;
+}
+.r15-tag.gr { background: #F0F2F4; color: var(--r15-text-2); }
+/* ⚠️ 2026-11-08：`.r15-tag.b` 原本是「浅蓝底 #EAF1FE + 蓝字 #3B6FD4」——
+   老板明令「不许出现蓝色」，`scripts/smoke/unit-ui-palette.mjs` 的棘轮也把这两个值
+   点名了（#EAF1FE 命中"浅色蓝紫底"判据：L≥85 且 chroma≥18）。
+   换成青绿族（本产品 `.line-ic.li-teal` 已经在用的合法色相）：
+   绿主题下 #0f766e on #E6F4F1 = 4.76:1，深色覆盖见文件末尾的深色块。 */
+.r15-tag.b { background: #E6F4F1; color: #0f766e; }
+.r15-tag.o { background: #FEF3E7; color: #C97A1E; }
+.r15-tag.r { background: #FDEDED; color: #C74444; }
+
+/* ---- 统一空态 ---- */
+.r15-empty {
+  text-align: center;
+  color: var(--r15-muted);
+  font-size: 13px;
+  padding: 28px 12px;
+  line-height: 1.8;
+}
+
+/* ---- 列表行 ---- */
+.r15-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F3F5F6;
+}
+.r15-row:last-child { border-bottom: 0; }
+.r15-row-t { font-size: 13px; font-weight: 600; color: var(--r15-text); }
+.r15-row-d { font-size: 11.5px; color: var(--r15-muted); margin-top: 1px; }
+
+/* ============================================================================
+   第十五轮 · 媒体投放页（MediaPublish）
+   老板需求：上传 word / 粘贴文章 → AI 分析挑媒体；不点则 100 家全展示自己选。
+   ========================================================================== */
+.media-article {
+  background: linear-gradient(180deg, #FBFEFC, #fff);
+  border: 1px solid #DFF1E6;
+  border-radius: var(--r15-radius);
+  box-shadow: 0 1px 3px rgba(30, 60, 45, 0.04);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.media-article-hd { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.media-article-t { font-size: 15px; font-weight: 700; color: var(--r15-text); }
+.media-article-sub { font-size: 12px; color: var(--r15-muted); }
+.media-article-ta {
+  border-radius: 10px !important;
+  border-color: #DCE3E0 !important;
+  font-size: 13px !important;
+}
+.media-article-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.media-article-file { font-size: 12px; color: var(--r15-green-dark); font-weight: 600; }
+.media-article-count { font-size: 12px; color: var(--r15-muted); }
+.media-article-msg { font-size: 12.5px; color: var(--r15-text-2); line-height: 1.7; }
+/* 分析结果区（设计稿 .media-article .result / .hit） */
+.media-article-result {
+  margin-top: 12px;
+  border-top: 1px dashed #DFF1E6;
+  padding-top: 10px;
+}
+.media-article-rt {
+  font-size: 12.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--r15-text);
+}
+.media-article-hit { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.media-article-hit span {
+  font-size: 10.5px;
+  background: var(--r15-green-tint);
+  color: var(--r15-green-dark);
+  border-radius: 6px;
+  padding: 2px 9px;
+  font-weight: 600;
+}
+
+/* 100 家媒体网格：随容器放宽自然铺开（解除 880 锁宽后的直接收益） */
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+}
+.media-card.ai-picked {
+  border-color: #8FD6AE;
+  box-shadow: 0 2px 10px rgba(47, 175, 107, 0.12);
+}
+/* AI 选中角标：设计稿 .mcard .ai-badge —— 卡片右上角悬浮绿渐变胶囊（星形 + AI 选中） */
+.media-ai-badge {
+  position: absolute;
+  top: -8px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(90deg, var(--r15-green), var(--r15-green-deep));
+  border-radius: 999px;
+  padding: 2px 9px;
+  box-shadow: 0 2px 8px rgba(47, 175, 107, 0.35);
+  white-space: nowrap;
+  z-index: 1;
+}
+.media-ai-badge svg { width: 10px; height: 10px; stroke: #fff; }
+/* 100 家说明条（设计稿 .media-count） */
+.media-count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--r15-muted);
+  border-top: 1px dashed var(--r15-line);
+  margin-top: 12px;
+  padding-top: 10px;
+}
+.media-count svg { width: 13px; height: 13px; stroke: currentColor; flex: 0 0 auto; }
+
+/* ============================================================================
+   第十五轮 · 企业大脑（CompanyBrain）双栏版式补充
+   ========================================================================== */
+/* 右栏 AI 工具按钮纵排 */
+.brain-tools { display: flex; flex-direction: column; gap: 8px; }
+/* AI 一键更新：白底绿边（设计系统 v3 同款中间态） */
+.brain-tool-outline.ant-btn {
+  background: #fff;
+  border-color: #BFE7D0;
+  color: var(--r15-green-dark);
+  font-weight: 600;
+}
+.brain-tool-outline.ant-btn:hover {
+  background: var(--r15-green-tint);
+  border-color: #8FD6AE;
+  color: var(--r15-green-deep);
+}
+/* 三类知识三栏：宽屏并排、≤900px 改两栏、≤620px 单栏（不让任何一列被压爆） */
+.brain-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: start; }
+@media (max-width: 900px) { .brain-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .brain-cols { grid-template-columns: 1fr; } }
+
+/* ============================================================================
+   第十五轮 · 版式说明条（设计系统 v3 .r15-note 同款）
+   内容创作 / 学习中心 / 企业大脑三页首屏各一条，向用户说明本轮版式变更。
+   ========================================================================== */
+.r15-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--r15-green-dark);
+  background: var(--r15-green-tint);
+  border: 1px solid #DFF1E6;
+  border-radius: 10px;
+  padding: 8px 12px;
+  line-height: 1.6;
+}
+.r15-note b { font-weight: 800; }
+.r15-note svg { width: 13px; height: 13px; stroke: currentColor; flex: 0 0 auto; }
+
+/* ============================================================================
+   第十五轮 · 企业大脑「AI 面板」卡（设计系统 v3 同款）
+   ========================================================================== */
+.brain-panel-msg { display: flex; gap: 8px; align-items: flex-start; }
+.brain-panel-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--r15-green-tint);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14px; flex: 0 0 auto;
+}
+.brain-panel-bubble {
+  background: #F4F6F5;
+  border-radius: 4px 12px 12px 12px;
+  padding: 10px 13px;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--r15-text);
+  max-width: 78%;
+}
+.brain-panel-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+
+/* ---- 学习中心右栏（设计系统 v3 同款：统计行 / chips）---- */
+.r15-card-link {
+  font-size: 11.5px; font-weight: 600; color: var(--r15-green);
+  cursor: pointer; flex: 0 0 auto;
+}
+.r15-stat-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 0; font-size: 12.5px;
+  border-bottom: 1px dashed var(--r15-line, #EDF0F3);
+}
+.r15-stat-row:last-child { border-bottom: 0; }
+.r15-stat-t { color: var(--r15-text-2); }
+.r15-stat-v { color: var(--r15-text); font-weight: 700; }
+.r15-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.r15-chip {
+  font-size: 11px; font-weight: 600; color: var(--r15-text-2);
+  background: #F0F2F4; border-radius: 6px; padding: 4px 10px;
+}
+
+/* ---- 体检结论统计（设计系统 v3 右栏同款：勾选项）---- */
+.cb-ck-stats { display: flex; flex-direction: column; gap: 9px; }
+.cb-ck-check {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; color: var(--r15-text-2);
+}
+.cb-ck-check svg { width: 14px; height: 14px; color: var(--r15-green); flex: 0 0 auto; }
+
+/* ============================================================================
+   深色主题覆盖（0.21.25 · 2026-11-08）
+   ============================================================================
+   ★ 为什么这个文件原本一条深色规则都没有（老板："深色里面还有很多白色底的地方"）
+     本文件是**五个页面共用的骨架**（`index.jsx:37` 的注释原文：
+     「第十五轮统一版式（内容创作/媒体投放/活动与档期/学习中心/企业大脑五页共用骨架…)」）。
+     它写于"只有绿主题"的年代，卡片/标签/按钮的底色全是浅色字面量
+     （`#fff` / `#F4F6F5` / `#F0F2F4` / `#FEF3E7` …），而字色走 `var(--r15-text)`。
+     `var(--r15-text)` 在深色下是 `#ecf1ee`（浅字），浅底没跟着翻转 ⇒
+     **白底白字**。实测：`.r15-card`（企业大脑用 17 次）1.14:1、
+     `.media-article`（媒体与报价用 12 次）1.14:1、`.brain-panel-bubble` 1.05:1。
+     这一块是"一次覆盖五页"的最高性价比处。
+
+   ⚠️ 写法纪律（与本仓 `theme-tokens.css` 头注释同一条）：
+     · 一律 `html[data-theme="dark"] …`（0,1,1）。裸 `[data-theme="dark"]` 是 0,1,0，
+       会跟本文件自己的 `:root`（0,1,0）打架；`html[…]` 靠特异性赢，与加载顺序无关。
+     · 颜色**优先取 `--c-*` token**（翻转由 `theme-tokens.css` 负责，只一处真源）；
+       只有"半透明色块"这类 token 里没有的形态才写 `rgba()`，并且 alpha 一律 ≤0.16
+       —— 深底上超过 0.16 的浅色叠层会把底色抬亮，反而把字压下去。
+     · 不动布局 / 字号 / 间距 / 圆角，只覆盖 `background` / `color` / `border-color`。
+     · 每一条的实测比值都由 `scripts/smoke/unit-dark-contrast.mjs` 的 C1~C31 守着。
+   ============================================================================ */
+
+/* —— 统一卡片：企业大脑 / 媒体投放 / 学习中心的主骨架 —— */
+html[data-theme="dark"] .r15-card { background: var(--c-surface); }
+
+/* —— 统一主按钮：亮绿实心块上的字必须用 `--c-on-brand`（深色下它是深墨 #10241a）——
+   基础是 `color:#fff`，深色下 #fff on #3cc47c 只有 2.4:1。 */
+html[data-theme="dark"] .r15-btn-g { color: var(--c-on-brand); }
+
+/* —— 统一次级按钮（白底绿边）：底色是 `#fff`，深色下是一块白板 —— */
+html[data-theme="dark"] .r15-btn-o {
+  background: var(--c-surface);
+  color: var(--c-brand);
+  border-color: var(--c-brand-line);
+}
+html[data-theme="dark"] .r15-btn-o:hover { background: var(--c-brand-tint); }
+
+/* —— 统一标签：四个变体的底色都是浅色系字面量 ——
+   注意 `.r15-tag.b` 原本是**蓝色**（#EAF1FE 底 + #3B6FD4 字），
+   既违老板「不许蓝紫」，也是 `unit-ui-palette.mjs` 棘轮点名的对象 ⇒ 换成青绿族。 */
+html[data-theme="dark"] .r15-tag.gr { background: rgba(255, 255, 255, 0.08); color: var(--c-text-2); }
+html[data-theme="dark"] .r15-tag.b { background: rgba(45, 212, 191, 0.16); color: #5eead4; }
+html[data-theme="dark"] .r15-tag.o { background: rgba(227, 163, 58, 0.12); color: var(--c-warn); }
+html[data-theme="dark"] .r15-tag.r { background: rgba(240, 121, 107, 0.1); color: var(--c-danger); }
+
+/* —— 列表行分隔线：`#F3F5F6` 在深底上是一条白线 —— */
+html[data-theme="dark"] .r15-row { border-bottom-color: var(--c-border); }
+
+/* —— 媒体投放页：文章卡（`MediaPublish.jsx` 用 12 次）——
+   基础是 `linear-gradient(180deg,#FBFEFC,#fff)` —— 深色下整块发光。 */
+html[data-theme="dark"] .media-article {
+  background: var(--c-surface);
+  border-color: var(--c-brand-line);
+}
+html[data-theme="dark"] .media-article-result { border-top-color: var(--c-brand-line); }
+/* ⚠️ 这条原规则带 `!important`（会盖掉 antd 的深色边框），所以覆盖也必须带
+   `!important` —— 权重不同压不住。`unit-dark-contrast.mjs` 的 B-S2 判据专盯这一条。 */
+html[data-theme="dark"] .media-article-ta {
+  border-color: var(--c-border) !important;
+}
+/* AI 选中角标：底色是 `--r15-green` 渐变（深色下变成亮绿），`color:#fff` 压不住 */
+html[data-theme="dark"] .media-ai-badge { color: var(--c-on-brand); }
+
+/* —— 企业大脑：右栏「AI 一键更新」antd 描边按钮 ——
+   antd Button 的 `background:#fff` 会盖掉 `darkAlgorithm` 给的底色，必须显式覆盖。 */
+html[data-theme="dark"] .brain-tool-outline.ant-btn {
+  background: var(--c-surface);
+  border-color: var(--c-brand-line);
+  color: var(--c-brand);
+}
+html[data-theme="dark"] .brain-tool-outline.ant-btn:hover { background: var(--c-brand-tint); }
+
+/* —— 企业大脑：AI 面板气泡（`#F4F6F5` 底 + `var(--r15-text)` 字 = 1.05:1）—— */
+html[data-theme="dark"] .brain-panel-bubble { background: var(--c-surface-2); }
+
+/* —— 统计 chip / 首屏说明条 —— */
+html[data-theme="dark"] .r15-chip { background: rgba(255, 255, 255, 0.08); }
+html[data-theme="dark"] .r15-note {
+  background: var(--c-brand-tint);
+  border-color: var(--c-brand-line);
+}

@@ -1,0 +1,258 @@
+/**
+ * company-entity.css —— 「同名企业消歧 / 确认主体」选择器样式（0.21.14 · 老板需求 4）。
+ *
+ * 老板原话：「输入苗苗 他会出现很多苗苗企业 要确定到底是哪个苗苗」。
+ *
+ * 只定义本组件自己的 `.cep-*` 类名，**一条都不往 6697 行的 style.css 里加**
+ * （共享纪律 S2：style.css 只追加、且新组件一律自带样式文件，
+ *   与 0.21.14 的 asset-slim.css 同一做法，避免 lint-css-collisions 判红）。
+ */
+
+.cep-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 6px;
+}
+
+.cep-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cep-hint {
+  font-size: 12px;
+  color: var(--loc-ent-ink-1);
+  line-height: 1.5;
+}
+
+.cep-note {
+  font-size: 12px;
+  color: var(--loc-ent-ink-1);
+  line-height: 1.6;
+}
+
+.cep-err {
+  font-size: 12.5px;
+  color: var(--loc-ent-ink-2);
+  line-height: 1.6;
+}
+
+.cep-confirmed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--loc-ent-ink-3);
+  background: var(--loc-ent-bg-1);
+  border: 1px solid var(--loc-ent-line-1);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+
+.cep-reselect {
+  border: 1px solid var(--loc-ent-line-1);
+  background: var(--c-surface);
+  color: var(--loc-ent-ink-4);
+  border-radius: 8px;
+  padding: 2px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.cep-cands {
+  border: 1px solid var(--loc-ent-line-2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: var(--loc-ent-bg-2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cep-cand-head {
+  font-size: 12.5px;
+  color: var(--loc-ent-ink-5);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cep-src-badge {
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--loc-ent-ink-1);
+  background: var(--loc-ent-bg-3);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+
+.cep-cand {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--loc-ent-line-3);
+  border-radius: 10px;
+  background: var(--c-surface);
+  cursor: pointer;
+}
+
+.cep-cand.active {
+  border-color: var(--loc-ent-line-4);
+  background: var(--loc-ent-bg-4);
+}
+
+.cep-cand input[type='radio'] {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.cep-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cep-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--loc-ent-ink-6);
+  word-break: break-all;
+}
+
+.cep-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--loc-ent-ink-7);
+}
+
+.cep-brief {
+  font-size: 12px;
+  color: var(--loc-ent-ink-1);
+  line-height: 1.55;
+}
+
+.cep-src {
+  font-size: 11.5px;
+  color: #2563eb;
+}
+
+.cep-src a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.cep-src-warn {
+  color: var(--loc-ent-ink-2);
+}
+
+.cep-manual {
+  border: 1px dashed var(--loc-ent-line-5);
+  background: var(--loc-ent-bg-5);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cep-manual-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--loc-ent-ink-8);
+}
+
+.cep-manual-note {
+  font-size: 11.5px;
+  color: var(--loc-ent-ink-8);
+  line-height: 1.55;
+}
+
+.cep-manual-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ============================================================================
+   公司主体 · 主题变量（文件作用域，前缀 --loc-ent-）
+   ============================================================================
+   【为什么是局部变量而不是直接用 --c-*】
+     本文件用的是自己的一套绿灰色阶，与全局语义 token 的绿值**不等值**
+     （例如 #1f7a4d 与 --c-brand-dark:#177A46 相差 ΔE≈4.5，直接换会让绿主题可见变色）。
+     所以这里为每个去重色值建一条局部变量：
+       · 绿主题（无 data-theme 属性）= **原字面量逐字不变** ⇒ 绿主题像素不变；
+       · light / dark 各给一套值（白色主题去绿、深色主题反向）。
+   【铁律】三套必须齐全，缺一套 = 那套主题下拿到空值 = 白屏。门禁 unit-theme-cover-group-b 守这条。
+   ========================================================================== */
+:root {
+  --loc-ent-ink-1: #6b7280;
+  --loc-ent-ink-2: #b45309;
+  --loc-ent-ink-3: #14532d;
+  --loc-ent-bg-1: #f0fdf4;
+  --loc-ent-line-1: #bbf7d0;
+  --loc-ent-ink-4: #15803d;
+  --loc-ent-line-2: #eceff1;
+  --loc-ent-bg-2: #fcfcfc;
+  --loc-ent-ink-5: #374151;
+  --loc-ent-bg-3: #f3f4f6;
+  --loc-ent-line-3: #eef0f2;
+  --loc-ent-line-4: #52c41a;
+  --loc-ent-bg-4: #f6ffed;
+  --loc-ent-ink-6: #111827;
+  --loc-ent-ink-7: #4b5563;
+  --loc-ent-line-5: #f0d9a8;
+  --loc-ent-bg-5: #fffdf5;
+  --loc-ent-ink-8: #92400e;
+}
+html[data-theme="light"] {
+  --loc-ent-ink-1: #727272;
+  --loc-ent-ink-2: #b45309;
+  --loc-ent-ink-3: #484848;
+  --loc-ent-bg-1: #f0fdf4;
+  --loc-ent-line-1: #e9e9e9;
+  --loc-ent-ink-4: #6f6f6f;
+  --loc-ent-line-2: #eceff1;
+  --loc-ent-bg-2: #fcfcfc;
+  --loc-ent-ink-5: #404040;
+  --loc-ent-bg-3: #f3f4f6;
+  --loc-ent-line-3: #eef0f2;
+  --loc-ent-line-4: #acacac;
+  --loc-ent-bg-4: #f6ffed;
+  --loc-ent-ink-6: #181818;
+  --loc-ent-ink-7: #545454;
+  --loc-ent-line-5: #f0d9a8;
+  --loc-ent-bg-5: #fffdf5;
+  --loc-ent-ink-8: #92400e;
+}
+html[data-theme="dark"] {
+  --loc-ent-ink-1: #b4b6b5;
+  --loc-ent-ink-2: #ecb48a;
+  --loc-ent-ink-3: #b1ecc8;
+  --loc-ent-bg-1: #093a18;
+  --loc-ent-line-1: #0f5929;
+  --loc-ent-ink-4: #9aeeb9;
+  --loc-ent-line-2: #272928;
+  --loc-ent-bg-2: #1a1c1b;
+  --loc-ent-ink-5: #c5c7c6;
+  --loc-ent-bg-3: #212322;
+  --loc-ent-line-3: #262827;
+  --loc-ent-line-4: #a1ea7d;
+  --loc-ent-bg-4: #223b0a;
+  --loc-ent-ink-6: #d7d9d8;
+  --loc-ent-ink-7: #bcbebd;
+  --loc-ent-line-5: #624811;
+  --loc-ent-bg-5: #342b08;
+  --loc-ent-ink-8: #eeb795;
+}

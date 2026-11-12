@@ -1,0 +1,936 @@
+/*
+ * round16-content.css —— 0.21.9 老板第 6 条（内容创作）专用样式。
+ *
+ * 改动：① 开始创作做成对话式大卡（占比更大）；② 日常内容 / 精品文章 下滑切换；
+ *      ③ 右栏收窄到 280px、主列变宽；④ 模板区与风格选择器的样式**不在这里**（那两块已删）。
+ *
+ * 为什么单开文件：ia-content.css 是内容创作 + 新媒体中心共用版式，
+ * 往里加类名容易撞（scripts/smoke/lint-css-collisions.mjs 专门抓 COLLIDE/SHADOW）。
+ * 本文件只新增 co-chat* / co-mode-pill* / co-switch* / co-start-btn 这几个新类，
+ * 另外只对 .co-cols 的栏宽做一次定向覆盖。
+ */
+/* ────────────────────────────────────────────────────────────────────────────
+   文件作用域主题变量（主题可切换 · 三期工程）
+   ────────────────────────────────────────────────────────────────────────────
+   【为什么是局部变量，不是直接换全局 --c-*】
+     本文件这套色是自定义绿灰，与 theme-tokens.css 里 --c-* 的**绿主题值不相等**。
+     直接把字面量换掉，绿色主题就会肉眼可见地变色（背景、正文、品牌绿全都会漂）。
+     所以这里一条变量对一条原字面量：
+
+       · 绿主题（:root，不带 data-theme）  = **原字面量，一字不改** ⇒ 逐像素不变
+       · 白主题（html[data-theme="light"]）= 去绿中性，主色中性深灰（老板明令不许蓝）
+       · 深主题（html[data-theme="dark"]） = 带绿的深底浅字
+
+   【铁律：三套必须齐全】
+     少一套 ⇒ 那个主题下这些属性拿到空值 ⇒ 白屏 / 黑字黑底。新增变量必须同时补三套。
+     门禁 scripts/smoke/unit-theme-cover-group-a.mjs 的 C/D 两条断言守着这件事。
+
+   【命名】
+     --loc-r16c-<角色><序号>。前缀是文件独占的，**不许跨文件复用**。
+     刻意不用 --c- 开头：那是全局 token 的命名空间，混进去会被核心层门禁误判。
+
+   【数据可视化系列色】
+     标签/系列色表达的是**数据身份**，不是界面语义 —— 它们也建了变量，但深色值
+     只调亮度、不改成同一个色，系列之间保持可区分。
+   ──────────────────────────────────────────────────────────────────────────── */
+:root {
+  --loc-r16c-alphaBrand10: rgba(48, 209, 88, 0.1);
+  --loc-r16c-alphaBrand16: rgba(29, 122, 54, 0.16);
+  --loc-r16c-alphaBrand18: rgba(48, 209, 88, 0.18);
+  --loc-r16c-alphaBrand22: rgba(29, 122, 54, 0.22);
+  --loc-r16c-alphaBrand30: rgba(29, 122, 54, 0.3);
+  --loc-r16c-alphaBrand45: rgba(29, 122, 54, 0.45);
+  --loc-r16c-alphaDanger18: rgba(201, 53, 31, 0.18);
+  --loc-r16c-alphaDanger22: rgba(201, 53, 31, 0.22);
+  --loc-r16c-border: rgba(0, 0, 0, 0.05);
+  --loc-r16c-bordera: rgba(0, 0, 0, 0.06);
+  --loc-r16c-borderb: rgba(0, 0, 0, 0.07);
+  --loc-r16c-borderc: rgba(0, 0, 0, 0.08);
+  --loc-r16c-brand: #30d158;
+  --loc-r16c-brandDeep: #1d7a36;
+  --loc-r16c-brandInk: #14281a;
+  --loc-r16c-brandTint: #e8f7ec;
+  --loc-r16c-danger: #6e4038;
+  --loc-r16c-dangera: #c9351f;
+  --loc-r16c-dangerTint: #fff3f0;
+  --loc-r16c-dangerTinta: #fffaf9;
+  --loc-r16c-shadowSoft: rgba(0, 0, 0, 0.04);
+  --loc-r16c-shadowSofta: rgba(0, 0, 0, 0.06);
+  --loc-r16c-surface2: #f2f2f7;
+  --loc-r16c-surface2a: #f2f3f5;
+  --loc-r16c-text: #1c1c1e;
+  --loc-r16c-text2: #4a4a4f;
+  --loc-r16c-text2a: #6e6e73;
+  --loc-r16c-text2b: #8e8e93;
+  --loc-r16c-text3: #9a9aa0;
+  --loc-r16c-text3a: #a8a8ae;
+  --loc-r16c-window: #f6f7f9;
+}
+
+html[data-theme="light"] {
+  --loc-r16c-alphaBrand10: rgba(58, 66, 71, 0.1);
+  --loc-r16c-alphaBrand16: rgba(58, 66, 71, 0.16);
+  --loc-r16c-alphaBrand18: rgba(58, 66, 71, 0.18);
+  --loc-r16c-alphaBrand22: rgba(58, 66, 71, 0.22);
+  --loc-r16c-alphaBrand30: rgba(58, 66, 71, 0.3);
+  --loc-r16c-alphaBrand45: rgba(58, 66, 71, 0.45);
+  --loc-r16c-alphaDanger18: rgba(192, 57, 43, 0.18);
+  --loc-r16c-alphaDanger22: rgba(192, 57, 43, 0.22);
+  --loc-r16c-border: #e3e6e6;
+  --loc-r16c-bordera: #e3e6e6;
+  --loc-r16c-borderb: #e3e6e6;
+  --loc-r16c-borderc: #e3e6e6;
+  --loc-r16c-brand: #3a4247;
+  --loc-r16c-brandDeep: #23282d;
+  --loc-r16c-brandInk: #0e1113;
+  --loc-r16c-brandTint: #f1f4f2;
+  --loc-r16c-danger: #c0392b;
+  --loc-r16c-dangera: #c0392b;
+  --loc-r16c-dangerTint: #fbedeb;
+  --loc-r16c-dangerTinta: #fbedeb;
+  --loc-r16c-shadowSoft: rgba(0, 0, 0, 0.04);
+  --loc-r16c-shadowSofta: rgba(0, 0, 0, 0.04);
+  --loc-r16c-surface2: #f4f5f5;
+  --loc-r16c-surface2a: #f4f5f5;
+  --loc-r16c-text: #1d2124;
+  --loc-r16c-text2: #565e63;
+  --loc-r16c-text2a: #565e63;
+  --loc-r16c-text2b: #565e63;
+  --loc-r16c-text3: #6e767c;
+  --loc-r16c-text3a: #6e767c;
+  --loc-r16c-window: #f6f7f7;
+}
+
+html[data-theme="dark"] {
+  --loc-r16c-alphaBrand10: rgba(60, 196, 124, 0.1);
+  --loc-r16c-alphaBrand16: rgba(60, 196, 124, 0.16);
+  --loc-r16c-alphaBrand18: rgba(60, 196, 124, 0.18);
+  --loc-r16c-alphaBrand22: rgba(60, 196, 124, 0.22);
+  --loc-r16c-alphaBrand30: rgba(60, 196, 124, 0.3);
+  --loc-r16c-alphaBrand45: rgba(60, 196, 124, 0.45);
+  --loc-r16c-alphaDanger18: rgba(240, 121, 107, 0.18);
+  --loc-r16c-alphaDanger22: rgba(240, 121, 107, 0.22);
+  --loc-r16c-border: rgba(255, 255, 255, 0.10);
+  --loc-r16c-bordera: rgba(255, 255, 255, 0.10);
+  --loc-r16c-borderb: rgba(255, 255, 255, 0.10);
+  --loc-r16c-borderc: rgba(255, 255, 255, 0.10);
+  --loc-r16c-brand: #3cc47c;
+  --loc-r16c-brandDeep: #2faf6b;
+  --loc-r16c-brandInk: #8fe7b8;
+  --loc-r16c-brandTint: #1b2a22;
+  --loc-r16c-danger: #f0796b;
+  --loc-r16c-dangera: #f0796b;
+  --loc-r16c-dangerTint: rgba(240, 121, 107, 0.16);
+  --loc-r16c-dangerTinta: rgba(240, 121, 107, 0.16);
+  --loc-r16c-shadowSoft: rgba(0, 0, 0, 0.28);
+  --loc-r16c-shadowSofta: rgba(0, 0, 0, 0.28);
+  --loc-r16c-surface2: #2a2f2c;
+  --loc-r16c-surface2a: #2a2f2c;
+  --loc-r16c-text: #ecf1ee;
+  --loc-r16c-text2: #9ba8a1;
+  --loc-r16c-text2a: #9ba8a1;
+  --loc-r16c-text2b: #9ba8a1;
+  --loc-r16c-text3: #7e8c85;
+  --loc-r16c-text3a: #7e8c85;
+  --loc-r16c-window: #171a18;
+}
+
+
+/* ============ 一、主列变宽、右栏 280px ============ */
+/* 老板要"占比再大一些"：右栏 310 → 280，主列把这 30px 全拿走。 */
+.co-cols {
+  grid-template-columns: minmax(0, 1fr) 280px;
+}
+@media (max-width: 1100px) {
+  /* 窄屏仍按原逻辑塌成单列（右栏掉到主列下方），别在窄屏硬塞两栏 */
+  .co-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ============ 二、开始创作 = 对话式大卡 ============ */
+/* 【0.21.27 · 一张对话卡】这里从"输入卡"升级成**唯一的对话卡**：
+   结果区（.co-log-body）与输入区（.co-chat-composer）都装在这一个外框里，
+   于是全卡只有**一个** border-radius / border / box-shadow —— 用户看到的是一个对话框，
+   而不是"上面一个框写字、下面另一个框看结果"。
+   宽度也在这里**只声明一次**（1120）：改前 `.co-chat` 是 860、`.co-log` 是 1120，
+   两张卡宽度不同正是"不是同一个框"最直观的证据。 */
+.co-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  /* 高度由父级 flex 分配（.co-cols > .co-wrap 有确定高度）：
+     min-height:0 必须有 —— flex 子项默认 min-height:auto，不写它就不肯收缩，
+     长文会把父容器顶破（"改了 CSS 还是没用"最常见的一个原因）。 */
+  min-height: 0;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0;
+  /* overflow:hidden 让内部滚动体自己滚，卡片本身绝不出现第二条滚动条 */
+  overflow: hidden;
+  border-radius: 24px;
+  background: var(--c-surface);
+  border: 1px solid var(--loc-r16c-bordera);
+  box-shadow: 0 1px 2px var(--loc-r16c-shadowSoft), 0 12px 32px var(--loc-r16c-shadowSofta);
+}
+/* 标题行（豆芽头像 + 一句招呼 + 已写完 N 篇 + 展开）：卡片内边距改由各段自己带，
+   所以这里补 padding，并让它**不参与收缩**（挤压只能发生在结果区）。 */
+.co-chat-hd {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 22px 12px;
+}
+.co-chat-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--loc-r16c-surface2);
+}
+.co-chat-hello {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--loc-r16c-text);
+}
+
+/* 无边框大输入区：对话感来自"没有输入框的框"，只剩文字 */
+.co-chat .co-chat-ta.ant-input,
+.co-chat textarea.co-chat-ta {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 2px 2px !important;
+  font-size: 15px !important;
+  line-height: 1.8 !important;
+  resize: none;
+}
+.co-chat .co-chat-ta.ant-input:focus,
+.co-chat textarea.co-chat-ta:focus {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.co-chat-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  /* 改前这里是 margin-top:auto（把工具条压到卡底）。现在"贴底"由 .co-chat-composer
+     自己承担（整段输入区 flex 0 0 auto 贴在卡底），这里再 auto 一次会把工具条
+     从输入框底下拽开，形成卡内第二处空洞。 */
+}
+
+/* 输入区（第二段）：文本框 + 工具条 + 企业资料 + 就地提示 + 标签。
+   它必须 **flex: 0 0 auto** —— 结果再多，被压缩的也只能是上面的 .co-log-body；
+   输入框永远在卡底原样可见（这正是"对话框"和"上下两张卡"的区别）。 */
+.co-chat-composer {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 22px 16px;
+  border-top: 1px solid var(--loc-r16c-border);
+  background: var(--c-surface);
+}
+/* 这两块原来挂在卡片上，自带 margin-top 14/10；
+   进了 composer 之后间距由上面的 gap 统一给，再叠一层会让卡底突然变松。
+   ⚠️ 【0.21.28】`.co-ref` 已从这一组里**移出**：企业资料清单改由 Popover 浮层承载
+   （见 ContentOps.jsx 的 `refPanel`），它不再是 composer 的子项，这条针对它的
+   `margin-top: 0` 也就无从生效。留着会误导下一个读代码的人以为"清单还在 composer 里"。
+   浮层里那版的内边距/底色改由下面的 `.co-ref-pop` 承担。 */
+.co-chat-composer .co-chips {
+  margin-top: 0;
+}
+
+/* ---- 「使用企业资料」清单的浮层（Popover）----
+   【0.21.28】清单从"卡内展开块"搬进浮层，是为了不再用掉卡片那 181px
+   （卡片被 `max-height: calc(100vh - 212px)` 卡住时，那 181px 一定会把清单下半截
+   连同「主题已写」标签一起裁进 `overflow: hidden` 里）。
+
+   为什么要专门写这一段：`.co-ref` 原本是**卡内子块**，底色/边框/圆角都是"贴着卡片背景"
+   调出来的（`ia-content.css` 里是 `--loc-iac-hoverb` 的浅灰底）。搬到浮层后它脚下不再有卡片，
+   若照搬就会变成"一片半透明方框浮在页面内容上"。所以：
+     · 把 antd 默认的 `.ant-popover-inner` 内边距与底色**清零**，让浮层外观完全由 `.co-ref` 决定
+       （不这么做会看到"白框套灰框"的双层边距）；
+     · 给 `.co-ref` 换上本页的 surface 底 + 细边 + 圆角 + 投影，读起来仍是一张卡片；
+     · 颜色**全部**取自既有的 `--c-*` / `--loc-r16c-*` 变量，不硬编码 —— 深色主题靠变量自动跟随
+       （本文件顶部的 token 层按 `html[data-theme]` 成套切换，硬编码会在这里留下一个不跟随的点）。 */
+.co-ref-pop .ant-popover-inner {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 14px;
+}
+.co-ref-pop .co-ref {
+  /* 浮层里不需要"离上一个兄弟 14px" —— 上面已经没有兄弟了。 */
+  margin-top: 0;
+  /* 4 行「项名 + 内容」在太窄的浮层里会疯狂折行；360px 是本页右栏宽（280）之上、
+     对话卡（1120）之下的一个稳妥上限。 */
+  min-width: 268px;
+  max-width: 360px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--c-surface);
+  border: 1px solid var(--loc-r16c-border);
+  box-shadow: 0 8px 24px var(--loc-r16c-shadowSofta);
+}
+
+/* 模型切换胶囊（日常内容 / 精品文章） */
+.co-mode-pill {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--loc-r16c-surface2);
+  border-radius: 999px;
+}
+.co-mode-pill-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--loc-r16c-text2a);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+.co-mode-pill-btn:hover {
+  color: var(--loc-r16c-text);
+}
+.co-mode-pill-btn.on {
+  background: var(--c-surface);
+  color: var(--loc-r16c-brandDeep);
+  box-shadow: 0 1px 2px var(--loc-r16c-shadowSofta), 0 2px 8px var(--loc-r16c-shadowSofta);
+}
+
+.co-start-btn.ant-btn {
+  height: 40px;
+  padding: 0 22px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ============ 三、日常内容 / 精品文章 下滑切换 ============ */
+.co-switch-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.co-switch-tab {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--loc-r16c-borderc);
+  background: var(--c-surface);
+  color: var(--loc-r16c-text);
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: 0 1px 2px var(--loc-r16c-shadowSoft);
+  transition: background-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+.co-switch-tab:hover {
+  background: var(--c-bg-window);
+}
+.co-switch-tab.on {
+  background: var(--loc-r16c-brandDeep);
+  border-color: var(--loc-r16c-brandDeep);
+  color: var(--c-on-brand);
+  box-shadow: 0 1px 2px var(--loc-r16c-shadowSofta), 0 6px 16px var(--loc-r16c-alphaBrand22);
+}
+.co-switch-tab:focus-visible {
+  outline: 2px solid var(--loc-r16c-alphaBrand45);
+  outline-offset: 2px;
+}
+/* scrollIntoView 会把这个容器顶到视口最上方，留一点余量别贴边 */
+.co-switch-body {
+  scroll-margin-top: 16px;
+}
+
+/* 入场下滑动画：260ms，位移 -10px + 透明 0→1。
+   面板元素带 key={switchTab}，切换时重新挂载 ⇒ 动画每次都会重放。 */
+.co-drop {
+  animation: co-drop 260ms ease-out both;
+}
+@keyframes co-drop {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+/* 尊重系统"减少动态效果"：关掉动画，但内容照样切换（不牺牲可用性） */
+@media (prefers-reduced-motion: reduce) {
+  .co-drop {
+    animation: none;
+  }
+}
+
+/* ============================================================================
+ * 0.21.11 · 老板第 1 条：删掉「生成文案」页签后，本页不再有 antd Tabs。
+ *
+ * ⚠️ 这是一个**必须补的滚动兜底**，不是样式偏好：
+ *   style.css:4047 给 `.merged-tabs` 定的是 `display:flex; flex-direction:column;
+ *   overflow:hidden`，滚动条本来由 `.ant-tabs-content-holder` 提供。
+ *   本页去掉 Tabs 之后，容器里**没有**任何可滚动的子元素 —— 内容一高就被裁掉、
+ *   鼠标滚轮没反应（与企业大脑 0.21.9 那个「不能下滑」是同一个病根）。
+ *   这里把滚动交回容器本身，并补上与 .module-page 一致的页边距。
+ * ========================================================================== */
+.merged-tabs.co-page {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 18px 22px 40px;
+}
+/* 子项在 flex column 里默认会被压缩，导致 overflow 失效（同 .module-page 的处理） */
+.merged-tabs.co-page > * {
+  flex-shrink: 0;
+}
+
+/* ---- 生成结果视图（原「生成文案」页签的内容） ---- */
+.co-gen-hd {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 2px 0 12px;
+}
+.co-gen-back {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--loc-r16c-brandDeep);
+  cursor: pointer;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--loc-r16c-alphaBrand10);
+  transition: background 0.15s;
+}
+.co-gen-back:hover { background: var(--loc-r16c-alphaBrand18); }
+.co-gen-t {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--loc-r16c-text);
+}
+.co-gen-note {
+  font-size: 12.5px;
+  color: var(--loc-r16c-text2b);
+}
+
+/* ============================================================================
+ * 0.21.15 · 老板需求 5：去掉三级页 / 对话即生成 / **对话框加大**
+ *
+ * 老板原话：「…然后这个创作对话框要大一些 不然生成的内容放不下对吧」
+ *
+ * 本段**只追加**：新类一律用 co-log* / co-msg* / co-chat-hint / co-chat-err
+ * （仓库里此前没有任何文件用过这些名字，不会撞别人规则）；
+ * 对既有 `.co-chat` 的两处放大用 `.co-card.co-chat` 提高特异性来覆盖上面的基础规则。
+ * ⚠️ 【0.21.27 合并卡】上面那句"保留 46vh 那一版作为历史"已经不成立了：
+ *    基础规则里的 `min-height: 46vh` 已删（合并后卡片高度由 flex 分配 + max-height 兜底），
+ *    否则它会与 `.co-card.co-chat` 的 min-height 打架，且让整卡在有结果时被撑高。
+ *
+ * ⚠️ 这里全部是视觉属性：`test:ui` 是 jsdom，**读不到** computed style / 盒子尺寸，
+ *    所以门禁只能验结构（有没有 .co-log-body、输入框 autoSize 的 minRows），
+ *    「看起来是不是真的大了」**未经真浏览器验证** —— 见本轮汇报里的"未验证项"。
+ * ========================================================================== */
+
+/* ============================================================================
+ * 【第二十三轮 · 2026-10-19】老板：「并不是在对话框里生成 / 对话框是不是有点小」
+ *
+ * 真根因（本轮逐个改掉，两处都在这份文件里，行号指改前）：
+ *   ① `.co-card.co-chat` 上的 `min-height: 56vh`     —— 改前第 250 行
+ *   ② `.co-log-body` 上的 `max-height: 62vh`        —— 改前第 317 行
+ *   56vh + 62vh = 118vh > 100vh ⇒ 对话流整体落在首屏以下。
+ *   所以上一轮那句「结果紧跟创作卡下方，用户说完就在原地看得到」是错的：
+ *   **「相邻」不等于「可见」**，两个按视口取高的块竖着叠，第二块必然出屏。
+ *
+ * 改法：整块（`.co-cols > .co-wrap`）给一个**不超过一屏**的高度，内部用 flex 分配 ——
+ *   创作卡按内容自然高（flex:0 0 auto）、对话流吃掉剩余（flex:1 1 auto）、
+ *   只有 `.co-log-body` 自己滚（flex:1 1 auto + min-height:0 + overflow-y:auto）。
+ *   `min-height: 0` 必须有：flex 子项默认 `min-height:auto`，不写这一条它不会收缩，
+ *   长文照样把父容器顶破（这是"改了 CSS 还是没用"最常见的一个原因）。
+ *   【0.21.27 合并卡 · 上面这句已经半失效，别照抄】
+ *     "创作卡 flex:0 0 auto / 对话流 flex:1 1 auto"描述的是**两个盒子**的分工。
+ *     现在只有一张卡（.co-chat）：它自己 flex:1 1 auto 吃掉剩余高度，
+ *     内部再分给「标题行 0 0 auto / 结果区 1 1 auto / 输入区 0 0 auto」。
+ *     为什么仍然只让结果区滚：外层卡片的 overflow 是 hidden，整页不滚，
+ *     卡内只有 .co-log-body 一条滚动条（不许滚动条套滚动条）。
+ *
+ * ⚠️ 高度表达式里的 212px 是怎么来的（**算出来的，不是在真浏览器量的**）：
+ *     · .app 里 titlebar 高 44px                 —— style.css:56 的 `.titlebar` 上 `height: 44px`
+ *     · .merged-tabs.co-page 上内边距 18px        —— 本文件第 198 行 padding: 18px 22px 40px
+ *     · PageBanner 最小高 90px + 下外边距 20px    —— round14.css:112 / :114
+ *     · 页面下内边距 40px                         —— 本文件第 198 行的 40px
+ *   合计 44+18+90+20+40 = **212px**，即 `.co-wrap` 可用高度 = 100vh - 212px。
+ *   外面的 clamp(520px, …, 880px) 是兜底：窗口很矮时不至于把输入框压没了，
+ *   窗口很高时不至于拉成一条。**这个 212px 没有在真浏览器上量过**（见本轮汇报的"未验证项"）。
+ *
+ * ⚠️ 写注释的硬规矩（本轮踩过，别再踩）：
+ *   上面两处根因**故意不写成"选择器 + 花括号 + 声明"的完整形态**。门禁脚本
+ *   `scripts/smoke/entry-interact.jsx:750` 用正则 `\.co-log-body\s*\{[^}]*\}` 取
+ *   **文件里第一处**命中来断言"滚动规则还在" —— 注释里写成完整块形态会被它先匹配到，
+ *   于是断言读到的是注释里的旧值而不是生效的规则（本轮实测：注释里那句 62vh 让断言
+ *   读到"有 max-height、没有 overflow-y:auto"，直接红）。这个仓库的注释习惯是原样保留
+ *   旧代码，所以写注释时必须避开选择器+花括号的形态。
+ * ========================================================================== */
+.co-cols > .co-wrap {
+  /* 整块高度上限 = 一屏减去它上面已经占掉的 212px（推导见本段注释） */
+  height: clamp(520px, calc(100vh - 212px), 880px);
+  /* 兜底：父级是 grid item，允许它比内容矮（否则 flex 分配无从谈起） */
+  min-height: 0;
+}
+/* 「日常内容 / 精品文章」下滑切换卡在整块高度之外：不许被 flex 压缩（内容会花），
+   也不许抢占对话流的高度 —— 它排最后，矮下来时它先落到首屏外，答案优先可见。 */
+.co-cols > .co-wrap > .co-card.co-switch {
+  flex: 0 0 auto;
+}
+/* 同理：说明条也不参与压缩。
+   为什么这条必须有：在定高 flex column 里，剩余空间的挤压是**按 flex-shrink 分摊**的，
+   只要有一个子项还是默认的 shrink:1，窗口一矮它就会先被压扁（文字被裁），
+   而用户看到的是"字被切了"却查不出是谁压的。
+   ⚠️ 只列 `.r15-note`，**不要把 `.co-card.co-chat` 写进来**：它必须是 `flex: 1 1 auto`
+   （吃掉剩余高度）。真写进来（`.co-cols > .co-wrap > .co-card.co-chat` 是 0,4,0）就等于把
+   "整张对话卡吃掉剩余高度"这条整条作废 —— 卡片会退回按内容取高，结果区又没地方滚。
+   【0.21.27 合并卡】改前这句警告针对的是 `.co-log`；现在吃掉剩余高度的换成了 `.co-chat`。 */
+.co-cols > .co-wrap > .r15-note {
+  flex: 0 0 auto;
+}
+
+/* ---- 一、这张卡的高度：不再按视口比例取高，也不再是"两张卡各取一段" ----
+   【第二十三轮】46vh / 56vh 两版都已删（见上段推导）；
+   【0.21.27 合并卡】它从"按内容自然高"改成**吃掉 .co-wrap 里剩余高度**的 flex 子项：
+   改前吃掉剩余高度的是另一张卡（.co-log），所以结果和输入分属两个盒子；
+   现在只有一个盒子，剩余高度自然归它，内部再分给「标题 / 结果区 / 输入区」。
+     · flex: 1 1 auto —— 吃掉剩余高度（窗口矮时先缩它，不缩输入框：输入区在内部是 0 0 auto）
+     · max-height: calc(100vh - 212px) —— 与 .co-wrap 的 clamp 同一个 212px 推导（见上段），
+       兜底：即使父级高度丢失（被别的样式覆盖），卡片也不会高过一屏 ⇒ 长对话不撑爆整页
+     · padding: 0 —— 内边距改由 .co-chat-hd / .co-chat-composer 各自承担，
+       这样结果区（.co-log-body）能横向铺满卡片，气泡不会浮在一圈大白边里。
+
+   ⚠️⚠️ 【0.21.28 修复：底部那排按钮被裁掉】`flex` 从 `1 1 auto` 改成 **`0 0 auto`**。
+   这是老板那句「内容创作 …想让我写点什么那排下面三个按钮 被挡住了」的**直接成因**，
+   别再改回可收缩（shrink: 1）：
+
+   · 为什么 `1 1 auto` 一定会裁人：`.co-wrap` 是**定高**的（见上一段的 clamp），里面三兄弟
+     「说明条 39 + 本卡 + 下滑切换卡 418」都挤在这点高度里，而切换卡与说明条都是
+     `flex: 0 0 auto`（不许压），于是留给本卡的只有几十像素 ⇒ 本卡带着 `flex-shrink: 1`
+     一路缩到**下限 420px** 为止。真浏览器实测（1180x670 / 1180x780 / 1440x900 三档）：
+     本卡高度**恒为 420**、内容高恒为 418 —— 窗口拉多高都不会给它多一点，
+     因为吃掉高度的是下面那张切换卡，与视口无关（这就是"把窗口开大也没用"的原因）。
+   · 而 420 恰好等于**空态**的内容高（标题行 76 + 空态 43 + 输入区 299 = 418）：一行余量都没有。
+     于是输入区只要高一丁点 —— 输入框写到 10 行（+54）、点开「使用企业资料」展开面板（+181）、
+     或冒出「主题已写」标签 —— 多出来的部分就被本卡的 `overflow: hidden` 裁掉，
+     **裁掉的正好是排在最下面的输入工具条**（模型胶囊 / 使用企业资料 / 开始创作）。
+     实测（1180x780、输入 10 行）：工具条底边超出卡底 **30px**，三个控件全被切；
+     此时卡内 scrollHeight 497 > clientHeight 418，但 overflow 是 hidden ⇒ 滚也滚不出来。
+   · 为什么是 `0 0 auto`（按内容取高 + 绝不收缩）而不是"把 420 调大"：
+     调大只是把断点挪个位置 —— 换个字号 / 多一行换行 / 面板再长一行，又开始裁。
+     `flex-shrink: 0` 让"卡片永远不小于它自己内容所需"成为**结构保证**：
+     被压缩的只能是结果区（它是 1 1 auto + min-height 0，天生让得开），
+     而标题行与输入区（都是 0 0 auto）一个像素都不会被切。
+   · 为什么这仍然满足"结果多了不许长过一屏"：`max-height` 那条**没动**，
+     仍是 calc(100vh - 212px)。结果区在卡内照旧自己滚，卡片长到上限就停。
+   · 为什么不改成 `min-height: min-content`（试过，别重蹈）：
+     `min-content` 是按**最小内容宽度**算高度的，空态那句提示文字被摊成很多行，
+     实测卡片被撑到 483px（空态）/ 759px（输入+展开），而且 `min-height > max-height`
+     时**min 赢**，那条一屏上限直接被作废。方向对、工具错。
+   · 门禁同步：`scripts/smoke/unit-copy-merge.mjs` 的 C2c-1 原先断言本规则里有
+     `flex: 1 1 auto`（"卡片吃掉剩余高度"）。这条断言的**字面**随本次修复改成 `0 0 auto`，
+     但它的**实质**（外层不滚、卡片有 max-height、结果区是唯一滚动体）一条没松，
+     详见该断言旁边的说明 —— 留着旧字面反而会让门禁替这个 bug 背书。 */
+.co-card.co-chat {
+  /* 420 只作"内容极小"时的观感地板；内容更多时由 `flex: 0 0 auto` 按内容取高，
+     不再像改前那样**封顶**在 420。 */
+  min-height: 420px;
+  /* ⚠️ 必须是 0 0 auto：grow=0 / shrink=**0** / basis=auto。
+     shrink 一旦回到 1，卡片就会再次被下面那张切换卡挤回 420 并把输入工具条裁掉。 */
+  flex: 0 0 auto;
+  max-height: calc(100vh - 212px);
+  max-width: 1120px;
+  padding: 0;
+}
+
+/* 输入区：0.21.15 是 minRows 6 / maxRows 16；第二十三轮改 8 / 18（老板「对话框有点小」）。
+   jsx 侧改 autoSize，这里补 min-height 做双保险 —— antd 的 autoSize 只写行内 height，
+   没有 min-height 兜底时，内容被清空（发送后）会瞬间缩回更矮，看起来很跳。
+   算式（行高 28px = 15px 字号 × 1.8 行高，见上面 .co-chat-ta 的 line-height:1.8）：
+     min-height  8 行 × 28px = 224px
+     max-height 18 行 × 28px = 504px */
+.co-chat textarea.co-chat-ta,
+.co-chat .co-chat-ta.ant-input {
+  min-height: 224px; /* ≈ 8 行 × 28px（改前 168px = 6 行 × 28px） */
+  max-height: 504px; /* ≈ 18 行 × 28px（改前 448px = 16 行 × 28px），到顶后输入区自己滚动 */
+  overflow-y: auto;
+}
+
+/* 【0.21.28 · 矮窗口里输入框的最高行数】
+   为什么必须有这一段：卡片的高度上限是 `max-height: calc(100vh - 212px)`（一层屏）。
+   在**矮窗口**里这个上限会小到装不下"标题行 + 8 行输入框 + 工具条 + 已选标签"：
+   真浏览器实测 1180x670（= 1366x768 笔记本经 92% 兜底后的真实窗口高，见
+   `src/main/windowPlacement.js:32`）：
+     · 卡片上限 = 670 − 212 = **458px**
+     · 固定部分 = 标题行 76 + 输入区（内边距 28 + 输入框 274[10 行] + 工具条 40 + 标签 22 + 两个 gap 20）= 461px
+   ⇒ 差 3px，卡片内容必然溢出，被本卡的 `overflow: hidden` 裁掉输入区最底下那几像素。
+   这不是"某个控件被挡住"，但它是同一台绞肉机：**只要卡片有上限，而固定部分能长到超过上限，
+   就一定有人被裁**。而在 670 里，唯一还能让的就是输入框高度 —— 窗口就这么高。
+
+   所以：视口高 ≤ 720px 时，把输入框最高压到 7 行（196px），多出来的内容在**框内自己滚**
+   （`overflow-y: auto` 早就在，不需要新加）。算一遍 670 档：
+     76 + (28 + 196 + 40 + 22 + 20) = 382 ≤ 458 ✔ 余 76px
+   ⚠️ 边界说明（别把这条误读成"把对话框改小了"）：
+     · 只影响**视口高 ≤ 720px**，默认窗口 780 与 1440x900 上**一个像素都不变**，
+       `min-height: 224px`（8 行）与 `max-height: 504px`（18 行）原样；
+     · **没有动** `data-co-chat-minrows=8` / `data-co-chat-maxrows=18` 与 `autoSize`
+       —— 那两个 data-* 是 `scripts/smoke/entry-interact.jsx:445` 的门禁锚点
+       （断言"输入框被加大过"，阈值 ≥6），它们描述的是 autoSize 的**行数上下限**，
+       与这里"矮窗口下屏上最多露几行"是两件事：autoSize 仍按 8/18 行计算高度，
+       本规则只在视口不足时把**结果**压到 196px，输入框自己滚。
+     · 不选"把 `max-height` 的 212 调大"：那是挪断点（换个字号、多一行换行又开始裁），
+       而且会连带把 `.co-wrap` 的 clamp 一起放大、顶破整页。 */
+@media (max-height: 720px) {
+  .co-chat textarea.co-chat-ta,
+  .co-chat .co-chat-ta.ant-input {
+    /* ⚠️ 三条都必须 `!important`，原因不是"图省事"，是**对手是行内样式**：
+       antd 的 autoSize（`rc-textarea/lib/calculateNodeHeight.js`）在每次输入后
+       直接往 textarea 上写行内 `height` / `maxHeight` / `overflowY`
+       （行内 `maxHeight` = maxRows 18 × 28 = 504px）。行内样式优先于任何选择器，
+       不加重载就会被它压回来 —— 实测第一版没加 `!important`，670 档输入框仍是 274px，
+       四条判据照样红（这就是"改了 CSS 没反应"的典型形态）。
+       本文件对同一元素已有先例：`:202` 起那组 border/box-shadow 也用 `!important` 压 antd。
+       ⚠️ 上限与下限**一起**改：CSS 里 `min-height` 赢 `max-height`，
+          只压 max-height 而留着 min-height: 224，min 会照旧把框撑到 224，白改。
+       这里 min 168（6 行）/max 196（7 行）⇒ autoSize 无论算出多少行，屏上都稳定 196px；
+       `overflow-y: auto !important` 必须给，否则 antd 写下的行内 `overflow-y: hidden`
+       会让被截掉的内容**滚都滚不到**（正是老板这个 bug 的老形态）。 */
+    min-height: 168px !important; /* ≈ 6 行 × 28px */
+    max-height: 196px !important; /* ≈ 7 行 × 28px；到顶后输入框内部滚动 */
+    overflow-y: auto !important;
+  }
+}
+
+/* 顶部那句小提示：说明"说完直接开始写"，同时告诉人回车就是发送 */
+.co-chat-hint {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--loc-r16c-text2b);
+  white-space: nowrap;
+}
+
+/* 空主题就点发送时的就地提示（不进对话流，也不弹窗） */
+.co-chat-err {
+  font-size: 13px;
+  color: var(--loc-r16c-dangera);
+  background: var(--loc-r16c-dangerTint);
+  border: 1px solid var(--loc-r16c-alphaDanger18);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+
+/* ---- 二、结果区：生成结果追加在这张卡里（替代原来的三级页）----
+   【0.21.27 合并卡】`.co-log` 这个**独立卡片**已经不存在了：
+   改前它自己有 border-radius 20px / max-width 1120 / margin 14px auto 0（在 `.co-chat`
+   的 860 宽度下面再摆一个更宽的框 ⇒ "两个卡"的观感就是这里来的）。
+   现在它只是 `.co-chat` 里的**第二段**（结果区），一个圆角/边框/阴影都不带，
+   宽度直接跟父卡片一致（不再声明 max-width —— 全页只剩 `.co-chat` 一处对话宽度）。
+   它必须 **flex: 1 1 auto**：吃掉标题行与输入区之外的全部高度，
+   挤压时也只由它让（输入区是 0 0 auto）⇒ 长对话在框内滚，输入框永远贴底可见。 */
+.co-log-note {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: var(--loc-r16c-text2b);
+}
+
+/* 空态（turns === 0）：结果区给一句人话，而不是一片空白。
+   它和结果区**占同一个位置**（同一段 flex 1 1 auto），所以卡片高度在"还没写"和
+   "写了三条"两种状态下是一样的 —— 输入框不会因为第一句话发出去就跳一下。
+
+   ⚠️ 【0.21.28】上下内边距从 `18px 22px` 改成 `0 22px`：**内边距是不可压缩的**。
+   卡片被 `max-height: calc(100vh - 212px)` 卡住时，多出来的高度要靠这一段让开；
+   而它当时的下限不是 0，是 36px（= 上下各 18px 内边距，文字早已被挤没）——
+   实测点开「使用企业资料」展开面板时，卡片正好溢出 **36px**，就是这 36 截住了收缩、
+   把面板尾巴裁在框外。留左右 22px（与标题行/输入区对齐），上下交给
+   `justify-content: center` + 段的 `flex-grow` 去撑 —— 有余量时观感不变（文字始终居中），
+   没余量时它才能真正缩到 0 把位置让给必看的输入区。 */
+.co-chat-empty {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 22px;
+  text-align: center;
+  overflow: hidden;
+}
+.co-chat-empty-t {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--loc-r16c-text3);
+}
+.co-chat-empty-d {
+  max-width: 420px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--loc-r16c-text3a);
+}
+
+/* 独立滚动：长文（精品文案五部分输出）在这里滚，**不撑高整页**。
+   scroll-margin 给新消息入场留余量，避免贴到视口最上沿。
+
+   【第二十三轮】`max-height: 62vh` **已删** —— 它就是"答案落在屏幕外"的元凶之一
+   （创作卡 56vh + 它 62vh = 118vh）。现在高度由父卡片的 flex 分配给出：
+     · `flex: 1 1 auto` —— 吃掉父级剩余高度；
+     · `min-height: 0`  —— **必须有**：flex 子项默认 `min-height: auto`（=内容高），
+       不写这一条它就不肯收缩，长文照样顶破父容器，"改完还是看不到"；
+     · `max-height: 100%` —— 上限锁在**父容器**给的那段高度上（不随视口比例变化），
+       语义是"不许比父卡片还高"；它与 62vh 的区别是**参照系**从视口换成了父级 flex 高度。
+       保留一条 max-height 也让既有门禁（entry-interact 断言本规则里同时有 max-height
+       与 overflow-y:auto）继续有效，而不是靠删断言过关。
+   【0.21.27 合并卡】父容器从 `.co-log` 换成 `.co-chat`：本规则**一个字没改**，
+   改变的只是"上面那个定高 flex 盒子"是这张卡本身 —— 于是结果区成了卡片内的唯一滚动体，
+   卡片外框（以及贴在框底的输入区）完全不动。 */
+.co-log-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 20px 18px;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-margin-top: 12px;
+}
+
+/* ---- 三、消息气泡 ---- */
+.co-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 100%;
+}
+/* 用户那句话：靠右、淡绿底，像所有对话产品的提问侧 */
+.co-msg-user {
+  align-self: flex-end;
+  align-items: flex-end;
+  max-width: 78%;
+}
+.co-msg-user-t {
+  background: var(--loc-r16c-brandTint);
+  border: 1px solid var(--loc-r16c-alphaBrand16);
+  border-radius: 16px 16px 4px 16px;
+  padding: 10px 14px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--loc-r16c-brandInk);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.co-msg-meta {
+  font-size: 11.5px;
+  color: var(--loc-r16c-text3);
+}
+
+/* 豆芽的回稿：靠左、白底描边，正文宽度放开（长文要能读） */
+.co-msg-ai {
+  align-items: stretch;
+  background: var(--c-surface);
+  border: 1px solid var(--loc-r16c-borderb);
+  border-radius: 16px 16px 16px 4px;
+  padding: 14px 16px;
+}
+.co-msg-ai.bad {
+  border-color: var(--loc-r16c-alphaDanger22);
+  background: var(--loc-r16c-dangerTinta);
+}
+.co-msg-body {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--loc-r16c-text);
+  word-break: break-word;
+}
+/* Markdown 正文的首尾留白收掉，别让每条消息上下各空一大块 */
+.co-msg-body > :first-child { margin-top: 0; }
+.co-msg-body > :last-child { margin-bottom: 0; }
+.co-msg-body p { margin: 0 0 9px; }
+.co-msg-body h1,
+.co-msg-body h2,
+.co-msg-body h3 { margin: 14px 0 8px; line-height: 1.4; }
+.co-msg-body ul,
+.co-msg-body ol { margin: 0 0 9px; padding-left: 20px; }
+.co-msg-body li { margin: 3px 0; }
+.co-msg-body pre {
+  background: var(--loc-r16c-window);
+  border-radius: 10px;
+  padding: 10px 12px;
+  overflow-x: auto;
+}
+.co-msg-body code { background: var(--loc-r16c-surface2a); padding: 1px 4px; border-radius: 4px; }
+.co-msg-body blockquote {
+  margin: 0 0 9px;
+  padding: 2px 0 2px 12px;
+  border-left: 3px solid var(--loc-r16c-alphaBrand30);
+  color: var(--loc-r16c-text2);
+}
+
+/* 【第二十三轮】「本次输出被上限截断」提示：正文下方一行浅灰小字。
+   为什么不是红字/感叹号：这不是失败 —— 稿子是真的、能用，只是没写到底；
+   红字会让人以为整个稿子废了。灰字 + 一句「可能不完整」正好。
+   命名先 grep 过全仓（`co-msg-limit` 此前无任何命中），不会撞 lint-css-collisions。 */
+.co-msg-limit {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--loc-r16c-text2b);
+}
+
+/* 「正在写」气泡：三个点呼吸，表示"还在跑"，不是"卡住了" */
+.co-msg-pending {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  color: var(--loc-r16c-brandDeep);
+}
+.co-msg-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--loc-r16c-brand);
+  animation: co-pulse 1.1s ease-in-out infinite;
+}
+@keyframes co-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+/* 失败气泡：必须"看得见原因 + 点得到重试"。停在半截、只留一句"生成失败"是不合格的 */
+.co-msg-err {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13.5px;
+}
+.co-msg-err-t {
+  font-weight: 700;
+  color: var(--loc-r16c-dangera);
+}
+.co-msg-err-d {
+  color: var(--loc-r16c-danger);
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+/* 每条结果的操作条 */
+.co-msg-ops {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 2px;
+}
+
+/* 尊重系统"减少动态效果"：关掉呼吸动画，文字与状态照样在 */
+@media (prefers-reduced-motion: reduce) {
+  .co-msg-dot { animation: none; }
+}
+
+/* 窄屏：卡片撑满，气泡不再按 78% 缩（否则长文被压成细条）。
+   【0.21.27 合并卡】原来这里还有一条 `.co-log`（它自己是张卡）——
+   那张卡已经不存在了，只剩这一条，宽度口径与宽屏**同源**（都来自 .co-chat）。 */
+@media (max-width: 1100px) {
+  .co-card.co-chat {
+    max-width: 100%;
+  }
+  .co-msg-user {
+    max-width: 100%;
+  }
+  /* 【第二十三轮】改前这里是 `.co-log-body { max-height: none }`，用途是抵掉主规则里的
+     `max-height: 62vh`。现在主规则已经没有视口单位的上限（改成锁定父级 flex 高度的 100%），
+     那条"取消上限"的规则就变成了**反噬**：窄屏下它会把上限完全放开，
+     长文又能把卡片顶破。所以这里改成同样锁到父级高度，语义与宽屏一致。 */
+  .co-log-body {
+    max-height: 100%;
+  }
+}
+
+/* ==========================================================================
+ * 【全屏展开】结果区铺满窗口（老板：「生成后 UI 真的很窄一条 看起来很累
+ * 要滑很久 能不能占比大一些 比如全屏这样」）
+ *
+ * 为什么默认版式不动、只加一个开关：
+ *   老板的诉求是"想看得大一些"，不是"取消双栏"。默认仍保持原分栏（右栏仍在），
+ *   点「展开」才临时铺满；点「收起」或按 Escape 回到原样。这样既满足诉求，
+ *   也不用重新校准整页栅格。
+ *
+ * 为什么窄是真的（所以不能靠"把窗口拉宽"解决）：
+ *   `.co-card.co-chat` 上有一条 `max-width: 1120px`（见本文件上文），
+ *   而主列实际可用宽 = 1560 − 44(padding) − 280(rail) − 40(gap) = 1196px，
+ *   被 1120 封顶后两侧各 38px 由 `margin: auto` 摊掉 ⇒ 窗口再宽也不涨。
+ *   展开态直接 `max-width: none` 把这个上限解除。
+ *   【0.21.27 合并卡】改前这里写的是"`/.co-log` 与 `.co-card.co-chat` 上都有 1120"——
+ *   两张卡各写一份；现在只有 `.co-chat` 一处，展开态作用在**整张对话卡**上：
+ *   `position: fixed` 的也是这张卡，所以标题行、结果区、输入区一起铺满，
+ *   输入框照样贴在窗口底部（这正是"一个对话框"该有的样子）。
+ *
+ * 为什么 `top: 44px` 而不是 `inset: 0`：
+ *   顶部 44px 是 `.titlebar`（style.css 里那条 44px 的窗口拖拽区），
+ *   它同时承载最小化/关闭按钮。盖住它窗口按钮就点不到，用户会觉得"应用卡死了"。
+ *   `z-index: 900`：在 titlebar 之上（它没有 z-index，靠 DOM 顺序）、
+ *   在 antd 弹层（1000+）之下 —— 全屏看稿时若有确认框/下拉，仍然弹得出来。
+ *
+ * ⚠️ 本条注释**故意不写"选择器 + 花括号"的完整形态**：本文件上文
+ *   （第 273-279 行那段规矩）已说明，门禁用正则取"文件里第一处"命中来断言滚动规则，
+ *   注释里写成完整块会被它先匹配到，导致断言读到注释而不是生效规则。
+ * ========================================================================== */
+.co-log-max-btn {
+  /* 改前是 margin-left:auto（它是另一张卡标题行里唯一的右推元素）。
+     并进 .co-chat-hd 之后，右推由 .co-chat-hint 的 margin-left:auto 负责；
+     这里再 auto 一次会把两个 auto 平分，标题行中间裂开一道空。 */
+  margin-left: 4px;
+  font-size: 12.5px;
+  color: var(--loc-r16c-brandDeep);
+  cursor: pointer;
+  user-select: none;
+}
+.co-chat.co-log-max {
+  position: fixed;
+  top: 44px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 900;
+  /* 铺满时高度必须解除 .co-card.co-chat 的 max-height: calc(100vh - 212px)，
+     否则"铺满"只铺到一屏减 212px，下面留一条白。 */
+  max-height: none;
+  min-height: 0;
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+/* 铺满后正文两侧留白（原来 20px 在满屏宽度下太贴边），并解除气泡的宽度上限：
+   窄气泡在窄栏里是对的，铺满后还压着 78% 就白铺了。 */
+.co-chat.co-log-max .co-log-body { padding: 18px 28px 24px; }
+.co-chat.co-log-max .co-chat-hd { padding: 16px 28px 12px; }
+.co-chat.co-log-max .co-chat-composer { padding: 12px 28px 18px; }
+.co-chat.co-log-max .co-msg-ai { max-width: none; }
+.co-chat.co-log-max .co-msg-user { max-width: 62%; }

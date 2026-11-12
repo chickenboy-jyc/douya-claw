@@ -1,0 +1,171 @@
+appId: com.douya.claw
+productName: 豆芽CLAW
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**/*
+  - src/main/**/*
+  # 🔴 2026-10-22 修（**用户可见：「装上去打不开」**）：
+  #   `src/shared/**/*` 原来**不在白名单里**。而 src/main/agentReview.js:41
+  #   有 `require('../shared/artifactEvidence')`（8845e0b「审查否决接上强制力」引入）。
+  #   于是主进程在**模块加载阶段**就抛
+  #     Error: Cannot find module '../shared/artifactEvidence'
+  #   ⇒ Chromium 根本没初始化 ⇒ 用户双击图标：进程起来又没了，没窗口、没报错、没托盘。
+  #   实测证据（用 dev Electron 加载本包 asar，20s 内无 CDP 端口、零子进程）：
+  #     Require stack: app.asar\src\main\agentReview.js ← backend.js ← main.js
+  #
+  #   为什么整整 124 步门禁全绿：所有单测都从**仓库根目录**跑（仓库里 src/shared 就在那儿），
+  #   测试环境的文件布局比发布产物更完整 ⇒ 结构上就看不见。打包六步也全都"成功"——
+  #   少一个 .js 文件不会让任何一步失败。
+  #   ⇒ 已补 `scripts/smoke/unit-package-closure.mjs`（在链里）直接判「require 闭包 ⊆ files 白名单」，
+  #     这类缺陷不会再静默到用户手里。
+  - src/shared/**/*
+  - package.json
+  # 🔴 排除临时物 / 备份 / 缓存（2026-09-22 修）：
+  #   上面 `src/main/**/*` 是**无过滤**的，于是下列文件会被原样打进安装包 ——
+  #     实测 4 个临时物 + __pycache__ = 691810 字节（~675 KB）：
+  #       backend.js.bak_usageclient_20260920_145219   209111
+  #       backend.js.clientpatch.tmp                   218714
+  #       tray-icon.ico.bak_icon_20260918_185344        87844
+  #       tray-icon.png.bak_icon_20260918_185344       167026
+  #       __pycache__/mic_record.cpython-313.pyc         9115
+  #   危害不只是体积：`.bak_*` 里是**旧代码**，一旦被 grep 到会把人指向已经修好的老缺陷，
+  #   而且 `.pyc` 的 Python 版本与包内 runtime 不一致时会被误当成运行时问题。
+  #   注意：`mic_record.py` / `tts_voice.py` / `tray-icon.*` 是**真源码与资源**，必须保留，
+  #   所以只按「后缀特征」排除，不按目录排除。
+  - "!**/*.bak"
+  - "!**/*.bak_*"
+  - "!**/*.bak-*"
+  - "!**/*.tmp"
+  - "!**/*.orig"
+  - "!**/*.rej"
+  - "!**/__pycache__/**"
+  - "!**/*.pyc"
+  - "!**/.DS_Store"
+  - "!**/Thumbs.db"
+# 把 Python 运行时和技能目录一起打进安装包，分发后无需用户另行安装 Python
+extraResources:
+  - from: python-runtime
+    to: python-runtime
+  - from: skills
+    to: skills
+    filter:
+      - "**/*"
+      - "!**/__pycache__/**"
+      - "!**/*.pyc"
+  # 🔴 2026-10-23 修（**不修的话，装上去 shell-exec 整个技能直接死**）：
+  #   `skills/` 走 extraResources ⇒ 落在 `resources/skills/`，**在 asar 之外**；
+  #   而 `src/shared/**` 走 files 白名单 ⇒ 只存在于 `app.asar` 里。
+  #   本轮给 `skills/shell-exec/run.js` 加了
+  #       require('../../src/shared/pythonRuntime')
+  #   在**仓库布局**下解析到 `<repo>/src/shared/pythonRuntime.js` ✔（128 步门禁全绿）
+  #   但在**打包布局**下是 `resources/skills/shell-exec/../../src/shared/…`
+  #       ⇒ `resources/src/shared/pythonRuntime.js` —— 这个目录原本**不存在**（实测：
+  #         `ls release/win-unpacked/resources/` = app.asar / skills / python-runtime / app-update.yml）
+  #   ⇒ 技能 runner 在 require 阶段就抛 `Cannot find module`，**每一次 shell-exec 调用都失败**。
+  #   病根与 2026-10-22 那次（src/shared 没进 files 白名单）是同一个：
+  #   **"测试环境的文件布局比发布产物更完整"** —— 门禁在仓库根跑，结构上就看不见这类缺陷。
+  #   ⇒ 这里让 resources 下也有一份 `src/shared`，与 skills 的相对位置关系对齐；
+  #     并在 `scripts/smoke/unit-package-closure.mjs` 新增 P7，直接断言
+  #     「skills 里每一条跨树 require，在打包布局下都解析得到」。
+  - from: src/shared
+    to: src/shared
+    filter:
+      - "**/*"
+      - "!**/*.bak*"
+  # 🔴 2026-02 修（**与上面 pythonRuntime 那一次是同一个病根**）：
+  #   `skills/file-read/run.js` 现在要「看图」⇒ 它 require('../../src/main/visionProvider')。
+  #   仓库布局：<repo>/skills/file-read/../../src/main/visionProvider.js ⇒ 解析得到 ✔
+  #   打包布局：resources/skills/file-read/../../src/main/visionProvider.js
+  #            ⇒ resources/src/main/visionProvider.js —— 原本**不存在**
+  #            ⇒ 技能在 require 阶段抛 Cannot find module ⇒ 每次读图都失败（
+  #              好在 file-read 会把加载失败翻译成「视觉识别失败」，不会假装看见，
+  #              但"能看图"这项能力就整个死了）。
+  #   ⇒ 只带 visionProvider.js 这一个文件（它只依赖 node 内置模块，可与 asar 内副本共存）。
+  #   scripts/smoke/unit-package-closure.mjs 的 P7 直接断言这条 require 在打包布局下解析得到。
+  - from: src/main/visionProvider.js
+    to: src/main/visionProvider.js
+  # 🔴 2026-02 修（**与上面 pythonRuntime / visionProvider 两次是同一个病根，第三次了**）：
+  #   本轮把「子进程字节 → 文本」的解码器抽成唯一真源 `src/main/childOutput.js`，
+  #   并让 4 个技能通过跨树 require 用它：
+  #       skills/shell-exec/run.js          require('../../src/main/childOutput')
+  #       skills/package-app/run.js         require('../../src/main/childOutput')
+  #       skills/desktop-verify/run.js      require('../../src/main/childOutput')
+  #       skills/browser-verify/lib/cdp.js  require('../../../src/main/childOutput')
+  #   仓库布局：<repo>/skills/<技能>/../../src/main/childOutput.js ⇒ 解析得到 ✔
+  #   打包布局：resources/skills/<技能>/../../src/main/childOutput.js
+  #            ⇒ resources/src/main/childOutput.js —— 不加这一条就**不存在**
+  #            ⇒ 上面 4 个技能全部在 require 阶段抛 Cannot find module。
+  #   后果按技能分别说清楚（这不是"少一个文件"，是能力整块死）：
+  #     · shell-exec 死 ⇒ 豆芽不能执行任何命令（部署、构建、装依赖全废）；
+  #     · package-app 死 ⇒ 不能把用户的项目打成 exe；
+  #     · desktop-verify 死 ⇒ 打完了也没法验收，只能报"没验成"；
+  #     · browser-verify 死 ⇒ 打不开浏览器、做不了网页验收。
+  #   为什么不是把 childOutput 复制到 skills 下：那就成了两份实现，日后必然漂移
+  #   （`unit-child-output-decode.mjs` 的 A 段专门判"全仓只有一份"）。
+  #   `scripts/smoke/unit-package-closure.mjs` 的 P7 会直接断言这 4 条 require
+  #   在打包布局下解析得到 —— 摘掉这一段，P7 立刻红。
+  - from: src/main/childOutput.js
+    to: src/main/childOutput.js
+  # 🔴 2026-11 修（**与上面 pythonRuntime / visionProvider / childOutput 三次是同一个病根，第四次了**）：
+  #   `skills/shell-exec/run.js` 现在 require('../../src/main/riskGate')。
+  #   为什么：那行「该命令已被拦截（涉及系统级危险操作）」的判据从「整条命令子串匹配」改成
+  #   「按解析出的命令头 + 开关 + 目标判定」，而「切段 / 剥包装 / 归一化命令名 / 拆开关」这套
+  #   解析 `src/main/riskGate.js` 里已经有了（`collectCommands` 等，已导出）。
+  #   让技能复用门控那份 = 两边天然同口径；在技能里另写一份 = 两份切词逻辑，日后必然漂移。
+  #   仓库布局：<repo>/skills/shell-exec/../../src/main/riskGate.js ⇒ 解析得到 ✔
+  #   打包布局：resources/skills/shell-exec/../../src/main/riskGate.js
+  #            ⇒ resources/src/main/riskGate.js —— 不搬就**不存在** ⇒ shell-exec 在 require
+  #            阶段就抛 Cannot find module ⇒ **豆芽一条命令都执行不了**（装软件 / 构建 / 跑测试全废）。
+  #   riskGate.js 是零依赖纯模块（不 require 任何东西、不读 fs），搬一份不会牵扯别的文件。
+  #   `scripts/smoke/unit-package-closure.mjs` 的 P7 直接断言这条 require 在打包布局下解析得到
+  #   —— 摘掉下面两条中的任意一条，P7 立刻红。
+  - from: src/main/riskGate.js
+    to: src/main/riskGate.js
+  # 🔴 2026-11-11 修（**与上面 pythonRuntime / visionProvider / childOutput / riskGate 四次是同一个病根，第五次了**）：
+  #   `skills/agent-delegate/run.js` 现在 require('../../src/main/dshClient')。
+  #   为什么：委派给 DeepSeek Harness 跑的那套 ACP 传输层在 src/main/dshClient.js 里，
+  #   技能只做「读参数 → 建客户端 → 发提示词 → 压报告」的编排。
+  #   在技能里另写一份 ACP 客户端 = 两份协议实现，日后必然漂移（这条 repo 已经为此付过四次学费）。
+  #   仓库布局：<repo>/skills/agent-delegate/../../src/main/dshClient.js ⇒ 解析得到 ✔
+  #   打包布局：resources/skills/agent-delegate/../../src/main/dshClient.js
+  #            ⇒ resources/src/main/dshClient.js —— 不搬就**不存在**
+  #            ⇒ agent-delegate 在 require 阶段就抛 Cannot find module ⇒ 委派能力整块死。
+  #   后果要说清楚：这个技能默认关（DOUYA_DSH_DELEGATE !== '1'），所以**关着的时候没人发现**；
+  #   等到有人开了开关、指望它分担重活时，拿到的是一句 "Cannot find module"
+  #   —— 那是最难查的一类：功能看起来"早就做好了"，只在打开时才炸。
+  #   dshClient.js 只 require child_process / fs / path（全是 Node 内置，不牵扯别的文件），
+  #   搬一份与 asar 内副本共存是安全的。
+  #   `scripts/smoke/unit-package-closure.mjs` 的 P7-2 直接断言这条 require 在打包布局下解析得到
+  #   —— 加这一段**之前**跑 P7，它已经报出
+  #     "skills/agent-delegate/run.js → require('../../src/main/dshClient') ⇒ 不可达"
+  #   （对照组成立：证明这条断言不是恒真）。摘掉下面两条中的任意一条，P7 立刻再红。
+  - from: src/main/dshClient.js
+    to: src/main/dshClient.js
+  # 🔴 自动更新必需（2026-09-22 修）：
+  #   electron-updater 在**已打包**状态下读 resources/app-update.yml
+  #   （见 electron-updater/out/ElectronAppAdapter.js 的 appUpdateConfigPath）。
+  #   文件缺失时 checkForUpdates() 正常（client 已由 setFeedURL 建立），
+  #   但 downloadUpdate() 会在 getOrCreateDownloadHelper() 里
+  #   `await this.configOnDisk.value` 抛 ENOENT ⇒ 用户症状是
+  #   「能发现新版本，点『立即更新』就失败」，且**老版本永远升不上来**。
+  #   为什么原来没有：本仓为规避 app-builder 卡死，打包拆成
+  #   `electron-builder --dir` + `electron-builder --prepackaged <dir> --win nsis` 两次调用；
+  #   而 electron-builder 只在 afterPack 且「本次调用存在合适 Windows target」时才写该文件
+  #   （app-builder-lib/out/publish/PublishManager.js 第 81-89 行）——
+  #   `--dir` 没有 target、`--prepackaged` 不执行 pack ⇒ 两次调用都不写。
+  #   而 latest.yml 由 nsis target 生成，所以「更新源看着是好的」，掩盖了本问题。
+  #   ⇒ 改为随 extraResources 显式携带（与 python-runtime / skills 同一机制，落点已被现有产物证实）。
+  # ⚠️ build/app-update.yml 的内容必须与上面 publish 段一致，改一处要改两处。
+  - from: build/app-update.yml
+    to: app-update.yml
+publish:
+  provider: generic
+  url: https://update.example.com/
+win:
+  target: nsis
+  artifactName: douya-claw-${version}-setup.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true

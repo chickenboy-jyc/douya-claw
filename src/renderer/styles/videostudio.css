@@ -1,0 +1,1247 @@
+/* ============================================================================
+   videostudio.css —— 「视频精剪」页（`modules/VideoStudio.jsx`）的样式。
+   ============================================================================
+
+   【为什么单独成文件，不往 style.css 里塞】
+     本仓已经踩过两次同一类事故（见 `mindmap.css:1-12` 与
+     `scripts/smoke/lint-css-collisions.mjs:1-20`）：
+     ① `style.css` 被 git stash 回退过，末尾 append 的整段样式归零，组件还在引用
+        ⇒ 页面变成一堆无样式裸元素；
+     ② 两个功能共用同一个 class 前缀，同优先级下后写者胜 ⇒ 旧页面的样式被静默改坏，
+        构建不报错、jsdom 不报错、只有人眼看截图才发现。
+     所以新页面一律：**独立文件 + 文件独占前缀**。
+
+   【前缀：`vs-`】
+     本文件独占 `vs-` 前缀（= **v**ideo **s**tudio）。全仓在此之前的 CSS 里
+     `vs-` 前缀出现 0 次（`grep -rn '\.vs-' src/renderer/styles src/renderer/style.css`
+     可自证），所以不会撞车。Time-line 相关的内部类名一律 `vs-tl-*` / `vs-track-*`。
+
+   【三套主题：绿（默认）/ 白 / 深，一套都不能少】
+     配色**全部**走变量，本文件正文里不出现任何颜色字面量（只有变量声明块里有）。
+     变量前缀 `--loc-vs-*`（局部作用域），刻意不叫 `--c-*` —— 那是全局 token 的
+     命名空间，混进去会被核心层主题门禁误判（`videodesign.css:30-37` 记的同一个坑）。
+     ⚠️ 铁律：新增一个 `--loc-vs-*` 必须**同时补三套**。
+        少一套 ⇒ 那个主题下这个属性拿到空值 ⇒ 白屏 / 黑字黑底。
+     绿主题的值 = 本文件最初的字面量（逐像素基线）；白主题去绿取中性，
+     品牌色用中性深灰（老板明令：**不要蓝色、不要黑色主调**）；深主题是带绿的深底浅字。
+
+   【几何：容器上一个 max-width 都没有】
+     `lint-mindmap-fullwidth.mjs` 记的那次事故：思维导图页被 `max-width:1080px` 钳住，
+     默认窗口 1180（可用 968）看不出问题，1920 最大化（可用 1708）右侧留 628px 死区。
+     本页是**三栏工作台**，天生要吃掉全部宽度，所以：
+       · 容器一律 `width:100%` / `flex:1 1 auto` + `min-width:0`；
+       · **容器上不写 max-width**。注意措辞：不是「本文件没有 max-width」——
+         在**声明位置**（行首缩进 + `max-width:`）grep 全文，会命中**恰好 4 行**：
+         2 条元素声明 + 2 条媒体查询条件。全部是故意留的、且都不是容器钳制：
+           · `.vs-projname` 的 `max-width: 320px` —— 只钳标题文字本身做省略号，
+             块级容器宽度不受影响（钳的是 inline 文本的可用宽度）；
+           · `.vs-preview-frame` 的 `max-width: 100%` —— 是**上限不是定宽**，
+             配合 `object-fit: contain` 让预览图不撑破中栏，本身不产生死区；
+           · `@media (max-width: 1280px)` / `@media (max-width: 1024px)` 这 2 行 ——
+             是**媒体查询的视口条件**，不是给元素设宽度，与那次事故无关。
+         （这里刻意只写选择器、不写行号：行号会随任何一次编辑漂移，写死就等于
+          埋一个必然过期的坐标，下次有人按行号去 grep 会扑空 —— 这份头注释自己
+          就因为改了 9 行而把 243/505 顶成了 257/519。）
+         判据：`max-width` 只许出现在「文本省略」和「媒体查询条件」上；一旦出现在
+         某个栏 / 某个 flex 容器的 width 约束里，就是重犯死区错。
+         自证命令（两条都必须行首锚定 —— 不加 `^` 的话本段注释里的引用本身会被
+         grep 命中，实测不加锚点得 4 行、加了才得 2 行，这种「注释把自己数进去」
+         的假阳性正是要防的）：
+           · `grep -nE "^\\s+max-width:" src/renderer/styles/videostudio.css`
+             → 只打印 2 行（`.vs-projname` / `.vs-preview-frame`）；
+           · `grep -nE "^@media \\(max-width" src/renderer/styles/videostudio.css`
+             → 只打印 2 行（1280 / 1024 两条查询）。
+         合计 4 行 = 上述全部声明，没有第 5 行。
+       · 栅格用 `flex` 而不是 `grid-template-columns`，左侧 232px / 右侧 264px 定宽、
+         中间 `flex:1 1 auto; min-width:0`，窗口再窄也只是中间栏变窄，不横向溢出。
+     ⚠️ 中间栏与时间轴上的每一层容器都必须带 `min-width:0`：flex 子项的默认
+        `min-width:auto` 会让内容（一段长文件名、一屏长刻度）把格子撑破，
+        这是「右侧空一大片」的同族病（撑破之后再被父级 overflow 切掉）。
+
+   【高度：calc(100vh - 44px) + max-height:100% + min-height:0 三件套】
+     44px 是本仓 `.titlebar` 的高度（`style.css` 里 `--titlebar-h`）。三件套的理由
+     与 `mindmap.css:26-42` 一模一样：`.app-body` 的高度**不恒等于** 100vh-44px
+     （设了当前目标时 `.wf-bar` 会把容器压矮），只写 calc 会让本页比容器高出一截、
+     再被 `.app{overflow:hidden}` 从底部切掉 —— 表现是「时间轴下沿没了，窗口一大又正常」。
+   ========================================================================== */
+
+/* ──────────────────────────────────────────────────────────────────────────
+   主题变量 · 绿（默认，不带 data-theme）
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* 面 */
+  --loc-vs-bg: #f4f6f5;
+  --loc-vs-panel: #ffffff;
+  --loc-vs-panel2: #f7f9f8;
+  --loc-vs-panel3: #eef2f0;
+  --loc-vs-glass: rgba(255, 255, 255, 0.86);
+  /* 线 */
+  --loc-vs-line: #e3e6e6;
+  --loc-vs-lineSoft: #eef0ef;
+  --loc-vs-lineStrong: #c9cfcf;
+  /* 字 */
+  --loc-vs-text: #1d2124;
+  --loc-vs-text2: #566065;
+  --loc-vs-text3: #8b939a;
+  /* 品牌 */
+  --loc-vs-brand: #2faf6b;
+  --loc-vs-brandDeep: #1e8e52;
+  --loc-vs-brandTint: #e8f7ef;
+  --loc-vs-brandLine: #b9e3ce;
+  --loc-vs-onBrand: #ffffff;
+  /* 语义 */
+  --loc-vs-danger: #c0392b;
+  --loc-vs-dangerTint: #fbedeb;
+  --loc-vs-warn: #9a6a00;
+  --loc-vs-warnTint: #fbf3e3;
+  /* 预览画布 */
+  --loc-vs-canvas: #101312;
+  /* 时间轴（要比页面深一档，片段才浮得起来） */
+  --loc-vs-tl: #1b201e;
+  --loc-vs-tl2: #232a27;
+  --loc-vs-tl3: #262e2a;
+  --loc-vs-tlLine: #333b37;
+  --loc-vs-tlText: #d6e0da;
+  --loc-vs-tlText2: #8d9a94;
+  /* 片段块 */
+  --loc-vs-clip: #35b377;
+  --loc-vs-clipDeep: #1f8a54;
+  --loc-vs-clipAudio: #2f8f7a;
+  --loc-vs-clipAudioDeep: #226a5b;
+  --loc-vs-clipTitle: #b98a3c;
+  --loc-vs-clipText: #ffffff;
+  /* 交互态 */
+  --loc-vs-sel: #f2a93b;
+  --loc-vs-playhead: #e0564a;
+  --loc-vs-ghost: rgba(47, 175, 107, 0.3);
+  --loc-vs-trackHi: rgba(47, 175, 107, 0.14);
+  /* 阴影 / 遮罩 / 滚动条 */
+  --loc-vs-shadow: rgba(15, 40, 30, 0.1);
+  --loc-vs-shadowSoft: rgba(16, 40, 32, 0.05);
+  --loc-vs-mask: rgba(0, 0, 0, 0.35);
+  --loc-vs-scroll: rgba(0, 0, 0, 0.18);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   主题变量 · 白（去绿中性；品牌 = 中性深灰，**不许蓝**）
+   ────────────────────────────────────────────────────────────────────────── */
+html[data-theme="light"] {
+  --loc-vs-bg: #f6f7f7;
+  --loc-vs-panel: #ffffff;
+  --loc-vs-panel2: #f4f5f5;
+  --loc-vs-panel3: #edefee;
+  --loc-vs-glass: rgba(255, 255, 255, 0.9);
+  --loc-vs-line: #e3e6e6;
+  --loc-vs-lineSoft: #eef0ef;
+  --loc-vs-lineStrong: #c9cfcf;
+  --loc-vs-text: #1d2124;
+  --loc-vs-text2: #565e63;
+  --loc-vs-text3: #6e767c;
+  --loc-vs-brand: #3a4247;
+  --loc-vs-brandDeep: #23282d;
+  --loc-vs-brandTint: #f1f4f2;
+  --loc-vs-brandLine: #d5dbd8;
+  --loc-vs-onBrand: #ffffff;
+  --loc-vs-danger: #c0392b;
+  --loc-vs-dangerTint: #fbedeb;
+  --loc-vs-warn: #9a6a00;
+  --loc-vs-warnTint: #fbf3e3;
+  --loc-vs-canvas: #14171a;
+  --loc-vs-tl: #22262a;
+  --loc-vs-tl2: #2a2f33;
+  --loc-vs-tl3: #31373b;
+  --loc-vs-tlLine: #3d4448;
+  --loc-vs-tlText: #e2e6e8;
+  --loc-vs-tlText2: #98a0a5;
+  --loc-vs-clip: #59635e;
+  --loc-vs-clipDeep: #3a4247;
+  --loc-vs-clipAudio: #6b7a72;
+  --loc-vs-clipAudioDeep: #4c5852;
+  --loc-vs-clipTitle: #8a6f3f;
+  --loc-vs-clipText: #ffffff;
+  --loc-vs-sel: #9a6a00;
+  --loc-vs-playhead: #c0392b;
+  --loc-vs-ghost: rgba(58, 66, 71, 0.3);
+  --loc-vs-trackHi: rgba(58, 66, 71, 0.14);
+  --loc-vs-shadow: rgba(0, 0, 0, 0.08);
+  --loc-vs-shadowSoft: rgba(0, 0, 0, 0.04);
+  --loc-vs-mask: rgba(0, 0, 0, 0.35);
+  --loc-vs-scroll: rgba(0, 0, 0, 0.2);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   主题变量 · 深（带绿的深底浅字）
+   ────────────────────────────────────────────────────────────────────────── */
+html[data-theme="dark"] {
+  --loc-vs-bg: #171a18;
+  --loc-vs-panel: #1e2220;
+  --loc-vs-panel2: #232826;
+  --loc-vs-panel3: #2a2f2c;
+  --loc-vs-glass: rgba(28, 31, 29, 0.86);
+  --loc-vs-line: rgba(255, 255, 255, 0.1);
+  --loc-vs-lineSoft: rgba(255, 255, 255, 0.06);
+  --loc-vs-lineStrong: rgba(255, 255, 255, 0.22);
+  --loc-vs-text: #ecf1ee;
+  --loc-vs-text2: #9ba8a1;
+  --loc-vs-text3: #7e8c85;
+  --loc-vs-brand: #3cc47c;
+  --loc-vs-brandDeep: #2faf6b;
+  --loc-vs-brandTint: rgba(60, 196, 124, 0.14);
+  --loc-vs-brandLine: rgba(60, 196, 124, 0.34);
+  --loc-vs-onBrand: #10241a;
+  --loc-vs-danger: #ff6b5e;
+  --loc-vs-dangerTint: rgba(255, 107, 94, 0.14);
+  --loc-vs-warn: #e0a44a;
+  --loc-vs-warnTint: rgba(224, 164, 74, 0.14);
+  --loc-vs-canvas: #0b0e0d;
+  --loc-vs-tl: #121614;
+  --loc-vs-tl2: #191e1b;
+  --loc-vs-tl3: #1d2320;
+  --loc-vs-tlLine: #2c3431;
+  --loc-vs-tlText: #dfe8e2;
+  --loc-vs-tlText2: #8e9c95;
+  --loc-vs-clip: #3cc47c;
+  --loc-vs-clipDeep: #25a463;
+  --loc-vs-clipAudio: #3aa88f;
+  --loc-vs-clipAudioDeep: #25796a;
+  --loc-vs-clipTitle: #d3a45f;
+  --loc-vs-clipText: #0c1a12;
+  --loc-vs-sel: #f5b74a;
+  --loc-vs-playhead: #ff6b5e;
+  --loc-vs-ghost: rgba(60, 196, 124, 0.28);
+  --loc-vs-trackHi: rgba(60, 196, 124, 0.16);
+  --loc-vs-shadow: rgba(0, 0, 0, 0.5);
+  --loc-vs-shadowSoft: rgba(0, 0, 0, 0.3);
+  --loc-vs-mask: rgba(0, 0, 0, 0.55);
+  --loc-vs-scroll: rgba(255, 255, 255, 0.18);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   页面骨架
+   ────────────────────────────────────────────────────────────────────────── */
+.vs-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  /* 一屏内排完：44px = 本仓 .titlebar 的高度（见文件头「高度」一段）。 */
+  height: calc(100vh - 44px);
+  max-height: 100%;
+  background: var(--loc-vs-bg);
+  color: var(--loc-vs-text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC",
+    "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+/* ── 顶栏 ─────────────────────────────────────────────────────────────────── */
+.vs-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  background: var(--loc-vs-panel);
+  border-bottom: 1px solid var(--loc-vs-line);
+}
+.vs-top-left {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.vs-projname {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--loc-vs-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px; /* 只钳标题文字本身，不是容器 —— 见文件头「几何」 */
+}
+.vs-projmeta {
+  font-size: 11.5px;
+  color: var(--loc-vs-text3);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.vs-top-mid {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.vs-top-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+.vs-top-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--loc-vs-line);
+  flex: 0 0 auto;
+}
+
+/* ── 按钮 ─────────────────────────────────────────────────────────────────── */
+.vs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 11px;
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--loc-vs-text);
+  background: var(--loc-vs-panel2);
+  border: 1px solid var(--loc-vs-line);
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+}
+.vs-btn:hover:not(:disabled) {
+  background: var(--loc-vs-panel3);
+  border-color: var(--loc-vs-lineStrong);
+}
+.vs-btn:focus-visible {
+  outline: 2px solid var(--loc-vs-brand);
+  outline-offset: 1px;
+}
+.vs-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+.vs-btn.is-primary {
+  color: var(--loc-vs-onBrand);
+  background: var(--loc-vs-brand);
+  border-color: var(--loc-vs-brand);
+  font-weight: 600;
+}
+.vs-btn.is-primary:hover:not(:disabled) {
+  background: var(--loc-vs-brandDeep);
+  border-color: var(--loc-vs-brandDeep);
+}
+.vs-btn.is-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--loc-vs-text2);
+}
+.vs-btn.is-ghost:hover:not(:disabled) {
+  background: var(--loc-vs-panel3);
+  border-color: var(--loc-vs-line);
+}
+.vs-btn.is-danger {
+  color: var(--loc-vs-danger);
+  border-color: var(--loc-vs-dangerTint);
+  background: var(--loc-vs-dangerTint);
+}
+.vs-btn.is-icon {
+  width: 28px;
+  padding: 0;
+  font-size: 13px;
+}
+
+/* ── 主体三栏 ─────────────────────────────────────────────────────────────── */
+.vs-body {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  padding: 10px;
+  overflow: hidden;
+}
+.vs-left {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 232px;
+  min-height: 0;
+  min-width: 0;
+  gap: 10px;
+}
+.vs-center {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  gap: 10px;
+}
+.vs-right {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 264px;
+  min-height: 0;
+  min-width: 0;
+  gap: 10px;
+}
+
+/* ── 面板 ─────────────────────────────────────────────────────────────────── */
+.vs-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  background: var(--loc-vs-panel);
+  border: 1px solid var(--loc-vs-line);
+  border-radius: 10px;
+  box-shadow: 0 1px 2px var(--loc-vs-shadowSoft);
+  overflow: hidden;
+}
+.vs-panel.is-grow {
+  flex: 1 1 auto;
+}
+.vs-panel-hd {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--loc-vs-lineSoft);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--loc-vs-text2);
+}
+.vs-panel-hd .vs-count {
+  margin-left: auto;
+  font-weight: 500;
+  color: var(--loc-vs-text3);
+  font-variant-numeric: tabular-nums;
+}
+.vs-panel-bd {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px;
+}
+/**
+ * 面板里的一行**弱提示**（"先贴一段文案"/"AI 正在切…"）。
+ * 存在的理由：禁用态的按钮只表达"按不了"，不表达"为什么按不了"——
+ * 老板 2026-11-10 那句「功能这一块是灰色的」指的就是这个盲区。
+ */
+.vs-panel-bd > .vs-panel-note {
+  margin-top: 6px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--loc-vs-text3);
+}
+.vs-panel-hd .vs-panel-note {
+  margin-left: auto;
+  font-weight: 500;
+  color: var(--loc-vs-text3);
+  font-variant-numeric: tabular-nums;
+}
+/** 两个按钮等宽并排（字幕面板：AI 切 / 加）。 */
+.vs-row2 {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.vs-row2 > .vs-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vs-panel-bd::-webkit-scrollbar {
+  width: 8px;
+}
+.vs-panel-bd::-webkit-scrollbar-thumb {
+  background: var(--loc-vs-scroll);
+  border-radius: 4px;
+}
+
+/* ── 素材库 ───────────────────────────────────────────────────────────────── */
+.vs-media-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 7px;
+  margin-bottom: 6px;
+  border: 1px solid var(--loc-vs-lineSoft);
+  border-radius: 8px;
+  background: var(--loc-vs-panel2);
+  cursor: grab;
+  transition: border-color 0.14s ease, background 0.14s ease;
+}
+.vs-media-item:hover {
+  border-color: var(--loc-vs-brandLine);
+  background: var(--loc-vs-brandTint);
+}
+.vs-media-item:active {
+  cursor: grabbing;
+}
+.vs-media-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 42px;
+  height: 32px;
+  border-radius: 6px;
+  font-size: 15px;
+  background: var(--loc-vs-panel3);
+  border: 1px solid var(--loc-vs-lineSoft);
+}
+.vs-media-thumb.is-audio {
+  background: var(--loc-vs-clipAudio);
+  border-color: var(--loc-vs-clipAudioDeep);
+}
+.vs-media-thumb.is-video {
+  background: var(--loc-vs-clip);
+  border-color: var(--loc-vs-clipDeep);
+}
+.vs-media-meta {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.vs-media-name {
+  font-size: 12px;
+  color: var(--loc-vs-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vs-media-sub {
+  font-size: 11px;
+  color: var(--loc-vs-text3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+.vs-media-add {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--loc-vs-brandDeep);
+}
+
+/* ── 预览区 ───────────────────────────────────────────────────────────────── */
+.vs-preview {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  background: var(--loc-vs-panel);
+  border: 1px solid var(--loc-vs-line);
+  border-radius: 10px;
+  box-shadow: 0 1px 2px var(--loc-vs-shadowSoft);
+  overflow: hidden;
+}
+.vs-preview-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  padding: 12px;
+  background: var(--loc-vs-canvas);
+  overflow: hidden;
+}
+.vs-preview-frame {
+  display: block;
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px var(--loc-vs-shadow);
+}
+.vs-preview-ph {
+  color: var(--loc-vs-tlText2);
+  font-size: 12.5px;
+  text-align: center;
+  padding: 0 20px;
+}
+/* 角标：诚实标注「这是抽帧静态图，不是播放器」。见 JSX 文件头「为什么预览只抽帧」。 */
+.vs-preview-badge {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--loc-vs-tlText);
+  background: var(--loc-vs-tl2);
+  border: 1px solid var(--loc-vs-tlLine);
+  letter-spacing: 0.2px;
+}
+.vs-preview-badge.is-right {
+  left: auto;
+  right: 10px;
+}
+.vs-preview-time {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  color: var(--loc-vs-tlText);
+  background: var(--loc-vs-tl2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 走带条（播放控制 + 时间码 + 缩放） ───────────────────────────────────── */
+.vs-transport {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border-top: 1px solid var(--loc-vs-lineSoft);
+  background: var(--loc-vs-panel);
+}
+.vs-tc {
+  font-size: 12.5px;
+  color: var(--loc-vs-text);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+.vs-tc .vs-tc-total {
+  color: var(--loc-vs-text3);
+}
+.vs-zoom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  color: var(--loc-vs-text3);
+  font-size: 11.5px;
+}
+.vs-zoom input[type="range"] {
+  width: 110px;
+  accent-color: var(--loc-vs-brand);
+}
+
+/* ── 时间轴 ───────────────────────────────────────────────────────────────── */
+.vs-timeline {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 268px;
+  min-height: 0;
+  min-width: 0;
+  background: var(--loc-vs-tl);
+  border: 1px solid var(--loc-vs-line);
+  border-radius: 10px;
+  box-shadow: 0 1px 2px var(--loc-vs-shadowSoft);
+  overflow: hidden;
+}
+.vs-tl-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  border-bottom: 1px solid var(--loc-vs-tlLine);
+  color: var(--loc-vs-tlText2);
+  font-size: 11.5px;
+}
+.vs-tl-bar .vs-tl-title {
+  color: var(--loc-vs-tlText);
+  font-weight: 600;
+  font-size: 12px;
+}
+.vs-tl-bar .vs-spacer {
+  margin-left: auto;
+}
+.vs-tl-bar .vs-btn {
+  height: 24px;
+  padding: 0 9px;
+  font-size: 11.5px;
+  color: var(--loc-vs-tlText);
+  background: var(--loc-vs-tl2);
+  border-color: var(--loc-vs-tlLine);
+}
+.vs-tl-bar .vs-btn:hover:not(:disabled) {
+  background: var(--loc-vs-tl3);
+  border-color: var(--loc-vs-tlLine);
+}
+.vs-tl-scroll {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+.vs-tl-scroll::-webkit-scrollbar {
+  height: 9px;
+  width: 9px;
+}
+.vs-tl-scroll::-webkit-scrollbar-thumb {
+  background: var(--loc-vs-scroll);
+  border-radius: 5px;
+}
+.vs-tl-inner {
+  position: relative;
+  min-height: 100%;
+}
+
+/* 刻度尺 */
+.vs-ruler {
+  position: relative;
+  height: 26px;
+  border-bottom: 1px solid var(--loc-vs-tlLine);
+  background: var(--loc-vs-tl2);
+  overflow: hidden;
+  cursor: pointer;
+}
+.vs-tick {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 6px;
+  background: var(--loc-vs-tlLine);
+}
+.vs-tick.is-major {
+  height: 11px;
+  background: var(--loc-vs-tlText2);
+}
+.vs-tick-label {
+  position: absolute;
+  top: 12px;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--loc-vs-tlText2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* 轨道行 */
+.vs-track {
+  display: flex;
+  align-items: stretch;
+  height: 48px;
+  border-bottom: 1px solid var(--loc-vs-tlLine);
+}
+.vs-track.is-target {
+  background: var(--loc-vs-trackHi);
+}
+.vs-track-head {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 52px;
+  width: 52px;
+  background: var(--loc-vs-tl2);
+  border-right: 1px solid var(--loc-vs-tlLine);
+}
+.vs-track-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--loc-vs-clipText);
+  background: var(--loc-vs-clipDeep);
+  font-variant-numeric: tabular-nums;
+}
+.vs-track-label.is-audio {
+  background: var(--loc-vs-clipAudioDeep);
+}
+.vs-track-lane {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  background: var(--loc-vs-tl);
+}
+.vs-track-lane.is-hover {
+  background: var(--loc-vs-trackHi);
+}
+
+/* 片段块 */
+.vs-clip {
+  position: absolute;
+  top: 5px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  background: var(--loc-vs-clip);
+  border: 1px solid var(--loc-vs-clipDeep);
+  color: var(--loc-vs-clipText);
+  cursor: grab;
+  overflow: hidden;
+  user-select: none;
+  box-shadow: 0 1px 2px var(--loc-vs-shadowSoft);
+}
+.vs-clip:active {
+  cursor: grabbing;
+}
+.vs-clip.is-audio {
+  background: var(--loc-vs-clipAudio);
+  border-color: var(--loc-vs-clipAudioDeep);
+}
+.vs-clip.is-title {
+  background: var(--loc-vs-clipTitle);
+  border-color: var(--loc-vs-clipTitle);
+}
+.vs-clip.is-selected {
+  outline: 2px solid var(--loc-vs-sel);
+  outline-offset: -1px;
+  z-index: 2;
+}
+.vs-clip.is-ghosting {
+  opacity: 0.62;
+  outline: 1px dashed var(--loc-vs-sel);
+  outline-offset: -1px;
+  z-index: 4;
+}
+.vs-clip-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 9px;
+  font-size: 11.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+/* 左右边缘 6px 热区：光标变 ew-resize。见 JSX 「片段左右边缘可拉伸裁剪」。 */
+.vs-clip-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: ew-resize;
+  background: var(--loc-vs-ghost);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.vs-clip:hover .vs-clip-handle,
+.vs-clip.is-selected .vs-clip-handle {
+  opacity: 1;
+}
+.vs-clip-handle.is-start {
+  left: 0;
+  border-radius: 6px 0 0 6px;
+}
+.vs-clip-handle.is-end {
+  right: 0;
+  border-radius: 0 6px 6px 0;
+}
+.vs-clip-reason {
+  position: absolute;
+  top: -16px;
+  left: 0;
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  white-space: nowrap;
+  color: var(--loc-vs-onBrand);
+  background: var(--loc-vs-warn);
+  pointer-events: none;
+}
+
+/* 播放头 */
+.vs-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1.5px solid var(--loc-vs-playhead);
+  pointer-events: none;
+  z-index: 5;
+}
+.vs-playhead::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 0 0 3px 3px;
+  background: var(--loc-vs-playhead);
+}
+/* 素材拖入时的竖向落点指示 */
+.vs-drop-guide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--loc-vs-brand);
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 4;
+}
+/* 拖入空轨时的幽灵块 */
+.vs-drop-ghost {
+  position: absolute;
+  top: 5px;
+  height: 38px;
+  border-radius: 6px;
+  background: var(--loc-vs-ghost);
+  border: 1px dashed var(--loc-vs-brand);
+  pointer-events: none;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--loc-vs-tlText);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* ── 属性面板 ─────────────────────────────────────────────────────────────── */
+.vs-props-empty {
+  padding: 18px 12px;
+  text-align: center;
+  color: var(--loc-vs-text3);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.vs-group {
+  margin-bottom: 12px;
+}
+.vs-group-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--loc-vs-text3);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.vs-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.vs-field > label {
+  flex: 0 0 64px;
+  font-size: 11.5px;
+  color: var(--loc-vs-text2);
+  white-space: nowrap;
+}
+.vs-field input[type="number"],
+.vs-field input[type="text"],
+.vs-field select {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 26px;
+  padding: 0 7px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--loc-vs-text);
+  background: var(--loc-vs-panel2);
+  border: 1px solid var(--loc-vs-line);
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.vs-field input[type="number"]:focus,
+.vs-field input[type="text"]:focus,
+.vs-field select:focus {
+  outline: none;
+  border-color: var(--loc-vs-brand);
+  box-shadow: 0 0 0 2px var(--loc-vs-brandTint);
+}
+.vs-field .vs-unit {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--loc-vs-text3);
+}
+.vs-field.is-wide {
+  display: block;
+}
+.vs-field.is-wide > label {
+  display: block;
+  flex: none;
+  margin-bottom: 3px;
+}
+.vs-hint {
+  font-size: 11px;
+  color: var(--loc-vs-text3);
+  line-height: 1.6;
+  margin: 4px 0 0;
+}
+.vs-clipname {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--loc-vs-text);
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vs-kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--loc-vs-text2);
+  margin-bottom: 3px;
+  font-variant-numeric: tabular-nums;
+}
+.vs-kv > span:last-child {
+  color: var(--loc-vs-text);
+}
+
+/* ── 空态 ─────────────────────────────────────────────────────────────────── */
+.vs-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 28px;
+  text-align: center;
+}
+.vs-empty-icon {
+  font-size: 34px;
+  line-height: 1;
+}
+.vs-empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--loc-vs-text);
+}
+.vs-empty-sub {
+  font-size: 12.5px;
+  color: var(--loc-vs-text2);
+  line-height: 1.8;
+}
+.vs-empty-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 4px;
+}
+.vs-empty code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  background: var(--loc-vs-panel3);
+  color: var(--loc-vs-text2);
+}
+/**
+ * 空态里的**最弱一级**说明（探测中那句"只在本机准备引擎"）。
+ * 为什么单独一格而不是复用 `.vs-empty-sub`：探测期那句"正在检查…"是主信息，
+ * 提示是附属信息，两者同色同级时用户会两行一起跳过。
+ */
+.vs-empty-hint {
+  align-self: center;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--loc-vs-text3);
+}
+
+/* ── 进度条（导出）—— 条 + 右侧百分数字，老板点名的口径 ──────────────────── */
+.vs-pct {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.vs-bar {
+  position: relative;
+  flex: 1 1 auto;
+  height: 6px;
+  min-width: 0;
+  border-radius: 999px;
+  background: var(--loc-vs-panel3);
+  overflow: hidden;
+}
+.vs-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--loc-vs-brand);
+  transition: width 0.25s ease;
+}
+.vs-pct-num {
+  flex: 0 0 auto;
+  min-width: 40px;
+  text-align: right;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--loc-vs-text);
+  /* 数字等宽：百分比从 9% 跳到 10% 时不能左右抖 */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ── 导出弹层 ─────────────────────────────────────────────────────────────── */
+.vs-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--loc-vs-mask);
+}
+.vs-dialog {
+  display: flex;
+  flex-direction: column;
+  width: 460px;
+  max-height: 86vh;
+  background: var(--loc-vs-panel);
+  border: 1px solid var(--loc-vs-line);
+  border-radius: 12px;
+  box-shadow: 0 18px 48px var(--loc-vs-shadow);
+  overflow: hidden;
+}
+.vs-dialog-hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--loc-vs-lineSoft);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--loc-vs-text);
+}
+.vs-dialog-hd .vs-btn {
+  margin-left: auto;
+}
+.vs-dialog-bd {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px;
+}
+.vs-dialog-ft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border-top: 1px solid var(--loc-vs-lineSoft);
+  background: var(--loc-vs-panel2);
+}
+.vs-dialog-ft .vs-spacer {
+  margin-left: auto;
+}
+.vs-outpath {
+  display: block;
+  padding: 6px 8px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  background: var(--loc-vs-panel2);
+  border: 1px solid var(--loc-vs-lineSoft);
+  font-size: 11.5px;
+  color: var(--loc-vs-text2);
+  word-break: break-all;
+  line-height: 1.5;
+}
+.vs-stage-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--loc-vs-text2);
+  margin-bottom: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.vs-stage-row .vs-stage-name {
+  color: var(--loc-vs-text);
+  font-weight: 600;
+}
+.vs-err {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--loc-vs-danger);
+  background: var(--loc-vs-dangerTint);
+  line-height: 1.6;
+  word-break: break-word;
+}
+.vs-ok {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--loc-vs-brandDeep);
+  background: var(--loc-vs-brandTint);
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+/* ── 提示条 ───────────────────────────────────────────────────────────────── */
+.vs-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 40;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  color: var(--loc-vs-onBrand);
+  background: var(--loc-vs-brandDeep);
+  box-shadow: 0 6px 20px var(--loc-vs-shadow);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.vs-toast.is-error {
+  background: var(--loc-vs-danger);
+}
+
+/* ── 窄窗降级：左栏收窄、右栏收窄，中间栏靠 min-width:0 自己让位 ────────── */
+@media (max-width: 1280px) {
+  .vs-left {
+    flex-basis: 196px;
+  }
+  .vs-right {
+    flex-basis: 232px;
+  }
+}
+@media (max-width: 1024px) {
+  .vs-left {
+    flex-basis: 168px;
+  }
+  .vs-right {
+    flex-basis: 200px;
+  }
+  .vs-timeline {
+    flex-basis: 232px;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   深色舞台 · 字色基线（2026-11-10）
+
+   视频剪辑器和灯箱一样，是"总是深色"的舞台（对标 Premiere / 剪映），底色不跟主题翻转。
+   但它们的 `color` 是**继承**来的：浅色主题下 body 是 #1d1d1f，舞台里任何没自己声明
+   字色的子元素都会拿到近黑字 —— 压在 #101312 的预览台上 = 1.11:1。
+   实测（`unit-dark-contrast.mjs --discover --theme=light`）：修前 8 条 1.02~1.18:1。
+
+   为什么不是"把告警关掉"：容器和文字节点在静态分析里分不开，但**声明的字色基线**
+   是确定的。舞台说自己"深底浅字"，那么无论谁把字放进来都看得见；
+   关告警则等于下次真有人往里放字时，没人会知道。
+   ──────────────────────────────────────────────────────────────────────────── */
+.vs-stage,
+.vs-timeline,
+.vs-track-lane,
+.vs-preview-stage,
+.vs-ruler,
+.vs-track-head {
+  color: var(--c-on-media);
+}

@@ -1,0 +1,10 @@
+{
+  "name": "生成小程序",
+  "description": "生成微信小程序项目骨架：创建 project.config.json（自动填 AppID）、app.json（页面清单 + window 配置）、app.js、app.wxss、sitemap.json，并为每个页面生成 .wxml/.wxss/.js/.json 四件套。params：appid（可选，未填则从设置读取）、name（小程序名，可选）、pages（页面清单 JSON 数组，如 [\"index\",\"list\",\"detail\"]）、basedir（可选，项目目录名，默认 miniprogram）。",
+  "params": [
+    { "name": "appid", "label": "小程序 AppID(可选，未填从设置读取)" },
+    { "name": "name", "label": "小程序名称(可选)" },
+    { "name": "pages", "label": "页面清单(JSON 数组，如 [\"index\",\"list\",\"detail\"])" },
+    { "name": "basedir", "label": "项目目录名(可选，默认 miniprogram)" }
+  ]
+}

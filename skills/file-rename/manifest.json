@@ -1,0 +1,12 @@
+{
+  "name": "批量重命名",
+  "description": "批量重命名工作区里的文件：按 match 匹配（如 *.jpg），统一改成 prefix_序号 的形式（如 photo_1.jpg, photo_2.jpg）。适合整理照片、素材命名。",
+  "runtime": "python",
+  "entry": "run.py",
+  "allowNetwork": true,
+  "params": [
+    { "name": "match", "label": "匹配模式(如 *.jpg)", "required": true },
+    { "name": "prefix", "label": "新文件名前缀(如 photo)", "required": true },
+    { "name": "start", "label": "起始序号(默认 1)" }
+  ]
+}
