@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="600" viewBox="0 0 820 600" role="img" aria-label="隔离架构：pro 与 flash 不直接对话，经人核对与服务器中转">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6B7280"/>
+    </marker>
+    <marker id="arrowMuted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#9CA3AF"/>
+    </marker>
+  </defs>
+
+  <rect x="0.5" y="0.5" width="819" height="599" rx="14" fill="#FFFFFF" stroke="#E5E7EB"/>
+
+  <g font-family="system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+
+    <!-- 人 -->
+    <rect x="250" y="28" width="320" height="76" rx="10" fill="#F9FAFB" stroke="#9CA3AF" stroke-width="1.5"/>
+    <text x="410" y="60" text-anchor="middle" font-size="16" font-weight="600" fill="#111827">人</text>
+    <text x="410" y="82" text-anchor="middle" font-size="12" fill="#6B7280">提出需求 · 核对方案</text>
+
+    <!-- 箭头：人 → pro -->
+    <line x1="410" y1="104" x2="410" y2="150" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="426" y="132" font-size="12" fill="#6B7280">对话</text>
+
+    <!-- 旗舰 pro -->
+    <rect x="250" y="158" width="320" height="86" rx="10" fill="#EEF2FF" stroke="#6366F1" stroke-width="1.5"/>
+    <text x="410" y="190" text-anchor="middle" font-size="16" font-weight="600" fill="#312E81">旗舰 pro</text>
+    <text x="410" y="211" text-anchor="middle" font-size="12" fill="#4338CA">独立服务器</text>
+    <text x="410" y="229" text-anchor="middle" font-size="12" fill="#4338CA">出方案 · 只验收，不执行</text>
+
+    <!-- 箭头：pro ⇢ flash（虚线 = 非模型直连） -->
+    <line x1="410" y1="244" x2="410" y2="282" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrowMuted)"/>
+    <text x="426" y="270" font-size="12" fill="#6B7280">① 方案 + 验收标准（经服务器中转）</text>
+
+    <!-- 轻量 flash -->
+    <rect x="250" y="288" width="320" height="86" rx="10" fill="#ECFDF5" stroke="#10B981" stroke-width="1.5"/>
+    <text x="410" y="320" text-anchor="middle" font-size="16" font-weight="600" fill="#065F46">轻量 flash</text>
+    <text x="410" y="341" text-anchor="middle" font-size="12" fill="#047857">执行侧</text>
+    <text x="410" y="359" text-anchor="middle" font-size="12" fill="#047857">分角色 + 替补（只通过契约交接）</text>
+
+    <!-- 回传路径：flash → pro -->
+    <path d="M 570 331 H 700 V 201 H 580" fill="none" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="712" y="270" font-size="12" fill="#6B7280">② 产出 + 证据</text>
+
+    <!-- 说明 -->
+    <rect x="60" y="410" width="700" height="152" rx="10" fill="#F9FAFB" stroke="#E5E7EB"/>
+    <text x="84" y="440" font-size="13" font-weight="600" fill="#111827">三条硬规则</text>
+    <text x="84" y="468" font-size="12.5" fill="#374151">① pro 与 flash 不直接对话：中间由人核对、服务器中转，只传契约（方案、验收标准、产出、证据）。</text>
+    <text x="84" y="494" font-size="12.5" fill="#374151">② pro 不参与执行，只做两件事：出方案、验收与改进方案。</text>
+    <text x="84" y="520" font-size="12.5" fill="#374151">③ flash 侧保留分角色 + 替补，但角色之间也只通过契约交接，不共享上下文。</text>
+    <text x="84" y="546" font-size="11.5" fill="#9CA3AF">虚线表示非模型直连；实线表示经过中转的契约传递。</text>
+
+  </g>
+</svg>
