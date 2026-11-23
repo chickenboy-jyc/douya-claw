@@ -6,6 +6,12 @@
 这个仓库是**源码快照**（2026-11-12，版本 `0.21.34`），不是可一键运行的发行版：
 发行用的二进制、运行时、内部部署脚本与数据都不在这里（见 [SANITIZATION.md](SANITIZATION.md)）。
 
+> **一句话定位**：上一代完整 Electron Agent 的源码快照——意图门、验收清单、证据采集、200+ 条 smoke 门禁。
+> **当前状态**：**源码快照，不可一键运行**；二进制、`python-runtime/`、部署脚本与数据已剥离。
+> **先看哪个**：先读 [DESIGN.md](DESIGN.md) 看“为什么为轻量模型这么设计”，再翻 [AGENTS.md](AGENTS.md) 看门禁与协作纪律。
+> **三仓关系**：本仓是血缘上游；`agent-intent-gate` 是从 `intentGate.js` 抽出的最小判据；`panyiqi-claw` 是从私有潘一琪那一代抽出的可运行内核。后两者是兄弟，不是本仓的直接分支。
+> **已知边界**：不是发行版，别现场 `npm install` 期待一键跑；`artifactCustody` / `runtimeEvidence` / `evidenceQuality` 的完整证据链在这里，`panyiqi-claw` 只回迁了接口和 acceptance，尚未补齐。
+
 ## 一句话说清取舍
 
 目标用户是公司里不懂技术的员工 ⇒ 只能跑得起轻量模型。
